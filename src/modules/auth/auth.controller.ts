@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -26,13 +27,10 @@ export class AuthController {
     res.cookie(REFRESH_COOKIE, refreshToken, { ...baseOptions, maxAge: REFRESH_MAX_AGE });
   }
 
-  @Post('register')
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    const { user, accessToken, refreshToken } = await this.authService.register(dto);
-    this.setAuthCookies(res, accessToken, refreshToken);
-    return { user };
-  }
-
+  // A07: Auth Failures — brute-force protection. 5 attempts per minute per IP.
+  // Deliberately tighter than register/refresh: login is the highest-value target
+  // for credential stuffing (attacker already has a password list, just needs to try it).
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
@@ -41,6 +39,19 @@ export class AuthController {
     return { user };
   }
 
+  // Looser than login (legitimate signup bursts happen), but still far under the
+  // global 100/min — stops scripted mass account creation.
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('register')
+  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
+    const { user, accessToken, refreshToken } = await this.authService.register(dto);
+    this.setAuthCookies(res, accessToken, refreshToken);
+    return { user };
+  }
+
+  // A stolen/guessed refresh token being replayed rapidly is exactly the reuse-detection
+  // scenario from Phase 5 — rate limiting here adds a second layer in front of it.
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
