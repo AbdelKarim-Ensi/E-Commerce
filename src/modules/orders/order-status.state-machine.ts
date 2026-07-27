@@ -1,15 +1,19 @@
 import { OrderStatus } from '@prisma/client';
 
-
-export const ORDER_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
-  [OrderStatus.PAID]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
-  [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
-  [OrderStatus.DELIVERED]: [], // terminal state — nothing can happen after delivery
-  [OrderStatus.CANCELLED]: [], // terminal state — a cancelled order stays cancelled
+export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING: ['PAID', 'CANCELLED'],
+  PAID: ['SHIPPED', 'CANCELLED'],
+  SHIPPED: ['DELIVERED'],
+  DELIVERED: [],   // état terminal
+  CANCELLED: [],   // état terminal
 };
 
 export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
-  if (from === to) return false; // no-op transitions are rejected, not silently allowed
-  return ORDER_STATUS_TRANSITIONS[from].includes(to);
+  return ORDER_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+export function assertValidTransition(from: OrderStatus, to: OrderStatus): void {
+  if (!canTransition(from, to)) {
+    throw new Error(`Transition invalide : ${from} → ${to}`);
+  }
 }

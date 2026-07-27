@@ -7,8 +7,7 @@ import { AppModule } from './app.module';
 import { PrismaExceptionFilter } from './prisma/prisma-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const config = app.get(ConfigService);
+const app = await NestFactory.create(AppModule, { rawBody: true });  const config = app.get(ConfigService);
 
   // --- A05: Security Misconfiguration — Helmet sets a batch of protective headers ---
   app.use(

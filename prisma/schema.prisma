@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -16,6 +17,7 @@ enum OrderStatus {
   PENDING
   PAID
   SHIPPED
+  DELIVERED
   CANCELLED
 }
 
@@ -33,6 +35,11 @@ model User {
   refreshTokens RefreshToken[]
 
   @@index([email])
+}
+model ProcessedWebhookEvent {
+  id          String   @id // l'event.id Stripe, garanti unique par Stripe
+  eventType   String
+  processedAt DateTime @default(now())
 }
 
 model RefreshToken {

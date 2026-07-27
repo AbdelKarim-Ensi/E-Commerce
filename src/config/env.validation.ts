@@ -1,37 +1,79 @@
-import { plainToInstance } from 'class-transformer';
-import { IsString, IsNumber, IsIn, validateSync } from 'class-validator';
+import * as Joi from 'joi';
+import { registerAs } from '@nestjs/config';
 
-class EnvironmentVariables {
-  @IsIn(['development', 'production', 'test'])
-  NODE_ENV!: string;
+// Every env var the app actually reads should be listed here.
+// If it's missing or malformed, Nest refuses to boot instead of failing
+// later at a random runtime call site (e.g. jwtService.sign() with an undefined secret).
+export const envValidationSchema = Joi.object({
+  NODE_ENV: Joi.string()
+    .valid('development', 'staging', 'production', 'test')
+    .default('development'),
 
-  @IsNumber()
-  PORT!: number;
+  PORT: Joi.number().port().default(3000),
 
-  @IsString()
-  DATABASE_URL!: string;
+  // --- Database ---
+  DATABASE_URL: Joi.string()
+    .uri({ scheme: ['postgresql', 'postgres'] })
+    .required(),
 
-  @IsString()
-  REDIS_HOST!: string;
+  // --- Redis ---
+  REDIS_HOST: Joi.string().required(),
+  REDIS_PORT: Joi.number().port().default(6379),
+  REDIS_PASSWORD: Joi.string().allow('').optional(),
 
-  @IsNumber()
-  REDIS_PORT!: number;
+  // --- Auth / JWT ---
+  // Secrets must be long and DIFFERENT from each other — if access and refresh
+  // share a secret, a leaked access token could be replayed as a refresh token.
+  JWT_ACCESS_SECRET: Joi.string().min(32).required(),
+  JWT_REFRESH_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_EXPIRES_IN: Joi.string().default('15m'),
+  JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
 
-  @IsString()
-  JWT_ACCESS_SECRET!: string;
+  // --- Cookies ---
+  COOKIE_SECURE: Joi.boolean().default(true),
 
-  @IsString()
-  JWT_REFRESH_SECRET!: string;
-}
+  // --- CORS (Phase 7, but declared here so config is centralized) ---
+  CORS_ORIGIN: Joi.string().default('http://localhost:4200'), // Angular CLI dev server
+})
+  .custom((value, helpers) => {
+    if (value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET) {
+      return helpers.error('any.invalid', {
+        message: 'JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different',
+      });
+    }
+    return value;
+  })
+  .unknown(true); // allow other process.env vars (PATH, npm_*, etc.) to pass through
 
-export function validateEnv(config: Record<string, unknown>) {
-  const validated = plainToInstance(EnvironmentVariables, config, {
-    enableImplicitConversion: true,
-  });
-  const errors = validateSync(validated, { skipMissingProperties: false });
+// registerAs gives you namespaced, typed config injection:
+//   constructor(@Inject(authConfig.KEY) private auth: ConfigType<typeof authConfig>)
+// instead of scattering configService.get<string>('JWT_ACCESS_SECRET') everywhere.
+// Optional — you can keep using configService.get(...) directly if you prefer.
 
-  if (errors.length > 0) {
-    throw new Error(`Config validation error: ${errors.toString()}`);
-  }
-  return validated;
-}
+export const appConfig = registerAs('app', () => ({
+  nodeEnv: process.env.NODE_ENV,
+  port: parseInt(process.env.PORT ?? '3000', 10),
+  isProduction: process.env.NODE_ENV === 'production',
+}));
+
+export const databaseConfig = registerAs('database', () => ({
+  url: process.env.DATABASE_URL,
+}));
+
+export const redisConfig = registerAs('redis', () => ({
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
+  password: process.env.REDIS_PASSWORD || undefined,
+}));
+
+export const authConfig = registerAs('auth', () => ({
+  accessSecret: process.env.JWT_ACCESS_SECRET,
+  refreshSecret: process.env.JWT_REFRESH_SECRET,
+  accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+  refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+  cookieSecure: process.env.COOKIE_SECURE !== 'false',
+}));
+
+export const corsConfig = registerAs('cors', () => ({
+  origin: process.env.CORS_ORIGIN ?? 'http://localhost:4200',
+}));
