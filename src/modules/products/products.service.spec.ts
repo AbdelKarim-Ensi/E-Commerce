@@ -42,4 +42,10 @@ export class ProductsService {
     await this.findOne(id);
     return this.prisma.product.delete({ where: { id } });
   }
+  async updateImages(id: string, imageUrl: string, thumbnailUrl: string) {
+    return this.prisma.product.update({
+      where: { id },
+      data: { imageUrl, thumbnailUrl },
+    });
+  }
 }

@@ -62,18 +62,20 @@ model Category {
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  name        String
-  slug        String   @unique
-  description String?
-  price       Decimal
-  stock       Int      @default(0)
-  isActive    Boolean  @default(true)
-  attributes  Json?
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  description  String?
+  price        Decimal
+  stock        Int      @default(0)
+  isActive     Boolean  @default(true)
+  attributes   Json?
+  imageUrl     String?
+  thumbnailUrl String?
+  categoryId   String
+  category     Category @relation(fields: [categoryId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   orderItems OrderItem[]
 

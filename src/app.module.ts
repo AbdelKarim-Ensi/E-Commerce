@@ -19,6 +19,8 @@ import { ProductsModule } from './modules/products/products.module';
 import { RateLimitModule } from './config/rate-limit.module';
 import { PaymentModule } from './modules/payment/payment.module';
 
+import { UploadsModule } from './modules/uploads/uploads.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -45,6 +47,7 @@ import { PaymentModule } from './modules/payment/payment.module';
     OrdersModule,
     ProductsModule,
     PaymentModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -40,6 +40,8 @@ export const envValidationSchema = Joi.object({
   SMTP_USER: Joi.string().required(),
   SMTP_PASS: Joi.string().required(),
   SMTP_FROM: Joi.string().email().default('no-reply@ecommerce.local'),
+  SUPABASE_URL: Joi.string().uri().required(),
+  SUPABASE_SECRET_KEY: Joi.string().required(),
 })
   .custom((value, helpers) => {
     if (value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET) {
