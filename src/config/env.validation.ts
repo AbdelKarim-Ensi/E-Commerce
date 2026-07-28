@@ -34,6 +34,12 @@ export const envValidationSchema = Joi.object({
 
   // --- CORS (Phase 7, but declared here so config is centralized) ---
   CORS_ORIGIN: Joi.string().default('http://localhost:4200'), // Angular CLI dev server
+// --- SMTP (Phase 10 - notifications) ---
+  SMTP_HOST: Joi.string().required(),
+  SMTP_PORT: Joi.number().port().default(587),
+  SMTP_USER: Joi.string().required(),
+  SMTP_PASS: Joi.string().required(),
+  SMTP_FROM: Joi.string().email().default('no-reply@ecommerce.local'),
 })
   .custom((value, helpers) => {
     if (value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET) {
@@ -44,11 +50,6 @@ export const envValidationSchema = Joi.object({
     return value;
   })
   .unknown(true); // allow other process.env vars (PATH, npm_*, etc.) to pass through
-
-// registerAs gives you namespaced, typed config injection:
-//   constructor(@Inject(authConfig.KEY) private auth: ConfigType<typeof authConfig>)
-// instead of scattering configService.get<string>('JWT_ACCESS_SECRET') everywhere.
-// Optional — you can keep using configService.get(...) directly if you prefer.
 
 export const appConfig = registerAs('app', () => ({
   nodeEnv: process.env.NODE_ENV,

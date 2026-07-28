@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrderStatus } from '@prisma/client';
-
+import { NotificationsQueue } from '../notifications/queues/notifications.queue';
 @Injectable()
 export class PaymentService {
   private readonly stripe: Stripe;
@@ -18,6 +18,7 @@ export class PaymentService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly notificationsQueue: NotificationsQueue,
   ) {
     this.stripe = new Stripe(
       this.configService.get<string>('STRIPE_SECRET_KEY')!,
@@ -25,6 +26,7 @@ export class PaymentService {
     );
     this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET')!;
   }
+  
 
   async createPaymentIntent(orderId: string, userId: string) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });
@@ -153,8 +155,10 @@ export class PaymentService {
       where: { id: orderId },
       data: { status: OrderStatus.PAID },
     });
-
     this.logger.log(`Commande ${orderId} marquée PAID`);
+await this.notificationsQueue.enqueueOrderConfirmation(orderId)
+
+    
   }
 
   private async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
