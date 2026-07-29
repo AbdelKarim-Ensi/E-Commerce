@@ -1,124 +1,227 @@
-// import { Test, TestingModule } from '@nestjs/testing';
-// import { OrdersService } from './orders.service';
-// import { PrismaService } from '../../prisma/prisma.service';
-// import { ConflictException } from '@nestjs/common';
-// import { Role } from '@prisma/client';
+import { Test } from '@nestjs/testing';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { OrderStatus, Prisma, Role } from '@prisma/client';
+import { OrdersService } from './orders.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { createMockPrismaService, MockPrismaService } from '../../prisma/prisma.mock';
 
-// describe('OrdersService — Race Condition & Transactions (integration)', () => {
-//   let service: OrdersService;
-//   let prisma: PrismaService;
+describe('OrdersService', () => {
+  let service: OrdersService;
+  let prisma: MockPrismaService;
 
-//   let userId: string;
-//   let categoryId: string;
-//   let productId: string;
+  beforeEach(async () => {
+    prisma = createMockPrismaService();
 
-//   beforeAll(async () => {
-//     const module: TestingModule = await Test.createTestingModule({
-//       providers: [OrdersService, PrismaService],
-//     }).compile();
+    const moduleRef = await Test.createTestingModule({
+      providers: [OrdersService, { provide: PrismaService, useValue: prisma }],
+    }).compile();
 
-//     service = module.get<OrdersService>(OrdersService);
-//     prisma = module.get<PrismaService>(PrismaService);
+    service = moduleRef.get(OrdersService);
+  });
 
-//     // Données isolées, préfixées pour identification/nettoyage facile
-//     const user = await prisma.user.create({
-//       data: {
-//         email: `race-test-${Date.now()}@test.local`,
-//         passwordHash: 'irrelevant-for-this-test',
-//         role: Role.CLIENT,
-//       },
-//     });
-//     userId = user.id;
+  function mockProduct(overrides: Record<string, unknown> = {}) {
+    return {
+      id: 'prod-1',
+      name: 'Widget',
+      slug: 'widget',
+      price: new Prisma.Decimal(20),
+      stock: 10,
+      isActive: true,
+      categoryId: 'cat-1',
+      imageUrl: null,
+      thumbnailUrl: null,
+      description: null,
+      attributes: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...overrides,
+    };
+  }
 
-//     const category = await prisma.category.create({
-//       data: { name: `RaceTestCat-${Date.now()}`, slug: `race-test-cat-${Date.now()}` },
-//     });
-//     categoryId = category.id;
+  describe('create', () => {
+    const userId = 'user-1';
 
-//     const product = await prisma.product.create({
-//       data: {
-//         name: 'Race Test Product',
-//         slug: `race-test-product-${Date.now()}`,
-//         price: 100,
-//         stock: 1, // <-- un seul exemplaire en stock, le coeur du test
-//         categoryId,
-//       },
-//     });
-//     productId = product.id;
-//   });
+    beforeEach(() => {
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: any) => cb(prisma));
+    });
 
-//   afterAll(async () => {
-//     // Nettoyage dans l'ordre inverse des FK
-//     await prisma.orderItem.deleteMany({ where: { productId } });
-//     await prisma.order.deleteMany({ where: { userId } });
-//     await prisma.product.deleteMany({ where: { id: productId } });
-//     await prisma.category.deleteMany({ where: { id: categoryId } });
-//     await prisma.user.deleteMany({ where: { id: userId } });
-//     await prisma.$disconnect();
-//   });
+    it('creates an order and decrements stock atomically', async () => {
+      const product = mockProduct();
+      prisma.product.findMany.mockResolvedValue([product] as any);
+      prisma.product.updateMany.mockResolvedValue({ count: 1 });
+      prisma.order.create.mockResolvedValue({
+        id: 'order-1',
+        userId,
+        status: OrderStatus.PENDING,
+        totalAmount: new Prisma.Decimal(40),
+        items: [],
+      } as any);
 
-//   it('empêche deux commandes concurrentes de vendre le même dernier stock', async () => {
-//     const dto = { items: [{ productId, quantity: 1 }] };
+      const result = await service.create(userId, {
+        items: [{ productId: product.id, quantity: 2 }],
+      });
 
-//     // Deux requêtes tirées EXACTEMENT en même temps
-//     const results = await Promise.allSettled([
-//       service.create(userId, dto),
-//       service.create(userId, dto),
-//     ]);
+      expect(prisma.product.updateMany).toHaveBeenCalledWith({
+        where: { id: product.id, stock: { gte: 2 } },
+        data: { stock: { decrement: 2 } },
+      });
+      expect(result.id).toBe('order-1');
+    });
 
-//     const fulfilled = results.filter((r) => r.status === 'fulfilled');
-//     const rejected = results.filter((r) => r.status === 'rejected');
+    it('throws NotFoundException when a product does not exist', async () => {
+      prisma.product.findMany.mockResolvedValue([]);
 
-//     // Une seule doit réussir
-//     expect(fulfilled).toHaveLength(1);
-//     expect(rejected).toHaveLength(1);
+      await expect(
+        service.create(userId, { items: [{ productId: 'missing', quantity: 1 }] }),
+      ).rejects.toThrow(NotFoundException);
+    });
 
-//     // L'autre doit échouer précisément avec ConflictException (stock insuffisant)
-//     const rejection = rejected[0] as PromiseRejectedResult;
-//     expect(rejection.reason).toBeInstanceOf(ConflictException);
+    it('throws BadRequestException for an inactive product', async () => {
+      const product = mockProduct({ isActive: false });
+      prisma.product.findMany.mockResolvedValue([product] as any);
 
-//     // Le stock final en DB doit être exactement 0, jamais négatif
-//     const finalProduct = await prisma.product.findUnique({ where: { id: productId } });
-//     expect(finalProduct?.stock).toBe(0);
-//   });
+      await expect(
+        service.create(userId, { items: [{ productId: product.id, quantity: 1 }] }),
+      ).rejects.toThrow(BadRequestException);
+    });
 
-//   it('restitue le stock quand une commande PENDING est annulée', async () => {
-//     // Remettre du stock pour ce test
-//     await prisma.product.update({ where: { id: productId }, data: { stock: 5 } });
+    it('throws ConflictException when stock is insufficient', async () => {
+      const product = mockProduct({ stock: 1 });
+      prisma.product.findMany.mockResolvedValue([product] as any);
+      prisma.product.updateMany.mockResolvedValue({ count: 0 });
 
-//     const order = await service.create(userId, {
-//       items: [{ productId, quantity: 3 }],
-//     });
+      await expect(
+        service.create(userId, { items: [{ productId: product.id, quantity: 5 }] }),
+      ).rejects.toThrow(ConflictException);
+    });
+  });
 
-//     let product = await prisma.product.findUnique({ where: { id: productId } });
-//     expect(product?.stock).toBe(2); // 5 - 3
+  describe('findAll', () => {
+    it('filters by userId for a CLIENT', async () => {
+      prisma.order.findMany.mockResolvedValue([]);
 
-//     await service.updateStatus(order.id, { status: 'CANCELLED' as any });
+      await service.findAll('user-1', Role.CLIENT);
 
-//     product = await prisma.product.findUnique({ where: { id: productId } });
-//     expect(product?.stock).toBe(5); // stock restitué intégralement
-//   });
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { userId: 'user-1' } }),
+      );
+    });
 
-//   it('rejette une transition invalide (ex: DELIVERED → PENDING)', async () => {
-//     await prisma.product.update({ where: { id: productId }, data: { stock: 5 } });
+    it('returns all orders for an ADMIN (no filter)', async () => {
+      prisma.order.findMany.mockResolvedValue([]);
 
-//     const order = await service.create(userId, {
-//       items: [{ productId, quantity: 1 }],
-//     });
+      await service.findAll('admin-1', Role.ADMIN);
 
-//     // On force artificiellement en DELIVERED pour tester le refus de retour en arrière
-//     await prisma.order.update({
-//       where: { id: order.id },
-//       data: { status: 'DELIVERED' },
-//     });
+      expect(prisma.order.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: {} }),
+      );
+    });
+  });
 
-//     await expect(
-//       service.updateStatus(order.id, { status: 'PENDING' as any }),
-//     ).rejects.toThrow('Transition invalide');
-//   });
-// });
+  describe('findOne', () => {
+    it('throws NotFoundException when the order does not exist', async () => {
+      prisma.order.findUnique.mockResolvedValue(null);
 
+      await expect(service.findOne('missing', 'user-1', Role.CLIENT)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
 
+    it("throws ForbiddenException when a CLIENT requests another user's order", async () => {
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        userId: 'someone-else',
+      } as any);
 
+      await expect(service.findOne('order-1', 'user-1', Role.CLIENT)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
 
+    it('lets an ADMIN access any order regardless of ownership', async () => {
+      const order = { id: 'order-1', userId: 'someone-else' };
+      prisma.order.findUnique.mockResolvedValue(order as any);
 
+      const result = await service.findOne('order-1', 'admin-1', Role.ADMIN);
+
+      expect(result).toBe(order);
+    });
+  });
+
+  describe('updateStatus', () => {
+    beforeEach(() => {
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: any) => cb(prisma));
+    });
+
+    it('throws NotFoundException when the order does not exist', async () => {
+      prisma.order.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.updateStatus('missing', { status: OrderStatus.PAID }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws BadRequestException on an invalid transition', async () => {
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PENDING,
+      } as any);
+
+      await expect(
+        service.updateStatus('order-1', { status: OrderStatus.DELIVERED }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('restores product stock for every item when cancelling an order', async () => {
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PENDING,
+      } as any);
+      prisma.orderItem.findMany.mockResolvedValue([
+        {
+          id: 'item-1',
+          orderId: 'order-1',
+          productId: 'prod-1',
+          quantity: 3,
+          unitPrice: new Prisma.Decimal(20),
+        },
+      ] as any);
+      prisma.order.update.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.CANCELLED,
+      } as any);
+
+      await service.updateStatus('order-1', { status: OrderStatus.CANCELLED });
+
+      expect(prisma.product.update).toHaveBeenCalledWith({
+        where: { id: 'prod-1' },
+        data: { stock: { increment: 3 } },
+      });
+    });
+
+    it('updates the status on a valid transition', async () => {
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PENDING,
+      } as any);
+      prisma.order.update.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PAID,
+      } as any);
+
+      const result = await service.updateStatus('order-1', { status: OrderStatus.PAID });
+
+      expect(prisma.order.update).toHaveBeenCalledWith({
+        where: { id: 'order-1' },
+        data: { status: OrderStatus.PAID },
+        include: { items: true },
+      });
+      expect(result.status).toBe(OrderStatus.PAID);
+    });
+  });
+});

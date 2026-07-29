@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { OrderStatus } from '@prisma/client';
 
 export const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
@@ -14,6 +15,6 @@ export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
 
 export function assertValidTransition(from: OrderStatus, to: OrderStatus): void {
   if (!canTransition(from, to)) {
-    throw new Error(`Transition invalide : ${from} → ${to}`);
+    throw new BadRequestException(`Transition invalide : ${from} → ${to}`);
   }
 }

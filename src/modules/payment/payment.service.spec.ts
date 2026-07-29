@@ -1,121 +1,208 @@
-// import { Test, TestingModule } from '@nestjs/testing';
-// import { ConfigService } from '@nestjs/config';
-// import { PaymentService } from './payment.service';
-// import { PrismaService } from '../../prisma/prisma.service';
-// import { BadRequestException } from '@nestjs/common';
-// import { Role, OrderStatus } from '@prisma/client';
+import { Test } from '@nestjs/testing';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { OrderStatus, Prisma } from '@prisma/client';
 
-// describe('PaymentService (integration)', () => {
-//   let service: PaymentService;
-//   let prisma: PrismaService;
+// PaymentService instancie `new Stripe(...)` lui-même en interne (pas injecté
+// via DI), donc on mocke le module 'stripe' entier plutôt que d'essayer de
+// substituer une instance. `mockImplementation` qui retourne un objet fait que
+// `new Stripe(...)` renvoie cet objet (comportement standard de `new` en JS
+// quand le constructeur retourne explicitement un objet).
+const mockConstructEvent = jest.fn();
+const mockPaymentIntentsCreate = jest.fn();
+jest.mock('stripe', () => {
+  return jest.fn().mockImplementation(() => ({
+    webhooks: { constructEvent: mockConstructEvent },
+    paymentIntents: { create: mockPaymentIntentsCreate },
+  }));
+});
 
-//   let ownerId: string;
-//   let strangerId: string;
-//   let categoryId: string;
-//   let productId: string;
+import { PaymentService } from './payment.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { NotificationsQueue } from '../notifications/queues/notifications.queue';
+import { createMockPrismaService, MockPrismaService } from '../../prisma/prisma.mock';
 
-//   beforeAll(async () => {
-//     const module: TestingModule = await Test.createTestingModule({
-//       providers: [PaymentService, PrismaService, ConfigService],
-//     }).compile();
+describe('PaymentService', () => {
+  let service: PaymentService;
+  let prisma: MockPrismaService;
+  let notificationsQueue: { enqueueOrderConfirmation: jest.Mock };
 
-//     service = module.get<PaymentService>(PaymentService);
-//     prisma = module.get<PrismaService>(PrismaService);
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    prisma = createMockPrismaService();
+    notificationsQueue = { enqueueOrderConfirmation: jest.fn() };
 
-//     const owner = await prisma.user.create({
-//       data: {
-//         email: `payment-owner-${Date.now()}@test.local`,
-//         passwordHash: 'irrelevant',
-//         role: Role.CLIENT,
-//       },
-//     });
-//     ownerId = owner.id;
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        PaymentService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: NotificationsQueue, useValue: notificationsQueue },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              const values: Record<string, string> = {
+                STRIPE_SECRET_KEY: 'sk_test_fake',
+                STRIPE_WEBHOOK_SECRET: 'whsec_fake',
+              };
+              return values[key];
+            }),
+          },
+        },
+      ],
+    }).compile();
 
-//     const stranger = await prisma.user.create({
-//       data: {
-//         email: `payment-stranger-${Date.now()}@test.local`,
-//         passwordHash: 'irrelevant',
-//         role: Role.CLIENT,
-//       },
-//     });
-//     strangerId = stranger.id;
+    service = moduleRef.get(PaymentService);
+  });
 
-//     const category = await prisma.category.create({
-//       data: {
-//         name: `PaymentTestCat-${Date.now()}`,
-//         slug: `payment-test-cat-${Date.now()}`,
-//       },
-//     });
-//     categoryId = category.id;
+  describe('createPaymentIntent', () => {
+    it('throws NotFoundException when the order does not exist', async () => {
+      prisma.order.findUnique.mockResolvedValue(null);
 
-//     const product = await prisma.product.create({
-//       data: {
-//         name: 'Payment Test Product',
-//         slug: `payment-test-product-${Date.now()}`,
-//         price: 50,
-//         stock: 100,
-//         categoryId,
-//       },
-//     });
-//     productId = product.id;
-//   });
+      await expect(service.createPaymentIntent('order-1', 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
 
-//   afterAll(async () => {
-//     await prisma.orderItem.deleteMany({ where: { productId } });
-//     await prisma.order.deleteMany({ where: { userId: { in: [ownerId, strangerId] } } });
-//     await prisma.product.deleteMany({ where: { id: productId } });
-//     await prisma.category.deleteMany({ where: { id: categoryId } });
-//     await prisma.user.deleteMany({ where: { id: { in: [ownerId, strangerId] } } });
-//     await prisma.$disconnect();
-//   });
+    it("throws BadRequestException when the order belongs to another user", async () => {
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        userId: 'someone-else',
+        status: OrderStatus.PENDING,
+        totalAmount: new Prisma.Decimal(50),
+      } as any);
 
-//   async function createPendingOrder(userId: string) {
-//     return prisma.order.create({
-//       data: {
-//         userId,
-//         status: OrderStatus.PENDING,
-//         totalAmount: 50,
-//         items: {
-//           create: [{ productId, quantity: 1, unitPrice: 50 }],
-//         },
-//       },
-//     });
-//   }
+      await expect(service.createPaymentIntent('order-1', 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
 
-//   it("refuse de créer un PaymentIntent si la commande n'appartient pas à l'utilisateur", async () => {
-//     const order = await createPendingOrder(ownerId);
+    it('throws BadRequestException when the order is not PENDING', async () => {
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        status: OrderStatus.PAID,
+        totalAmount: new Prisma.Decimal(50),
+      } as any);
 
-//     await expect(
-//       service.createPaymentIntent(order.id, strangerId),
-//     ).rejects.toThrow("Cette commande ne vous appartient pas");
-//   });
+      await expect(service.createPaymentIntent('order-1', 'user-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
 
-//   it('refuse de créer un PaymentIntent si la commande n\'est pas PENDING', async () => {
-//     const order = await createPendingOrder(ownerId);
+    it('creates a Stripe PaymentIntent and stores its id on the order', async () => {
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        userId: 'user-1',
+        status: OrderStatus.PENDING,
+        totalAmount: new Prisma.Decimal(49.99),
+      } as any);
+      mockPaymentIntentsCreate.mockResolvedValue({
+        id: 'pi_123',
+        client_secret: 'secret_abc',
+      });
+      prisma.order.update.mockResolvedValue({} as any);
 
-//     await prisma.order.update({
-//       where: { id: order.id },
-//       data: { status: OrderStatus.PAID },
-//     });
+      const result = await service.createPaymentIntent('order-1', 'user-1');
 
-//     await expect(
-//       service.createPaymentIntent(order.id, ownerId),
-//     ).rejects.toThrow(BadRequestException);
-//   });
+      expect(mockPaymentIntentsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ amount: 4999, currency: 'eur' }),
+      );
+      expect(prisma.order.update).toHaveBeenCalledWith({
+        where: { id: 'order-1' },
+        data: { stripePaymentIntentId: 'pi_123' },
+      });
+      expect(result).toEqual({ clientSecret: 'secret_abc', paymentIntentId: 'pi_123' });
+    });
+  });
 
-//   it('traite payment_intent.payment_failed sans planter et sans changer le statut', async () => {
-//     const order = await createPendingOrder(ownerId);
+  describe('handleWebhookEvent', () => {
+    const rawBody = Buffer.from('{}');
 
-//     // On accède à la méthode privée via cast pour tester isolément la logique métier,
-//     // sans dépendre de la vérification de signature Stripe dans ce test unitaire.
-//     const fakePaymentIntent = {
-//       id: 'pi_fake_failed_test',
-//       metadata: { orderId: order.id },
-//     } as any;
+    it('throws BadRequestException when the signature is invalid', async () => {
+      mockConstructEvent.mockImplementation(() => {
+        throw new Error('invalid signature');
+      });
 
-//     await (service as any).handlePaymentFailed(fakePaymentIntent);
+      await expect(service.handleWebhookEvent(rawBody, 'bad-sig')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
 
-//     const refreshed = await prisma.order.findUnique({ where: { id: order.id } });
-//     expect(refreshed?.status).toBe(OrderStatus.PENDING); // reste inchangé, pas de crash
-//   });
-// });
+    it('skips processing when the event was already handled (idempotence)', async () => {
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_1',
+        type: 'payment_intent.succeeded',
+        data: { object: { metadata: { orderId: 'order-1' } } },
+      });
+      prisma.processedWebhookEvent.findUnique.mockResolvedValue({
+        id: 'evt_1',
+        eventType: 'payment_intent.succeeded',
+      } as any);
+
+      const result = await service.handleWebhookEvent(rawBody, 'sig');
+
+      expect(result).toEqual({ received: true, duplicate: true });
+      expect(prisma.order.update).not.toHaveBeenCalled();
+    });
+
+    it('marks a PENDING order as PAID and enqueues the confirmation notification', async () => {
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_1',
+        type: 'payment_intent.succeeded',
+        data: { object: { metadata: { orderId: 'order-1' } } },
+      });
+      prisma.processedWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.PENDING,
+      } as any);
+      prisma.order.update.mockResolvedValue({} as any);
+      prisma.processedWebhookEvent.create.mockResolvedValue({} as any);
+
+      const result = await service.handleWebhookEvent(rawBody, 'sig');
+
+      expect(prisma.order.update).toHaveBeenCalledWith({
+        where: { id: 'order-1' },
+        data: { status: OrderStatus.PAID },
+      });
+      expect(notificationsQueue.enqueueOrderConfirmation).toHaveBeenCalledWith('order-1');
+      expect(prisma.processedWebhookEvent.create).toHaveBeenCalledWith({
+        data: { id: 'evt_1', eventType: 'payment_intent.succeeded' },
+      });
+      expect(result).toEqual({ received: true });
+    });
+
+    it('does not touch an order that is no longer PENDING', async () => {
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_1',
+        type: 'payment_intent.succeeded',
+        data: { object: { metadata: { orderId: 'order-1' } } },
+      });
+      prisma.processedWebhookEvent.findUnique.mockResolvedValue(null);
+      prisma.order.findUnique.mockResolvedValue({
+        id: 'order-1',
+        status: OrderStatus.SHIPPED,
+      } as any);
+
+      await service.handleWebhookEvent(rawBody, 'sig');
+
+      expect(prisma.order.update).not.toHaveBeenCalled();
+      expect(notificationsQueue.enqueueOrderConfirmation).not.toHaveBeenCalled();
+    });
+
+    it('does nothing harmful on payment_intent.payment_failed', async () => {
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_1',
+        type: 'payment_intent.payment_failed',
+        data: { object: { metadata: { orderId: 'order-1' } } },
+      });
+      prisma.processedWebhookEvent.findUnique.mockResolvedValue(null);
+
+      const result = await service.handleWebhookEvent(rawBody, 'sig');
+
+      expect(prisma.order.update).not.toHaveBeenCalled();
+      expect(result).toEqual({ received: true });
+    });
+  });
+});

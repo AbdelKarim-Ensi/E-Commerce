@@ -9,11 +9,8 @@ import { PrismaExceptionFilter } from './prisma/prisma-exception.filter';
 async function bootstrap() {
 const app = await NestFactory.create(AppModule, { rawBody: true });  const config = app.get(ConfigService);
 
-  // --- A05: Security Misconfiguration — Helmet sets a batch of protective headers ---
   app.use(
     helmet({
-      // CSP is strict by default; only relax this if you serve HTML/inline scripts
-      // from this API directly (rare for a pure JSON API like this one).
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
@@ -21,10 +18,7 @@ const app = await NestFactory.create(AppModule, { rawBody: true });  const confi
           frameAncestors: ["'none'"], // extra clickjacking protection beyond X-Frame-Options
         },
       },
-      crossOriginResourcePolicy: { policy: 'same-site' },
-      // HSTS: forces HTTPS on every future request for 1 year, including subdomains.
-      // Only actually enforced by browsers over HTTPS — harmless in local HTTP dev.
-      hsts: {
+      crossOriginResourcePolicy: { policy: 'same-site' },      hsts: {
         maxAge: 31536000,
         includeSubDomains: true,
         preload: true,
@@ -32,7 +26,6 @@ const app = await NestFactory.create(AppModule, { rawBody: true });  const confi
     }),
   );
 
-  // --- Cookies must be parsed before guards/strategies that read req.cookies ---
   app.use(cookieParser());
 
   // --- CORS: only the Angular dev/prod origin may call this API with credentials ---
