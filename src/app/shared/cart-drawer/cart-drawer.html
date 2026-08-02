@@ -1,0 +1,148 @@
+
+<!-- Overlay -->
+<div
+  class="fixed inset-0 z-50 bg-black/50 transition-opacity duration-300"
+  [class.opacity-100]="isOpen"
+  [class.opacity-0]="!isOpen"
+  [class.pointer-events-none]="!isOpen"
+  (click)="onClose()"
+></div>
+
+<!-- Drawer -->
+<div
+  class="fixed right-0 top-0 h-full z-50 w-full sm:w-96 bg-white shadow-2xl flex flex-col transition-transform duration-300"
+  [class.translate-x-0]="isOpen"
+  [class.translate-x-full]="!isOpen"
+>
+  <!-- Header -->
+  <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+    <div class="flex items-center gap-2">
+      <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+      <h2 class="font-poppins font-bold text-gray-900">
+        Your Cart <span class="text-amber-500">({{ totalItemsCount }})</span>
+      </h2>
+    </div>
+    <button
+      type="button"
+      (click)="onClose()"
+      class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-500"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Items -->
+  <div class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+    @if (items.length === 0) {
+      <div class="text-center py-20">
+        <div class="text-5xl mb-4">🛒</div>
+        <p class="text-gray-500 font-medium">Your cart is empty</p>
+        <p class="text-sm text-gray-400 mt-1">Add some products to get started</p>
+        <button
+          type="button"
+          (click)="onClose()"
+          class="mt-6 px-5 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-semibold hover:bg-amber-600 transition-colors"
+        >
+          Continue Shopping
+        </button>
+      </div>
+    } @else {
+      @for (item of items; track item.product.id) {
+        <div class="flex gap-3 p-3 rounded-xl border border-gray-100 hover:border-amber-200 transition-colors">
+          <div class="rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 w-[72px] h-[72px]">
+            <img
+              [src]="item.product.thumbnailUrl || item.product.imageUrl || 'assets/placeholder-product.webp'"
+              [alt]="item.product.name"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 leading-tight line-clamp-2 font-poppins">
+              {{ item.product.name }}
+            </p>
+
+            <div class="flex items-center justify-between mt-2">
+              <span class="text-sm font-bold text-gray-900">
+                {{ itemLineTotal(item).toFixed(2) }} DT
+              </span>
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  (click)="onUpdateQty(item.product.id, item.quantity - 1)"
+                  class="w-6 h-6 rounded-md bg-gray-100 hover:bg-amber-100 flex items-center justify-center text-gray-600 text-xs font-bold transition-colors"
+                >
+                  −
+                </button>
+                <span class="w-6 text-center text-sm font-semibold text-gray-900">
+                  {{ item.quantity }}
+                </span>
+                <button
+                  type="button"
+                  (click)="onUpdateQty(item.product.id, item.quantity + 1)"
+                  [disabled]="item.quantity >= item.product.stock"
+                  class="w-6 h-6 rounded-md bg-gray-100 hover:bg-amber-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-gray-600 text-xs font-bold transition-colors"
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  (click)="onRemove(item.product.id)"
+                  class="w-6 h-6 rounded-md hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-gray-400 transition-colors ml-1"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Summary -->
+  @if (items.length > 0) {
+    <div class="px-5 py-4 border-t border-gray-100 space-y-3">
+      <div class="flex items-center justify-between text-sm text-gray-500">
+        <span>Subtotal</span>
+        <span>{{ subtotal.toFixed(2) }} DT</span>
+      </div>
+      <div class="flex items-center justify-between text-sm text-gray-500">
+        <span>Shipping</span>
+        <span [class.text-green-500]="shipping === 0" [class.font-medium]="shipping === 0">
+          {{ shipping === 0 ? 'FREE' : (shipping.toFixed(2) + ' DT') }}
+        </span>
+      </div>
+
+      @if (subtotal < 50) {
+        <p class="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+          Add {{ amountUntilFreeShipping.toFixed(2) }} DT more for free shipping!
+        </p>
+      }
+
+      <div class="flex items-center justify-between font-black text-gray-900 pt-1 border-t border-gray-100">
+        <span class="font-poppins">Total</span>
+        <span class="font-poppins">{{ total.toFixed(2) }} DT</span>
+      </div>
+
+      <button
+        type="button"
+        class="w-full py-3.5 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 active:scale-95 transition-all text-sm font-poppins"
+      >
+        Checkout →
+      </button>
+      <button
+        type="button"
+        (click)="onClose()"
+        class="w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+      >
+        Continue Shopping
+      </button>
+    </div>
+  }
+</div>

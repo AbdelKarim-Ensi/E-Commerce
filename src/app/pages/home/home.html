@@ -1,0 +1,34 @@
+<app-hero (shopNow)="scrollToFeatured()" />
+
+<app-trust-section />
+
+<app-categories
+  [categories]="categories"
+  [activeCategory]="activeCategory"
+  (selectCategory)="onSelectCategory($event)"
+/>
+
+<app-flash-deals
+  [products]="dealProducts"
+  (addToCart)="onAddToCart($event)"
+  (selectProduct)="onSelectProduct($event)"
+/>
+
+<div id="featured">
+  <app-featured-products
+    [products]="products"
+    [activeCategory]="activeCategory"
+    (addToCart)="onAddToCart($event)"
+    (selectProduct)="onSelectProduct($event)"
+  />
+</div>
+
+@if (selectedProduct) {
+  <app-product-detail
+    [product]="selectedProduct"
+    [wishlisted]="isWishlisted(selectedProduct.id)"
+    (closeModal)="onCloseProductDetail()"
+    (addToCart)="onAddToCartFromDetail($event)"
+    (toggleWishlist)="onToggleWishlist($event)"
+  />
+}

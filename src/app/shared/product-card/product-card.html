@@ -1,0 +1,89 @@
+
+<div
+  (click)="onSelect()"
+  class="group bg-white rounded-2xl border border-gray-100 overflow-hidden cursor-pointer relative shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+  [class.opacity-75]="isOutOfStock"
+>
+  <!-- Badge -->
+  @if (isOutOfStock) {
+    <div class="absolute top-3 left-3 z-10 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-gray-400 text-white">
+      SOLD OUT
+    </div>
+  } @else if (isOnSale) {
+    <div class="absolute top-3 left-3 z-10 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-amber-500 text-white">
+      -{{ product.discountPercent }}%
+    </div>
+  } @else if (isLowStock) {
+    <div class="absolute top-3 left-3 z-10 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide bg-orange-500 text-white">
+      LOW STOCK
+    </div>
+  }
+
+  <!-- Wishlist -->
+  <button
+    type="button"
+    (click)="onWishlist($event)"
+    class="absolute top-3 right-3 z-10 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm"
+    [class.bg-red-50]="wishlisted"
+    [class.text-red-500]="wishlisted"
+    [class.bg-white/80]="!wishlisted"
+    [class.text-gray-400]="!wishlisted"
+  >
+    <svg class="w-4 h-4" [attr.fill]="wishlisted ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
+  </button>
+
+  <!-- Image -->
+  <div class="bg-gray-50 h-52 flex items-center justify-center overflow-hidden relative">
+    @if (isOutOfStock) {
+      <div class="absolute inset-0 bg-white/60 z-10 flex items-center justify-center">
+        <span class="text-gray-500 font-semibold text-sm bg-white px-3 py-1 rounded-full border">Out of Stock</span>
+      </div>
+    }
+    <img
+      [src]="product.thumbnailUrl || product.imageUrl || 'assets/placeholder-product.webp'"
+      [alt]="product.name"
+      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+      loading="lazy"
+    />
+  </div>
+
+  <!-- Body -->
+  <div class="p-4 space-y-3">
+    <div>
+      @if (product.category?.name) {
+        <p class="text-xs text-amber-600 font-medium mb-1">{{ product.category?.name }}</p>
+      }
+      <h3 class="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 font-poppins">
+        {{ product.name }}
+      </h3>
+    </div>
+
+    <!-- Price row -->
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-baseline gap-2">
+        <span class="text-xl font-black text-gray-900 font-poppins">{{ product.price }} DT</span>
+        @if (product.originalPrice) {
+          <span class="text-sm text-gray-400 line-through">{{ product.originalPrice }} DT</span>
+        }
+      </div>
+
+      @if (!isOutOfStock) {
+        <button
+          type="button"
+          (click)="onAddToCart($event)"
+          class="w-9 h-9 bg-amber-500 text-white rounded-xl flex items-center justify-center hover:bg-amber-600 active:scale-90 transition-all flex-shrink-0 shadow-sm shadow-amber-200"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+        </button>
+      }
+    </div>
+
+    @if (isLowStock) {
+      <p class="text-xs text-orange-500 font-medium">Only {{ product.stock }} left in stock!</p>
+    }
+  </div>
+</div>

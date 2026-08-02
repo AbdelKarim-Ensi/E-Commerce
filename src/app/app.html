@@ -1,0 +1,24 @@
+<div class="min-h-screen bg-white">
+  <app-navbar
+    [cartItems]="cartItems"
+    [wishlistCount]="wishlistCount"
+    [searchQuery]="searchQuery"
+    [categories]="categories"
+    (cartOpen)="onCartOpen()"
+    (searchChange)="onSearchChange($event)"
+  />
+
+  <main class="pt-16">
+    <router-outlet />
+  </main>
+
+  <app-footer />
+</div>
+
+<app-cart-drawer
+  [isOpen]="cartOpen"
+  [items]="cartItems"
+  (closeDrawer)="onCartClose()"
+  (updateQty)="onUpdateQty($event)"
+  (removeItem)="onRemoveItem($event)"
+/>
