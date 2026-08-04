@@ -1,69 +1,83 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { CartItem } from '@models/cartItem.model';
+import { Injectable, signal, computed } from '@angular/core';
 import { Product } from '@models/product.model';
+import { CartItem } from '@models/cartItem.model';
 
-const CART_STORAGE_KEY = 'techhub_cart';
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class CartService {
-  private itemsSubject = new BehaviorSubject<CartItem[]>(this.loadFromStorage());
-  items$ = this.itemsSubject.asObservable();
+  private _items = signal<CartItem[]>([]);
+  private _wishlist = signal<string[]>([]);
+  private _isOpen = signal(false);
 
-  private loadFromStorage(): CartItem[] {
-    if (typeof window === 'undefined') return []; // SSR safety
-    try {
-      const raw = localStorage.getItem(CART_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
+  readonly items = this._items.asReadonly();
+  readonly wishlist = this._wishlist.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+
+  readonly totalCount = computed(() =>
+    this._items().reduce((s, i) => s + i.quantity, 0)
+  );
+
+  readonly subtotal = computed(() =>
+    this._items().reduce((s, i) => s + parseFloat(i.product.price) * i.quantity, 0)
+  );
+
+  readonly savings = computed(() =>
+    this._items().reduce((s, i) => {
+      if (i.product.originalPrice) {
+        const diff = parseFloat(i.product.originalPrice) - parseFloat(i.product.price);
+        return s + diff * i.quantity;
+      }
+      return s;
+    }, 0)
+  );
+
+  readonly shipping = computed(() => this.subtotal() >= 50 ? 0 : 9.99);
+  readonly total = computed(() => this.subtotal() + this.shipping());
+
+  open() { this._isOpen.set(true); }
+  close() { this._isOpen.set(false); }
+
+  addItem(product: Product, color?: string, storage?: string) {
+    this._items.update(items => {
+      const idx = items.findIndex(
+        i => i.product.id === product.id &&
+             i.selectedColor === color &&
+             i.selectedStorage === storage
+      );
+      if (idx >= 0) {
+        const updated = [...items];
+        updated[idx] = { ...updated[idx], quantity: updated[idx].quantity + 1 };
+        return updated;
+      }
+      return [...items, { product, quantity: 1, selectedColor: color, selectedStorage: storage }];
+    });
+    this.open();
   }
 
-  private saveToStorage(items: CartItem[]): void {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  }
-
-  private update(items: CartItem[]): void {
-    this.itemsSubject.next(items);
-    this.saveToStorage(items);
-  }
-
-  get currentItems(): CartItem[] {
-    return this.itemsSubject.value;
-  }
-
-  addToCart(product: Product, quantity = 1): void {
-    const items = [...this.currentItems];
-    const existing = items.find(i => i.product.id === product.id);
-
-    if (existing) {
-      const newQty = Math.min(existing.quantity + quantity, product.stock);
-      this.update(items.map(i => i.product.id === product.id ? { ...i, quantity: newQty } : i));
-    } else {
-      this.update([...items, { product, quantity: Math.min(quantity, product.stock) }]);
-    }
-  }
-
-  updateQuantity(productId: string, qty: number): void {
-    if (qty < 1) {
-      this.removeFromCart(productId);
-      return;
-    }
-    const items = this.currentItems.map(i =>
-      i.product.id === productId ? { ...i, quantity: Math.min(qty, i.product.stock) } : i
+  updateQty(productId: string, qty: number) {
+    if (qty <= 0) this.remove(productId);
+    else this._items.update(items =>
+      items.map(i => i.product.id === productId ? { ...i, quantity: qty } : i)
     );
-    this.update(items);
   }
 
-  removeFromCart(productId: string): void {
-    this.update(this.currentItems.filter(i => i.product.id !== productId));
+  remove(productId: string) {
+    this._items.update(items => items.filter(i => i.product.id !== productId));
   }
 
-  clearCart(): void {
-    this.update([]);
-  }
+  // frontend/src/app/core/services/cart.service.ts
+
+// ...
+readonly wishlistCount = computed(() => this._wishlist().length);
+
+toggleWishlist(id: string | number) {
+  const strId = String(id);
+  this._wishlist.update(wl =>
+    wl.includes(strId) ? wl.filter(x => x !== strId) : [...wl, strId]
+  );
+}
+
+isWishlisted(id: string | number): boolean {
+  if (!id) return false;
+  return this._wishlist().includes(String(id));
+}
 }

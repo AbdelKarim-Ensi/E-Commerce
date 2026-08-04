@@ -1,36 +1,36 @@
-<footer class="relative pt-16 pb-8 overflow-hidden bg-[radial-gradient(ellipse_at_50%_110%,#fef3c7_0%,#ffffff_50%)]">
+<footer class="relative pt-16 pb-8 overflow-hidden"
+        style="background: radial-gradient(ellipse at 50% 110%, #fef3c7 0%, #ffffff 50%)">
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
-    <!-- Newsletter -->
-    <div class="bg-gray-900 rounded-3xl p-8 sm:p-10 mb-14 relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-72 h-72 rounded-full opacity-5 bg-[radial-gradient(circle,#f59e0b,transparent)] translate-x-[30%] -translate-y-[30%]"></div>
 
+    <div class="bg-gray-900 rounded-3xl p-8 sm:p-10 mb-14 relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-72 h-72 rounded-full opacity-5"
+           style="background: radial-gradient(circle, #f59e0b, transparent); transform: translate(30%, -30%)"></div>
       <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
         <div>
-          <h3 class="text-2xl font-black text-white mb-2 font-poppins">Get exclusive tech deals</h3>
+          <h3 class="text-2xl font-black text-white mb-2 font-display">Get exclusive tech deals</h3>
           <p class="text-gray-400 text-sm">Join 50,000+ subscribers. No spam, unsubscribe anytime.</p>
         </div>
 
-        @if (subscribed) {
+        @if (subscribed()) {
           <div class="flex items-center gap-2 text-amber-400 font-semibold">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
             You're subscribed!
           </div>
         } @else {
-          <form (submit)="onSubscribe($event)" class="flex gap-2 w-full max-w-sm">
-            <input
-              type="email"
-              [(ngModel)]="email"
-              name="email"
-              placeholder="your@email.com"
-              required
-              class="flex-1 px-4 py-3 bg-white/10 text-white placeholder-gray-500 border border-white/10 rounded-xl text-sm focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-            />
-            <button
-              type="submit"
-              class="px-5 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 transition-colors text-sm flex-shrink-0"
-            >
+          <form (submit)="subscribe($event)" class="flex gap-2 w-full max-w-sm">
+            <input type="email"
+                   [ngModel]="email()"
+                   (ngModelChange)="email.set($event)"
+                   placeholder="your@email.com"
+                   required
+                   name="newsletterEmail"
+                   class="flex-1 px-4 py-3 bg-white/10 text-white placeholder-gray-500
+                          border border-white/10 rounded-xl text-sm focus:outline-none
+                          focus:border-amber-400 focus:ring-1 focus:ring-amber-400"/>
+            <button type="submit"
+                    class="px-5 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 text-sm flex-shrink-0">
               Subscribe
             </button>
           </form>
@@ -38,35 +38,30 @@
       </div>
     </div>
 
-    <!-- Main grid -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
       <div class="col-span-2 sm:col-span-1">
         <div class="flex items-center gap-2 mb-4">
           <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center">
-            <span class="text-white font-bold text-sm font-poppins">T</span>
+            <span class="text-white font-bold text-sm font-display">T</span>
           </div>
-          <span class="text-lg font-bold text-gray-900 font-poppins">
-            Tech<span class="text-amber-500">Gear</span>
-          </span>
+          <span class="text-lg font-bold text-gray-900 font-display">Tech<span class="text-amber-500">Hub</span></span>
         </div>
         <p class="text-sm text-gray-500 leading-relaxed max-w-xs">
           Your one-stop destination for premium tech gadgets and electronics at the best prices.
         </p>
         <div class="flex gap-3 mt-5">
           @for (s of socials; track s) {
-            <button
-              type="button"
-              class="w-9 h-9 rounded-lg bg-gray-100 hover:bg-amber-100 hover:text-amber-600 text-gray-500 flex items-center justify-center transition-colors text-sm font-bold"
-            >
-              {{ socialInitial(s) }}
+            <button class="w-9 h-9 rounded-lg bg-gray-100 hover:bg-amber-100 hover:text-amber-600
+                           text-gray-500 flex items-center justify-center text-sm font-bold">
+              {{ s }}
             </button>
           }
         </div>
       </div>
 
-      @for (col of footerColumns; track col.title) {
+      @for (col of columns; track col.title) {
         <div>
-          <h4 class="font-bold text-gray-900 mb-4 text-sm font-poppins">{{ col.title }}</h4>
+          <h4 class="font-bold text-gray-900 mb-4 text-sm font-display">{{ col.title }}</h4>
           <ul class="space-y-2.5">
             @for (link of col.links; track link) {
               <li>
@@ -78,9 +73,8 @@
       }
     </div>
 
-    <!-- Bottom bar -->
     <div class="pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p class="text-xs text-gray-400">© 2026 TechGear Inc. All rights reserved.</p>
+      <p class="text-xs text-gray-400">© 2026 TechHub Inc. All rights reserved.</p>
       <div class="flex items-center gap-2">
         <span class="text-xs text-gray-400 mr-1">We accept:</span>
         @for (p of payments; track p) {
@@ -88,5 +82,6 @@
         }
       </div>
     </div>
+
   </div>
 </footer>

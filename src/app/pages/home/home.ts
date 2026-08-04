@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Hero } from './hero/hero';
 import { TrustSection } from './trust-section/trust-section';
-import { Categories } from '@shared/categories/categories';
+import { Categories } from './categories/categories';
 import { FlashDeals } from './flash-deals/flash-deals';
 import { FeaturedProducts } from './featured-products/featured-products';
+import { ProductList } from '@pages/product-list/product-list';
 import { ProductDetail } from '@pages/product-detail/product-detail';
 import { Product } from '@models/product.model';
 import { Category } from '@models/category.model';
@@ -14,9 +15,9 @@ import { CartService } from '@services/cart.service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [Hero, TrustSection, Categories, FlashDeals, FeaturedProducts, ProductDetail],
+  imports: [Hero, TrustSection, Categories, FlashDeals, ProductList, ProductDetail],
   templateUrl: './home.html',
-  styleUrl: './home.css'
+  styleUrl: './home.css',
 })
 export class Home implements OnInit {
   products: Product[] = [];
@@ -24,27 +25,26 @@ export class Home implements OnInit {
   categories: Category[] = [];
   activeCategory = '';
   selectedProduct: Product | null = null;
-  wishlist: string[] = []; // 🚧 pas de backend Wishlist — state local uniquement
 
   constructor(
-    private productsService: ProductsService,
-    private categoriesService: CategoriesService,
-    private cartService: CartService
-  ) {}
+  private productsService: ProductsService,
+  private categoriesService: CategoriesService,
+  protected cartService: CartService
+) {}
 
   ngOnInit(): void {
-    this.productsService.getProducts().subscribe({
-      next: (products) => {
-        this.products = products;
-        // 🚧 "deal" = produits avec discountPercent défini, en attendant le vrai champ backend
-        this.dealProducts = products.filter(p => !!p.discountPercent);
-      },
-      error: (err) => console.error('Erreur chargement produits', err)
-    });
+    this.productsService.getAll().subscribe({
+  next: (res) => {
+    const products = Array.isArray(res) ? res : (res?.data ?? []);
+    this.products = products;
+    this.dealProducts = products.filter((p: Product) => !!p.discountPercent);
+  },
+  error: (err: unknown) => console.error('Erreur chargement produits', err),
+});
 
     this.categoriesService.getCategories().subscribe({
-      next: (categories) => (this.categories = categories),
-      error: (err) => console.error('Erreur chargement catégories', err)
+      next: (categories: Category[]) => (this.categories = categories),
+      error: (err: unknown) => console.error('Erreur chargement catégories', err),
     });
   }
 
@@ -61,22 +61,22 @@ export class Home implements OnInit {
   }
 
   onAddToCart(product: Product): void {
-    this.cartService.addToCart(product);
+    this.cartService.addItem(product);
   }
 
   onAddToCartFromDetail(event: { product: Product; color?: string; storage?: string; qty: number }): void {
-    this.cartService.addToCart(event.product, event.qty);
+    for (let i = 0; i < event.qty; i++) {
+      this.cartService.addItem(event.product, event.color, event.storage);
+    }
     this.selectedProduct = null;
   }
 
   onToggleWishlist(productId: string): void {
-    this.wishlist = this.wishlist.includes(productId)
-      ? this.wishlist.filter(id => id !== productId)
-      : [...this.wishlist, productId];
+    this.cartService.toggleWishlist(productId);
   }
 
   isWishlisted(productId: string): boolean {
-    return this.wishlist.includes(productId);
+    return this.cartService.isWishlisted(productId);
   }
 
   scrollToFeatured(): void {

@@ -14,11 +14,12 @@
   (selectProduct)="onSelectProduct($event)"
 />
 
-<div id="featured">
-  <app-featured-products
+<div id="all-products" class="pb-16">
+  <app-product-list
     [products]="products"
-    [activeCategory]="activeCategory"
+    [wishlist]="cartService.wishlist()"
     (addToCart)="onAddToCart($event)"
+    (toggleWishlist)="onToggleWishlist($event)"
     (selectProduct)="onSelectProduct($event)"
   />
 </div>
@@ -28,7 +29,7 @@
     [product]="selectedProduct"
     [wishlisted]="isWishlisted(selectedProduct.id)"
     (closeModal)="onCloseProductDetail()"
-    (addToCart)="onAddToCartFromDetail($event)"
+   (addToCart)="onAddToCartFromDetail($event)"
     (toggleWishlist)="onToggleWishlist($event)"
   />
 }

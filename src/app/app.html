@@ -1,24 +1,24 @@
 <div class="min-h-screen bg-white">
   <app-navbar
-    [cartItems]="cartItems"
-    [wishlistCount]="wishlistCount"
+    [cartItems]="cartService.items()"
+    [wishlistCount]="cartService.wishlist().length"
     [searchQuery]="searchQuery"
-    [categories]="categories"
-    (cartOpen)="onCartOpen()"
-    (searchChange)="onSearchChange($event)"
+    [categories]="categories()"
+    (cartOpen)="cartService.open()"
+    (searchChange)="onSearch($event)"
   />
 
-  <main class="pt-16">
+  <main>
     <router-outlet />
   </main>
 
   <app-footer />
-</div>
 
-<app-cart-drawer
-  [isOpen]="cartOpen"
-  [items]="cartItems"
-  (closeDrawer)="onCartClose()"
-  (updateQty)="onUpdateQty($event)"
-  (removeItem)="onRemoveItem($event)"
-/>
+  <app-cart-drawer
+    [isOpen]="cartService.isOpen()"
+    [items]="cartService.items()"
+    [subtotal]="cartService.subtotal()"
+    [savings]="cartService.savings()"
+    [shipping]="cartService.shipping()"
+  />
+</div>

@@ -1,175 +1,30 @@
 <section class="py-16 bg-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
-    <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
         <p class="text-amber-500 font-semibold text-sm mb-1 tracking-wide uppercase">Handpicked</p>
-        <h2 class="text-3xl font-black text-gray-900 font-poppins">Featured Products</h2>
+        <h2 class="text-3xl font-black text-gray-900 font-display">Featured Products</h2>
       </div>
-      <div class="flex items-center gap-3">
-        <button
-          type="button"
-          (click)="toggleSidebar()"
-          class="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:border-amber-300 transition-colors"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          Filters
-          @if (hasFilters) {
-            <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
-          }
-        </button>
-
-        <select
-          [value]="sort"
-          (change)="onSortChange($event)"
-          class="pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
-        >
-          @for (o of sortOptions; track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
-
-        <span class="text-sm text-gray-400">{{ filtered.length }} products</span>
-      </div>
+      <span class="text-sm text-gray-400">{{ products.length }} products</span>
     </div>
 
-    <div class="flex gap-8">
-      <!-- Sidebar desktop -->
-      <aside class="hidden lg:block w-56 flex-shrink-0">
-        <div class="bg-white rounded-2xl border border-gray-100 p-5 sticky top-20 shadow-[0_2px_12px_rgba(0,0,0,0.05)]">
-          <ng-container [ngTemplateOutlet]="sidebarTpl"></ng-container>
-        </div>
-      </aside>
-
-      <!-- Sidebar mobile -->
-      @if (sidebarOpen) {
-        <div class="lg:hidden fixed inset-0 z-50 flex">
-          <div class="absolute inset-0 bg-black/40" (click)="toggleSidebar()"></div>
-          <div class="relative w-72 bg-white h-full overflow-y-auto p-6 shadow-2xl">
-            <button
-              type="button"
-              (click)="toggleSidebar()"
-              class="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <ng-container [ngTemplateOutlet]="sidebarTpl"></ng-container>
-          </div>
-        </div>
-      }
-
-      <!-- Grid -->
-      <div class="flex-1">
-        @if (filtered.length === 0) {
-          <div class="text-center py-24 text-gray-400">
-            <div class="text-5xl mb-4">🔍</div>
-            <p class="font-semibold text-lg text-gray-600">No products match your filters</p>
-            <button type="button" (click)="clearFilters()" class="mt-4 text-amber-500 hover:text-amber-600 text-sm font-medium">
-              Clear filters
-            </button>
-          </div>
-        } @else {
-          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            @for (product of filtered; track product.id) {
-              <app-product-card [product]="product" (addToCart)="onAddToCart(product)"></app-product-card>
-            }
-          </div>
+    @if (products.length === 0) {
+      <div class="text-center py-24 text-gray-400">
+        <div class="text-5xl mb-4">🔍</div>
+        <p class="font-semibold text-lg text-gray-600">No featured products right now</p>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        @for (product of products; track product.id) {
+          <app-product-card
+            [product]="product"
+            [wishlisted]="isWishlisted(product.id)"
+            (addToCart)="addToCart.emit($event)"
+            (toggleWishlist)="toggleWishlist.emit($event)"
+            (selectProduct)="selectProduct.emit($event)"
+          />
         }
       </div>
-    </div>
+    }
   </div>
 </section>
-
-<!-- Sidebar template (partagé desktop/mobile) -->
-<ng-template #sidebarTpl>
-  <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <h3 class="font-bold text-gray-900 font-poppins">Filters</h3>
-      @if (hasFilters) {
-        <button type="button" (click)="clearFilters()" class="text-xs text-amber-500 hover:text-amber-600 font-medium">
-          Clear all
-        </button>
-      }
-    </div>
-
-    <!-- Brand -->
-    @if (availableBrands.length > 0) {
-      <div>
-        <h4 class="font-semibold text-sm text-gray-800 mb-3">Brand</h4>
-        <div class="space-y-2">
-          @for (brand of availableBrands; track brand) {
-            <label class="flex items-center gap-2.5 cursor-pointer group">
-              <input
-                type="checkbox"
-                [checked]="isBrandSelected(brand)"
-                (change)="toggleBrand(brand)"
-                class="w-4 h-4 rounded border-gray-300 text-amber-500 focus:ring-amber-400 focus:ring-offset-0 cursor-pointer"
-              />
-              <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ brand }}</span>
-            </label>
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Price Range -->
-    <div>
-      <h4 class="font-semibold text-sm text-gray-800 mb-3">Price Range</h4>
-      <div class="space-y-3">
-        <input
-          type="range"
-          min="0"
-          max="2000"
-          step="50"
-          [value]="priceRange[1]"
-          (input)="onPriceMaxChange($any($event.target).valueAsNumber)"
-          class="w-full accent-amber-500"
-        />
-        <div class="flex items-center justify-between text-sm text-gray-600">
-          <span>{{ priceRange[0] }} DT</span>
-          <span>{{ priceRange[1] }} DT</span>
-        </div>
-        <div class="flex gap-2">
-          @for (preset of pricePresets; track preset[0]) {
-            <button
-              type="button"
-              (click)="setPricePreset(preset[0], preset[1])"
-              class="flex-1 text-[10px] py-1 rounded-lg border transition-colors font-medium"
-              [class.border-amber-400]="isPricePresetActive(preset[0], preset[1])"
-              [class.bg-amber-50]="isPricePresetActive(preset[0], preset[1])"
-              [class.text-amber-600]="isPricePresetActive(preset[0], preset[1])"
-              [class.border-gray-200]="!isPricePresetActive(preset[0], preset[1])"
-              [class.text-gray-500]="!isPricePresetActive(preset[0], preset[1])"
-            >
-              {{ preset[0] }}–{{ preset[1] }}
-            </button>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- Availability -->
-    <div>
-      <h4 class="font-semibold text-sm text-gray-800 mb-3">Availability</h4>
-      <label class="flex items-center gap-2.5 cursor-pointer">
-        <div
-          (click)="toggleInStock()"
-          class="w-10 h-[22px] rounded-full relative transition-colors cursor-pointer"
-          [class.bg-amber-500]="inStockOnly"
-          [class.bg-gray-200]="!inStockOnly"
-        >
-          <div
-            class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all"
-            [class.left-5]="inStockOnly"
-            [class.left-0.5]="!inStockOnly"
-          ></div>
-        </div>
-        <span class="text-sm text-gray-600">In Stock Only</span>
-      </label>
-    </div>
-  </div>
-</ng-template>

@@ -1,104 +1,83 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Product } from '@models/product.model';
-import { StarRating } from '@shared/star-rating/star-rating';
+import { Component, Input, Output, EventEmitter, signal, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { Product } from '../../core/models/product.model';
+import { StarRating } from '../../shared/star-rating/star-rating';
+
+const NEW_THRESHOLD_DAYS = 14;
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
   imports: [StarRating],
   templateUrl: './product-detail.html',
-  styleUrl: './product-detail.css'
+  styleUrl: './product-detail.css',
 })
-export class ProductDetail {
-  @Input({ required: true }) product!: Product;
-  @Input() wishlisted = false;
-
-  @Output() closeModal = new EventEmitter<void>();
+export class ProductDetail implements OnInit {
   @Output() addToCart = new EventEmitter<{ product: Product; color?: string; storage?: string; qty: number }>();
+  @Input() product!: Product;
+  @Input() wishlisted = false;
+ 
   @Output() toggleWishlist = new EventEmitter<string>();
 
-  selectedImageIndex = 0;
-  selectedColor = '';
-  selectedStorage = '';
-  qty = 1;
-  zoomed = false;
-  zoomPos = { x: 50, y: 50 };
+  protected selectedImage = signal(0);
+  protected selectedColor = signal('');
+  protected selectedStorage = signal('');
+  protected qty = signal(1);
+  protected zoomed = signal(false);
+  protected zoomX = signal(50);
+  protected zoomY = signal(50);
+Math: any;
 
-  ngOnChanges(): void {
-    this.selectedColor = this.product.colors?.[0]?.name ?? '';
-    this.selectedStorage = this.product.storage?.[0] ?? '';
-    this.selectedImageIndex = 0;
-    this.qty = 1;
+  constructor(private router: Router) {}
+
+  ngOnInit() {
+    this.selectedColor.set(this.product.colors?.[0]?.name ?? '');
+    this.selectedStorage.set(this.product.storage?.[0] ?? '');
   }
 
   get images(): string[] {
-    return this.product.images?.length
-      ? this.product.images
-      : [this.product.thumbnailUrl || this.product.imageUrl || 'assets/placeholder-product.webp'];
+    if (this.product.images?.length) return this.product.images;
+    return [this.product.imageUrl ?? '/assets/products/placeholder.jpg'];
   }
 
-  get isOutOfStock(): boolean {
+  get specEntries() {
+    return Object.entries(this.product.specDetails ?? {});
+  }
+
+  get price(): number {
+    return parseFloat(this.product.price);
+  }
+
+  get originalPrice(): number | null {
+    return this.product.originalPrice ? parseFloat(this.product.originalPrice) : null;
+  }
+
+  get isOutOfStock() {
     return this.product.stock <= 0;
   }
 
-  get specEntries(): [string, string][] {
-    return this.product.specDetails ? Object.entries(this.product.specDetails) : [];
+  private get isNew(): boolean {
+    const created = new Date(this.product.createdAt).getTime();
+    const days = (Date.now() - created) / (1000 * 60 * 60 * 24);
+    return days <= NEW_THRESHOLD_DAYS;
   }
 
-  readonly trustBadges = ['Free Shipping', '2-Year Warranty', 'Secure Payment', '30-Day Returns'];
-
-  selectImage(index: number): void {
-    this.selectedImageIndex = index;
+  get badgeLabel(): string {
+    if (this.isOutOfStock) return 'SOLD OUT';
+    if (this.product.discountPercent) return `-${this.product.discountPercent}%`;
+    if (this.isNew) return 'NEW';
+    return '';
   }
 
-  selectColor(colorName: string): void {
-    this.selectedColor = colorName;
+  onMouseMove(e: MouseEvent, el: HTMLElement) {
+    const r = el.getBoundingClientRect();
+    this.zoomX.set(((e.clientX - r.left) / r.width) * 100);
+    this.zoomY.set(((e.clientY - r.top) / r.height) * 100);
   }
 
-  selectStorage(storage: string): void {
-    this.selectedStorage = storage;
+  close() {
+    this.router.navigate(['/']);
   }
 
-  decreaseQty(): void {
-    this.qty = Math.max(1, this.qty - 1);
-  }
-
-  increaseQty(): void {
-    this.qty = Math.min(this.product.stock, this.qty + 1);
-  }
-
-  onMouseMove(event: MouseEvent): void {
-    const target = event.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    this.zoomPos = {
-      x: ((event.clientX - rect.left) / rect.width) * 100,
-      y: ((event.clientY - rect.top) / rect.height) * 100
-    };
-  }
-
-  get zoomTransform(): string {
-    return this.zoomed ? `scale(1.8)` : 'scale(1)';
-  }
-
-  get zoomOrigin(): string {
-    return `${this.zoomPos.x}% ${this.zoomPos.y}%`;
-  }
-
-  onClose(): void {
-    this.closeModal.emit();
-  }
-
-  onWishlist(): void {
-    this.toggleWishlist.emit(this.product.id);
-  }
-
-  onAddToCart(): void {
-    if (this.isOutOfStock) return;
-    this.addToCart.emit({
-      product: this.product,
-      color: this.selectedColor || undefined,
-      storage: this.selectedStorage || undefined,
-      qty: this.qty
-    });
-  }
+  protected readonly trustBadges = ['Free Shipping', '2-Year Warranty', 'Secure Payment', '30-Day Returns'];
 }

@@ -1,48 +1,38 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Product } from '@models/product.model';
-
-const LOW_STOCK_THRESHOLD = 5;
+import { CommonModule } from '@angular/common';
+import { Product } from '../../core/models/product.model';
 
 @Component({
   selector: 'app-product-card',
   standalone: true,
-  imports: [],
+  imports: [CommonModule],
   templateUrl: './product-card.html',
-  styleUrl: './product-card.css'
+  styleUrl: './product-card.css',
 })
 export class ProductCard {
   @Input({ required: true }) product!: Product;
-  @Input() wishlisted = false; // état géré par le parent, pas de backend Wishlist
+  @Input() wishlisted = false;
 
   @Output() addToCart = new EventEmitter<Product>();
   @Output() toggleWishlist = new EventEmitter<string>();
   @Output() selectProduct = new EventEmitter<Product>();
 
-  get isOutOfStock(): boolean {
-    return this.product.stock <= 0;
-  }
+  protected isAnimating = false;
 
-  get isLowStock(): boolean {
-    return !this.isOutOfStock && this.product.stock <= LOW_STOCK_THRESHOLD;
-  }
-
-  get isOnSale(): boolean {
-    return !!this.product.discountPercent && this.product.discountPercent > 0;
-  }
-
-  onSelect(): void {
-    this.selectProduct.emit(this.product);
-  }
-
-  onAddToCart(event: Event): void {
+  onWishlistClick(event: MouseEvent) {
+    // Empêche la propagation pour NE PAS ouvrir la modale produit
     event.stopPropagation();
-    if (!this.isOutOfStock) {
-      this.addToCart.emit(this.product);
-    }
-  }
 
-  onWishlist(event: Event): void {
-    event.stopPropagation();
+    // Animation Pop (durée 0.2s)
+    this.isAnimating = true;
+    setTimeout(() => (this.isAnimating = false), 200);
+
+    // Émission de l'événement toggle pour cet ID précis
     this.toggleWishlist.emit(this.product.id);
+  }
+
+  onCartClick(event: MouseEvent) {
+    event.stopPropagation();
+    this.addToCart.emit(this.product);
   }
 }

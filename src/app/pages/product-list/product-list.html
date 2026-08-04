@@ -1,1 +1,171 @@
-<p>product-list works!</p>
+<section class="py-16 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <p class="text-amber-500 font-semibold text-sm mb-1 tracking-wide uppercase">Catalog</p>
+        <h2 class="text-3xl font-black text-gray-900 font-display">All Products</h2>
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          (click)="sidebarOpen.set(true)"
+          class="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl
+                 text-sm font-medium text-gray-700 hover:border-amber-300 transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0
+                     00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+          </svg>
+          Filters
+          @if (hasFilters()) { <span class="w-2 h-2 bg-amber-500 rounded-full"></span> }
+        </button>
+
+        <select
+          [ngModel]="sort()"
+          (ngModelChange)="sort.set($event)"
+          class="pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-700
+                 focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+        >
+          @for (o of sortOptions; track o.value) {
+            <option [value]="o.value">{{ o.label }}</option>
+          }
+        </select>
+        <span class="text-sm text-gray-400">{{ filtered().length }} products</span>
+      </div>
+    </div>
+
+    <div class="flex gap-8">
+
+      <aside class="hidden lg:block w-56 flex-shrink-0">
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 sticky top-20"
+             style="box-shadow: 0 2px 12px rgba(0,0,0,0.05)">
+          <ng-container *ngTemplateOutlet="filterPanel"/>
+        </div>
+      </aside>
+
+      @if (sidebarOpen()) {
+        <div class="lg:hidden fixed inset-0 z-50 flex">
+          <div class="absolute inset-0 bg-black/40" (click)="sidebarOpen.set(false)"></div>
+          <div class="relative w-72 bg-white h-full overflow-y-auto p-6 shadow-2xl">
+            <button (click)="sidebarOpen.set(false)"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+            <ng-container *ngTemplateOutlet="filterPanel"/>
+          </div>
+        </div>
+      }
+
+      <div class="flex-1">
+        @if (filtered().length === 0) {
+          <div class="text-center py-24 text-gray-400">
+            <div class="text-5xl mb-4">🔍</div>
+            <p class="font-semibold text-lg text-gray-600">No products match your filters</p>
+            <button (click)="clearFilters()" class="mt-4 text-amber-500 hover:text-amber-600 text-sm font-medium">
+              Clear filters
+            </button>
+          </div>
+        } @else {
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+            @for (product of filtered(); track product.id) {
+              <app-product-card
+                [product]="product"
+                [wishlisted]="isWishlisted(product.id)"
+                (addToCart)="addToCart.emit($event)"
+                (toggleWishlist)="onToggleWishlist(product.id)"
+                (selectProduct)="selectProduct.emit($event)"
+              />
+            }
+          </div>
+        }
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<ng-template #filterPanel>
+  <div class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h3 class="font-bold text-gray-900 font-display">Filters</h3>
+      @if (hasFilters()) {
+        <button (click)="clearFilters()" class="text-xs text-amber-500 hover:text-amber-600 font-medium">Clear all</button>
+      }
+    </div>
+
+    <div>
+      <h4 class="font-semibold text-sm text-gray-800 mb-3">Brand</h4>
+      <div class="space-y-2">
+        @for (brand of brands; track brand) {
+          <label class="flex items-center gap-2.5 cursor-pointer group">
+            <input type="checkbox"
+                   [checked]="selectedBrands().includes(brand)"
+                   (change)="toggleBrand(brand)"
+                   class="w-4 h-4 rounded accent-amber-500"/>
+            <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ brand }}</span>
+          </label>
+        }
+      </div>
+    </div>
+
+    <div>
+      <h4 class="font-semibold text-sm text-gray-800 mb-3">Price Range</h4>
+      <input type="range" min="0" max="2000" step="50"
+             [ngModel]="maxPrice()"
+             (ngModelChange)="maxPrice.set($event)"
+             class="w-full accent-amber-500"/>
+      <div class="flex justify-between text-sm text-gray-600 mt-1 mb-3">
+        <span>$0</span><span>${{ maxPrice().toLocaleString() }}</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        @for (range of priceRanges; track range.label) {
+          <button
+            (click)="setMaxPrice(range.max)"
+            class="px-2 py-1.5 rounded-lg border text-xs font-medium transition-colors"
+            [class.border-amber-400]="maxPrice() === range.max"
+            [class.bg-amber-50]="maxPrice() === range.max"
+            [class.text-amber-700]="maxPrice() === range.max"
+            [class.border-gray-200]="maxPrice() !== range.max"
+            [class.text-gray-600]="maxPrice() !== range.max"
+          >
+            {{ range.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div>
+      <h4 class="font-semibold text-sm text-gray-800 mb-3">Minimum Rating</h4>
+      <div class="space-y-2">
+        @for (opt of ratingOptions; track opt.value) {
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="radio"
+                   [value]="opt.value"
+                   [checked]="minRating() === opt.value"
+                   (change)="minRating.set(opt.value)"
+                   class="w-4 h-4 accent-amber-500"/>
+            <span class="text-sm text-gray-600">{{ opt.label }}</span>
+          </label>
+        }
+      </div>
+    </div>
+
+    <div>
+      <h4 class="font-semibold text-sm text-gray-800 mb-3">Availability</h4>
+      <label class="flex items-center gap-2.5 cursor-pointer">
+        <div class="relative w-10 h-5 rounded-full cursor-pointer transition-colors"
+             [class.bg-amber-500]="inStockOnly()"
+             [class.bg-gray-200]="!inStockOnly()"
+             (click)="inStockOnly.update(v => !v)">
+          <div class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all"
+               [class.left-5]="inStockOnly()"
+               [class.left-0.5]="!inStockOnly()"></div>
+        </div>
+        <span class="text-sm text-gray-600">In Stock Only</span>
+      </label>
+    </div>
+  </div>
+</ng-template>

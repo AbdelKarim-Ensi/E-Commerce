@@ -25,14 +25,10 @@ export interface Product {
   category?: Category;
   createdAt: string;
   updatedAt: string;
-
- 
   colors?: ProductColor[];
   storage?: string[];
   specs?: string[];
   specDetails?: Record<string, string>;
-
- 
- rating: number | null;
+  rating: number | null;
   reviewsCount: number | null;
 }

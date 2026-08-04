@@ -1,57 +1,48 @@
+<div class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-0 sm:p-4"
+     (click)="close()">
+  <div class="relative bg-white w-full sm:max-w-4xl max-h-screen sm:max-h-[90vh] overflow-y-auto
+              sm:rounded-3xl shadow-2xl"
+       (click)="$event.stopPropagation()">
 
-<div
-  class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center p-0 sm:p-4"
-  (click)="onClose()"
->
-  <div
-    class="relative bg-white w-full sm:max-w-4xl max-h-screen sm:max-h-[90vh] overflow-y-auto sm:rounded-3xl shadow-2xl"
-    (click)="$event.stopPropagation()"
-  >
-    <button
-      type="button"
-      (click)="onClose()"
-      class="absolute top-4 right-4 z-10 w-9 h-9 bg-white shadow-md rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors"
-    >
+    <button (click)="close()"
+            class="absolute top-4 right-4 z-10 w-9 h-9 bg-white shadow-md rounded-full flex items-center
+                   justify-center text-gray-500 hover:text-gray-800 transition-colors">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-0">
+    <div class="grid grid-cols-1 sm:grid-cols-2">
+
       <!-- Gallery -->
       <div class="bg-gray-50 sm:rounded-l-3xl p-6 flex flex-col gap-4">
-        <div
-          class="relative rounded-2xl overflow-hidden cursor-zoom-in bg-white border border-gray-100 h-80"
-          (mouseenter)="zoomed = true"
-          (mouseleave)="zoomed = false"
-          (mousemove)="onMouseMove($event)"
-        >
-          <img
-            [src]="images[selectedImageIndex]"
-            [alt]="product.name"
-            class="w-full h-full object-cover transition-transform duration-300"
-            [style.transform]="zoomTransform"
-            [style.transform-origin]="zoomOrigin"
+        <div #imgContainer
+             class="relative rounded-2xl overflow-hidden cursor-zoom-in bg-white border border-gray-100"
+             style="height: 320px"
+             (mouseenter)="zoomed.set(true)"
+             (mouseleave)="zoomed.set(false)"
+             (mousemove)="onMouseMove($event, imgContainer)">
+          <img [src]="images[selectedImage()]"
+               [alt]="product.name"
+               class="w-full h-full object-cover transition-transform duration-300"
+               [style.transform]="zoomed() ? 'scale(1.8)' : 'scale(1)'"
+               [style.transform-origin]="zoomX() + '% ' + zoomY() + '%'"
           />
-          @if (product.discountPercent) {
+          @if (badgeLabel) {
             <div class="absolute top-3 left-3 bg-amber-500 text-white px-2.5 py-1 rounded-full text-xs font-bold">
-              -{{ product.discountPercent }}%
+              {{ badgeLabel }}
             </div>
           }
         </div>
 
         @if (images.length > 1) {
           <div class="flex gap-2.5">
-            @for (img of images; track img; let i = $index) {
-              <button
-                type="button"
-                (click)="selectImage(i)"
-                class="w-16 h-16 rounded-xl overflow-hidden border-2 transition-all"
-                [class.border-amber-400]="i === selectedImageIndex"
-                [class.shadow-sm]="i === selectedImageIndex"
-                [class.border-transparent]="i !== selectedImageIndex"
-              >
-                <img [src]="img" [alt]="'View ' + (i + 1)" class="w-full h-full object-cover" />
+            @for (img of images; track $index) {
+              <button (click)="selectedImage.set($index)"
+                      class="w-16 h-16 rounded-xl overflow-hidden border-2 transition-all"
+                      [class.border-amber-400]="selectedImage() === $index"
+                      [class.border-transparent]="selectedImage() !== $index">
+                <img [src]="img" [alt]="'View ' + ($index + 1)" class="w-full h-full object-cover"/>
               </button>
             }
           </div>
@@ -61,22 +52,19 @@
       <!-- Info -->
       <div class="p-6 sm:p-7 space-y-5 overflow-y-auto">
         <div>
-          @if (product.category?.name) {
-            <p class="text-amber-500 font-semibold text-sm mb-1">{{ product.category?.name }}</p>
+          @if (product.brand) {
+            <p class="text-amber-500 font-semibold text-sm mb-1">{{ product.brand }}</p>
           }
-          <h2 class="text-2xl font-black text-gray-900 leading-tight font-poppins">{{ product.name }}</h2>
-          @if (product.rating !== undefined) {
-            <div class="mt-2">
-              <app-star-rating [rating]="product.rating" [reviews]="product.reviews" size="md" />
-            </div>
-          }
+          <h2 class="text-2xl font-black text-gray-900 leading-tight font-display">{{ product.name }}</h2>
+          <div class="mt-2">
+            <app-star-rating [rating]="product.rating ?? 0" [reviews]="product.reviewsCount ?? undefined" size="md"/>
+          </div>
         </div>
 
-        <!-- Price -->
         <div class="flex items-baseline gap-3">
-          <span class="text-3xl font-black text-gray-900 font-poppins">{{ product.price }} DT</span>
-          @if (product.originalPrice) {
-            <span class="text-gray-400 line-through text-lg">{{ product.originalPrice }} DT</span>
+          <span class="text-3xl font-black text-gray-900 font-display">${{ price }}</span>
+          @if (originalPrice) {
+            <span class="text-gray-400 line-through text-lg">${{ originalPrice }}</span>
           }
           @if (product.discountPercent) {
             <span class="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-lg text-sm font-bold">
@@ -97,46 +85,39 @@
           </div>
         }
 
-        <!-- Colors -->
         @if (product.colors?.length) {
           <div>
             <p class="text-sm font-semibold text-gray-800 mb-2.5">
-              Color: <span class="font-normal text-gray-500">{{ selectedColor }}</span>
+              Color: <span class="font-normal text-gray-500">{{ selectedColor() }}</span>
             </p>
             <div class="flex gap-2.5">
               @for (c of product.colors; track c.name) {
-                <button
-                  type="button"
-                  (click)="selectColor(c.name)"
-                  [title]="c.name"
-                  class="w-8 h-8 rounded-full border-2 transition-all"
-                  [class.border-amber-400]="selectedColor === c.name"
-                  [class.scale-110]="selectedColor === c.name"
-                  [class.shadow-md]="selectedColor === c.name"
-                  [class.border-gray-200]="selectedColor !== c.name"
-                  [style.background-color]="c.hex"
-                ></button>
+                <button (click)="selectedColor.set(c.name)"
+                        [title]="c.name"
+                        class="w-8 h-8 rounded-full border-2 transition-all"
+                        [class.border-amber-400]="selectedColor() === c.name"
+                        [class.scale-110]="selectedColor() === c.name"
+                        [class.shadow-md]="selectedColor() === c.name"
+                        [class.border-gray-200]="selectedColor() !== c.name"
+                        [style.background-color]="c.hex">
+                </button>
               }
             </div>
           </div>
         }
 
-        <!-- Storage -->
         @if (product.storage?.length) {
           <div>
             <p class="text-sm font-semibold text-gray-800 mb-2.5">Storage</p>
             <div class="flex flex-wrap gap-2">
               @for (s of product.storage; track s) {
-                <button
-                  type="button"
-                  (click)="selectStorage(s)"
-                  class="px-3.5 py-1.5 rounded-lg border text-sm font-medium transition-all"
-                  [class.border-amber-400]="selectedStorage === s"
-                  [class.bg-amber-50]="selectedStorage === s"
-                  [class.text-amber-700]="selectedStorage === s"
-                  [class.border-gray-200]="selectedStorage !== s"
-                  [class.text-gray-600]="selectedStorage !== s"
-                >
+                <button (click)="selectedStorage.set(s)"
+                        class="px-3.5 py-1.5 rounded-lg border text-sm font-medium transition-all"
+                        [class.border-amber-400]="selectedStorage() === s"
+                        [class.bg-amber-50]="selectedStorage() === s"
+                        [class.text-amber-700]="selectedStorage() === s"
+                        [class.border-gray-200]="selectedStorage() !== s"
+                        [class.text-gray-600]="selectedStorage() !== s">
                   {{ s }}
                 </button>
               }
@@ -144,7 +125,6 @@
           </div>
         }
 
-        <!-- Specs table -->
         @if (specEntries.length) {
           <div class="rounded-xl border border-gray-100 overflow-hidden">
             @for (entry of specEntries; track entry[0]; let i = $index) {
@@ -158,26 +138,24 @@
           </div>
         }
 
-        <!-- Qty + CTA -->
         <div class="space-y-3 pt-1">
           <div class="flex items-center gap-3">
             <div class="flex items-center border border-gray-200 rounded-xl overflow-hidden">
-              <button type="button" (click)="decreaseQty()" class="w-10 h-10 text-gray-500 hover:bg-gray-50 flex items-center justify-center font-bold transition-colors">−</button>
-              <span class="w-10 text-center font-bold text-gray-900">{{ qty }}</span>
-              <button type="button" (click)="increaseQty()" class="w-10 h-10 text-gray-500 hover:bg-gray-50 flex items-center justify-center font-bold transition-colors">+</button>
+              <button (click)="qty.update(q => Math.max(1, q - 1))"
+                      class="w-10 h-10 text-gray-500 hover:bg-gray-50 flex items-center justify-center font-bold">−</button>
+              <span class="w-10 text-center font-bold text-gray-900">{{ qty() }}</span>
+              <button (click)="qty.update(q => q + 1)"
+                      class="w-10 h-10 text-gray-500 hover:bg-gray-50 flex items-center justify-center font-bold">+</button>
             </div>
-            <button
-              type="button"
-              (click)="onWishlist()"
-              class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all"
-              [class.bg-red-50]="wishlisted"
-              [class.border-red-200]="wishlisted"
-              [class.text-red-500]="wishlisted"
-              [class.border-gray-200]="!wishlisted"
-              [class.text-gray-400]="!wishlisted"
-            >
-              <svg class="w-5 h-5" [attr.fill]="wishlisted ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            <button (click)="toggleWishlist.emit(product.id)"
+                    class="w-10 h-10 rounded-xl border flex items-center justify-center transition-all"
+                    [class.bg-red-50]="wishlisted" [class.border-red-200]="wishlisted" [class.text-red-500]="wishlisted"
+                    [class.border-gray-200]="!wishlisted" [class.text-gray-400]="!wishlisted">
+              <svg class="w-5 h-5" [attr.fill]="wishlisted ? 'currentColor' : 'none'"
+                   stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0
+                         00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
               </svg>
             </button>
           </div>
@@ -187,29 +165,26 @@
               Out of Stock
             </div>
           } @else {
-            <button
-              type="button"
-              (click)="onAddToCart()"
-              class="w-full py-3.5 rounded-xl border-2 border-amber-500 text-amber-600 font-bold hover:bg-amber-50 transition-colors text-sm font-poppins"
-            >
-              Add to Cart
-            </button>
-            <button
-              type="button"
-              class="w-full py-3.5 rounded-xl bg-amber-500 text-white font-bold hover:bg-amber-600 transition-colors text-sm font-poppins"
-            >
+           <button
+  (click)="addToCart.emit({ product, color: selectedColor(), storage: selectedStorage(), qty: qty() })"
+  class="w-full py-3.5 rounded-xl border-2 border-amber-500 text-amber-600 font-bold
+         hover:bg-amber-50 transition-colors text-sm font-display">
+  Add to Cart
+</button>
+            <button class="w-full py-3.5 rounded-xl bg-amber-500 text-white font-bold
+                           hover:bg-amber-600 transition-colors text-sm font-display">
               Buy Now →
             </button>
           }
         </div>
 
         <div class="flex flex-wrap gap-3 pt-1 text-xs text-gray-400">
-          @for (t of trustBadges; track t) {
+          @for (badge of trustBadges; track badge) {
             <span class="flex items-center gap-1">
               <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
               </svg>
-              {{ t }}
+              {{ badge }}
             </span>
           }
         </div>

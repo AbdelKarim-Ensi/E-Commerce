@@ -1,58 +1,50 @@
-import { Component, Input, Output, EventEmitter, HostListener, ElementRef, ViewChild } from '@angular/core';
+import { Component, HostListener, Input, Output, EventEmitter } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CartItem } from '@models/cartItem.model';
-import { Category } from '@models/category.model';
+import { CommonModule } from '@angular/common';
+import { Category } from '../../core/models/category.model';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css'
 })
 export class Navbar {
-  @Input() cartItems: CartItem[] = [];
+  @Input() cartItems: any[] = [];
   @Input() wishlistCount = 0;
   @Input() searchQuery = '';
-  @Input() categories: Category[] = []; // fourni par CategoriesService via le parent
+  @Input() categories: Category[] = [];
 
   @Output() cartOpen = new EventEmitter<void>();
   @Output() searchChange = new EventEmitter<string>();
 
-  @ViewChild('dropRef') dropRef?: ElementRef<HTMLDivElement>;
-
-  catOpen = false;
   scrolled = false;
+  catOpen = false;
 
   get cartCount(): number {
-    return this.cartItems.reduce((sum, i) => sum + i.quantity, 0);
+    return this.cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
   }
 
-  @HostListener('window:scroll')
-  onWindowScroll(): void {
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
     this.scrolled = window.scrollY > 20;
   }
 
-  @HostListener('document:mousedown', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (this.dropRef && !this.dropRef.nativeElement.contains(event.target as Node)) {
-      this.catOpen = false;
-    }
-  }
-
-  toggleCategoryDropdown(): void {
+  toggleCategoryDropdown() {
     this.catOpen = !this.catOpen;
   }
 
-  closeCategoryDropdown(): void {
+  closeCategoryDropdown() {
     this.catOpen = false;
   }
 
-  onSearchInput(event: Event): void {
-    this.searchChange.emit((event.target as HTMLInputElement).value);
+  onSearchInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.searchChange.emit(input.value);
   }
 
-  onCartOpen(): void {
+  onCartOpen() {
     this.cartOpen.emit();
   }
 }
