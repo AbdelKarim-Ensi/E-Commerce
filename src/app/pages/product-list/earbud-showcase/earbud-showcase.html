@@ -1,0 +1,129 @@
+<div class="min-h-screen w-full bg-white relative">
+  <div class="absolute inset-0 z-0 transition-all duration-[1200ms]"
+       [style.background-image]="isLeft()
+         ? 'radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #f59e0b 100%), radial-gradient(circle at 0% 50%, rgba(59,130,246,0.12), transparent 50%)'
+         : 'radial-gradient(125% 125% at 50% 90%, #ffffff 40%, #f59e0b 100%), radial-gradient(circle at 100% 50%, rgba(16,185,129,0.12), transparent 50%)'">
+  </div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-6 py-16">
+
+    <div class="showcase-card relative w-full min-h-[760px] bg-white/70 backdrop-blur-xl border border-black/[0.04] rounded-[32px] shadow-[0_24px_80px_rgba(0,0,0,0.06)] overflow-hidden flex flex-col items-center justify-center px-6 py-16">
+
+      <div class="absolute inset-0 opacity-60 pointer-events-none"
+           style="background-image: radial-gradient(120% 120% at 50% 100%, #fef3c7 0%, #ffffff 60%);">
+      </div>
+
+      <main class="relative z-10 w-full flex flex-col justify-center">
+        <div class="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-32 lg:gap-48 w-full transition-all duration-[900ms]"
+             [class.md:flex-row]="isLeft()"
+             [class.md:flex-row-reverse]="!isLeft()">
+
+          <!-- Visual -->
+          <div class="relative group shrink-0">
+            <div class="absolute inset-[-20%] rounded-full border border-dashed border-zinc-900/10 animate-spin-slow"
+                 [ngClass]="current().ring"></div>
+            <div class="absolute inset-0 rounded-full bg-gradient-to-br blur-2xl opacity-30 animate-pulse-slow"
+                 [ngClass]="current().gradient"></div>
+
+            <div class="relative h-80 w-80 md:h-[450px] md:w-[450px] rounded-full border border-black/5 shadow-2xl flex items-center justify-center overflow-hidden bg-white/40 backdrop-blur-sm">
+
+              <div class="image-wrapper w-full h-full" [@.disabled]="skipAnimation()">
+                @for (side of [activeSide()]; track side) {
+                  <div class="relative z-10 w-full h-full flex items-center justify-center animate-float"
+                       [@imageAnim]="imageAnimParams()">
+                    <img [src]="current().image" [alt]="current().title"
+                         class="w-full h-full object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-4"
+                         draggable="false" />
+                  </div>
+                }
+              </div>
+
+            </div>
+
+            <div class="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+              <div class="flex items-center gap-2 text-xs uppercase tracking-widest text-zinc-500 bg-white/90 px-4 py-2 rounded-full border border-black/5 backdrop-blur">
+                <span class="h-1.5 w-1.5 rounded-full animate-pulse" [ngClass]="current().glow"></span>
+                {{ current().connectionStatus }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Details -->
+          <div class="w-full max-w-md">
+
+            <div class="image-wrapper w-full min-h-[420px]" [@.disabled]="skipAnimation()">
+              @for (side of [activeSide()]; track side) {
+                <div class="flex flex-col items-start text-left" [@detailsAnim]>
+
+                  <h2 class="stagger-item text-sm font-bold uppercase tracking-[0.2em] text-zinc-500 mb-2">
+                    {{ current().label }} {{ product() ? '' : 'Earbud' }}
+                  </h2>
+                  <h1 class="stagger-item text-4xl md:text-5xl font-bold tracking-tight mb-2 text-zinc-900">
+                    {{ current().title }}
+                  </h1>
+
+                  @if (price()) {
+                    <div class="stagger-item text-2xl font-bold text-amber-600 mb-2">${{ price() }}</div>
+                  }
+
+                  <p class="stagger-item text-zinc-500 mb-8 max-w-sm leading-relaxed mr-auto">
+                    {{ current().description }}
+                  </p>
+
+                  <div class="stagger-item w-full space-y-6 bg-white/60 p-6 rounded-2xl border border-black/5 backdrop-blur-sm">
+                    @for (feature of current().features; track feature.label) {
+                      <div class="group">
+                        <div class="flex items-center justify-between mb-3 text-sm">
+                          <div class="flex items-center gap-2"
+                               [class.text-zinc-800]="feature.value > 50" [class.text-zinc-400]="feature.value <= 50">
+                            <span class="text-xs uppercase">{{ feature.icon }}</span>
+                            <span>{{ feature.label }}</span>
+                          </div>
+                          <span class="font-mono text-xs text-zinc-500">{{ feature.value }}%</span>
+                        </div>
+                        <div class="relative h-2 w-full bg-zinc-200 rounded-full overflow-hidden">
+                          <div class="absolute top-0 left-0 bottom-0 opacity-80 transition-all duration-1000"
+                               [class.bg-blue-500]="isLeft()"
+                               [class.bg-emerald-500]="!isLeft()"
+                               [style.width.%]="feature.value">
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+          </div>
+
+        </div>
+      </main>
+
+      <!-- Switcher -->
+      <div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+        <div class="relative flex items-center gap-1 p-1.5 rounded-full bg-zinc-900/90 backdrop-blur-2xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.3)] ring-1 ring-white/5">
+
+          <div class="absolute top-1.5 bottom-1.5 w-24 rounded-full bg-gradient-to-b from-white/10 to-white/5 shadow-inner transition-transform duration-[400ms]"
+               [style.transform]="isLeft() ? 'translateX(0)' : 'translateX(96px)'">
+          </div>
+
+          @for (opt of [sides()['left'], sides()['right']]; track opt.id) {
+            <button
+              type="button"
+              (click)="setSide(opt.id)"
+              class="relative z-10 w-24 h-12 rounded-full flex items-center justify-center text-sm font-medium focus:outline-none transition-colors"
+            >
+              <span class="relative z-10 transition-colors duration-300"
+                    [class.text-white]="activeSide() === opt.id"
+                    [class.text-zinc-500]="activeSide() !== opt.id">
+                {{ opt.label }}
+              </span>
+            </button>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

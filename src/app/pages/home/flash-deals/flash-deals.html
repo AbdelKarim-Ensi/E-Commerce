@@ -61,7 +61,7 @@
           <div
             class="product-card group flex-shrink-0 w-64 bg-white rounded-2xl border border-gray-100 overflow-hidden cursor-pointer"
             style="scroll-snap-align: start; box-shadow: 0 2px 16px rgba(0,0,0,0.06)"
-            (click)="selectProduct.emit(product)"
+           (click)="onCardClick(product)"
           >
             <div class="relative bg-gray-50 h-44 flex items-center justify-center overflow-hidden">
               @if (product.discountPercent) {

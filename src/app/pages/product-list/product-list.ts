@@ -1,6 +1,7 @@
-import { Component, Input, Output, EventEmitter, signal, computed, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Product } from '../../core/models/product.model';
 import { ProductCard } from '../../shared/product-card/product-card';
 import { CartService } from '../../core/services/cart.service';
@@ -47,7 +48,9 @@ const RATING_OPTIONS: RatingOption[] = [
   templateUrl: './product-list.html',
   styleUrl: './product-list.css',
 })
-export class ProductList {
+export class ProductList implements OnInit {
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
   protected cartService = inject(CartService);
 
   @Input() set products(val: Product[]) {
@@ -58,8 +61,7 @@ export class ProductList {
   }
 
   @Output() addToCart = new EventEmitter<Product>();
-  @Output() toggleWishlist = new EventEmitter<string>();
-  @Output() selectProduct = new EventEmitter<Product>();
+
 
   private _products = signal<Product[]>([]);
   private _activeCategoryId = signal<string>('');
@@ -70,18 +72,26 @@ export class ProductList {
   protected minRating = signal<number>(0);
   protected inStockOnly = signal<boolean>(false);
   protected sort = signal<SortOption>('featured');
+  protected wishlistOnly = signal<boolean>(false);
 
   protected readonly brands = BRANDS;
   protected readonly sortOptions = SORT_OPTIONS;
   protected readonly priceRanges = PRICE_RANGES;
   protected readonly ratingOptions = RATING_OPTIONS;
 
+  ngOnInit() {
+    this.route.queryParamMap.subscribe((params) => {
+      this.wishlistOnly.set(params.get('wishlist') === 'true');
+    });
+  }
+
   protected hasFilters = computed(() => {
     return (
       this.selectedBrands().length > 0 ||
       this.maxPrice() < 2000 ||
       this.minRating() > 0 ||
-      this.inStockOnly()
+      this.inStockOnly() ||
+      this.wishlistOnly()
     );
   });
 
@@ -90,6 +100,10 @@ export class ProductList {
     const catId = this._activeCategoryId();
     const brands = this.selectedBrands();
 
+    if (this.wishlistOnly()) {
+      const wishlist = this.cartService.wishlist();
+      list = list.filter((p) => wishlist.includes(p.id));
+    }
     if (catId) {
       list = list.filter((p) => p.categoryId === catId);
     }
@@ -133,14 +147,11 @@ export class ProductList {
     this.maxPrice.set(2000);
     this.minRating.set(0);
     this.inStockOnly.set(false);
+    this.wishlistOnly.set(false);
+    this.router.navigate([], { queryParams: {} });
   }
 
-  isWishlisted(id: string | number): boolean {
-    return this.cartService.isWishlisted(id);
-  }
-
-  onToggleWishlist(id: string) {
-    this.cartService.toggleWishlist(id);
-    this.toggleWishlist.emit(id);
+  goToEarbudShowcase() {
+    this.router.navigate(['/products/earbud-showcase']);
   }
 }

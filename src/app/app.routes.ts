@@ -1,5 +1,13 @@
 import { Routes } from '@angular/router';
 import { Home } from '@pages/home/home';
+import { ProductList } from '@pages/product-list/product-list';
+import { ProductDetail } from '@pages/product-detail/product-detail';
+import { Cart } from '@pages/cart/cart';
+import { Checkout } from '@pages/checkout/checkout';
+import { Login } from '@pages/login/login';
+import { Register } from '@pages/register/register';
+import { OrderHistory } from '@pages/order-history/order-history';
+import { EarbudShowcase } from '@pages/product-list/earbud-showcase/earbud-showcase';
 
 export const routes: Routes = [
   {
@@ -8,38 +16,43 @@ export const routes: Routes = [
     title: 'TechGear — Accueil'
   },
   {
-    path: 'products',
-    loadComponent: () => import('@pages/product-list/product-list').then(m => m.ProductList),
-    title: 'TechGear — Produits'
+    path: 'products/earbud-showcase',
+    component: EarbudShowcase,
+    title: 'TechGear — Earbud Showcase'
   },
   {
     path: 'products/:id',
-    loadComponent: () => import('@pages/product-detail/product-detail').then(m => m.ProductDetail),
+    component: ProductDetail,
     title: 'TechGear — Détail produit'
   },
   {
+    path: 'products',
+    component: ProductList,
+    title: 'TechGear — Produits'
+  },
+  {
     path: 'cart',
-    loadComponent: () => import('@pages/cart/cart').then(m => m.Cart),
+    component: Cart,
     title: 'TechGear — Panier'
   },
   {
     path: 'checkout',
-    loadComponent: () => import('@pages/checkout/checkout').then(m => m.Checkout),
+    component: Checkout,
     title: 'TechGear — Commande'
   },
   {
     path: 'login',
-    loadComponent: () => import('@pages/login/login').then(m => m.Login),
+    component: Login,
     title: 'TechGear — Connexion'
   },
   {
     path: 'register',
-    loadComponent: () => import('@pages/register/register').then(m => m.Register),
+    component: Register,
     title: 'TechGear — Inscription'
   },
   {
     path: 'orders',
-    loadComponent: () => import('@pages/order-history/order-history').then(m => m.OrderHistory),
+    component: OrderHistory,
     title: 'TechGear — Mes commandes'
   },
   {

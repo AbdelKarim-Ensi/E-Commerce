@@ -11,25 +11,11 @@
 <app-flash-deals
   [products]="dealProducts"
   (addToCart)="onAddToCart($event)"
-  (selectProduct)="onSelectProduct($event)"
 />
 
 <div id="all-products" class="pb-16">
   <app-product-list
-    [products]="products"
-    [wishlist]="cartService.wishlist()"
+    [products]="products" 
     (addToCart)="onAddToCart($event)"
-    (toggleWishlist)="onToggleWishlist($event)"
-    (selectProduct)="onSelectProduct($event)"
   />
 </div>
-
-@if (selectedProduct) {
-  <app-product-detail
-    [product]="selectedProduct"
-    [wishlisted]="isWishlisted(selectedProduct.id)"
-    (closeModal)="onCloseProductDetail()"
-   (addToCart)="onAddToCartFromDetail($event)"
-    (toggleWishlist)="onToggleWishlist($event)"
-  />
-}

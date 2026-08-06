@@ -3,12 +3,16 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "analytics": false
+    "analytics": false,
+    "cache": {
+      "path": "C:/temp/angular-cache-techhub"
+    }
   },
   "newProjectRoot": "projects",
   "projects": {
     "frontend": {
       "projectType": "application",
+      
       "schematics": {},
       "root": "",
       "sourceRoot": "src",

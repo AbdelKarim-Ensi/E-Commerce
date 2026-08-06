@@ -17,12 +17,9 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
         @for (product of products; track product.id) {
           <app-product-card
-            [product]="product"
-            [wishlisted]="isWishlisted(product.id)"
-            (addToCart)="addToCart.emit($event)"
-            (toggleWishlist)="toggleWishlist.emit($event)"
-            (selectProduct)="selectProduct.emit($event)"
-          />
+  [product]="product"
+  (addToCart)="addToCart.emit($event)"
+/>
         }
       </div>
     }

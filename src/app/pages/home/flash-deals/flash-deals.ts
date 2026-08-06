@@ -1,6 +1,8 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { Product } from '@models/product.model';
 import { StarRating } from '../../../shared/star-rating/star-rating';
+import { ShowcaseService } from '@services/showcase.service';
 
 @Component({
   selector: 'app-flash-deals',
@@ -15,6 +17,9 @@ export class FlashDeals implements OnInit, OnDestroy {
   @Output() selectProduct = new EventEmitter<Product>();
 
   @ViewChild('carousel') carousel!: ElementRef<HTMLDivElement>;
+
+  private router = inject(Router);
+  private showcaseService = inject(ShowcaseService);
 
   time = { h: 5, m: 34, s: 17 };
   private timer?: ReturnType<typeof setInterval>;
@@ -49,5 +54,13 @@ export class FlashDeals implements OnInit, OnDestroy {
       { val: this.time.m, label: 'Min' },
       { val: this.time.s, label: 'Sec' },
     ];
+  }
+
+  onCardClick(product: Product) {
+    this.showcaseService.setProduct(product);
+    this.router.navigate(['/products/earbud-showcase'], {
+      queryParams: { slug: product.id },
+    });
+    this.selectProduct.emit(product);
   }
 }

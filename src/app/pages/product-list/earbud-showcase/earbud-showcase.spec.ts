@@ -1,18 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { Home } from './home';
+import { EarbudShowcase } from './earbud-showcase';
 
-describe('Home', () => {
-  let component: Home;
-  let fixture: ComponentFixture<Home>;
+describe('EarbudShowcase', () => {
+  let component: EarbudShowcase;
+  let fixture: ComponentFixture<EarbudShowcase>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Home],
-      providers: [provideRouter([])],
+      imports: [EarbudShowcase],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Home);
+    fixture = TestBed.createComponent(EarbudShowcase);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

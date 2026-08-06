@@ -6,6 +6,7 @@ export interface ProductColor {
 }
 
 export interface Product {
+product: Product;
   id: string;
   name: string;
   slug: string;

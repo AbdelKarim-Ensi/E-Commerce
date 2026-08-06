@@ -1,7 +1,8 @@
-import { Component, HostListener, Input, Output, EventEmitter } from '@angular/core';
+import { Component, HostListener, Input, Output, EventEmitter, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Category } from '../../core/models/category.model';
+import { CartService } from '../../core/services/cart.service';
 
 @Component({
   selector: 'app-navbar',
@@ -11,8 +12,9 @@ import { Category } from '../../core/models/category.model';
   styleUrl: './navbar.css'
 })
 export class Navbar {
+  private cartService = inject(CartService);
+
   @Input() cartItems: any[] = [];
-  @Input() wishlistCount = 0;
   @Input() searchQuery = '';
   @Input() categories: Category[] = [];
 
@@ -21,6 +23,10 @@ export class Navbar {
 
   scrolled = false;
   catOpen = false;
+
+  get wishlistCount(): number {
+    return this.cartService.wishlistCount();
+  }
 
   get cartCount(): number {
     return this.cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);

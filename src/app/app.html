@@ -1,7 +1,6 @@
 <div class="min-h-screen bg-white">
   <app-navbar
     [cartItems]="cartService.items()"
-    [wishlistCount]="cartService.wishlist().length"
     [searchQuery]="searchQuery"
     [categories]="categories()"
     (cartOpen)="cartService.open()"

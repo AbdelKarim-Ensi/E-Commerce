@@ -1,12 +1,28 @@
 <section class="py-16 bg-white">
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
 
+    @if (wishlistOnly()) {
+      <div class="flex items-center justify-between mb-6 px-4 py-3 bg-red-50 border border-red-100 rounded-xl">
+        <div class="flex items-center gap-2 text-sm text-red-700 font-medium">
+          <svg class="w-4 h-4 fill-red-500" viewBox="0 0 24 24">
+            <path d="M12 21s-6.716-4.35-9.428-7.062C.858 12.224 0 10.36 0 8.5 0 5.462 2.462 3 5.5 3c1.74 0 3.41.81 4.5 2.09C11.09 3.81 12.76 3 14.5 3 17.538 3 20 5.462 20 8.5c0 1.86-.858 3.724-2.572 5.438C18.716 16.65 12 21 12 21z"/>
+          </svg>
+          Showing your wishlist ({{ filtered().length }})
+        </div>
+        <button (click)="clearFilters()" class="text-xs text-red-600 hover:text-red-700 font-medium">
+          Show all products
+        </button>
+      </div>
+    }
+
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div>
         <p class="text-amber-500 font-semibold text-sm mb-1 tracking-wide uppercase">Catalog</p>
         <h2 class="text-3xl font-black text-gray-900 font-display">All Products</h2>
       </div>
       <div class="flex items-center gap-3">
+        
+
         <button
           (click)="sidebarOpen.set(true)"
           class="lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl
@@ -72,12 +88,9 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             @for (product of filtered(); track product.id) {
               <app-product-card
-                [product]="product"
-                [wishlisted]="isWishlisted(product.id)"
-                (addToCart)="addToCart.emit($event)"
-                (toggleWishlist)="onToggleWishlist(product.id)"
-                (selectProduct)="selectProduct.emit($event)"
-              />
+  [product]="product"
+  (addToCart)="addToCart.emit($event)"
+/>
             }
           </div>
         }
