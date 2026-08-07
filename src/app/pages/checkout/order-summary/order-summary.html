@@ -1,0 +1,154 @@
+<div
+  class="bg-white/80 backdrop-blur-sm rounded-2xl border border-zinc-200/70 p-5 space-y-5"
+  [class.sticky]="!isMobile"
+  [class.top-20]="!isMobile"
+  style="box-shadow: 0 2px 12px rgba(0,0,0,0.05)"
+>
+
+  <!-- Title -->
+  <h2 class="text-base font-bold text-zinc-900 font-display">Order Summary</h2>
+
+  <!-- Items list (scrollable if many) -->
+  <div class="space-y-3 max-h-64 overflow-y-auto pr-1">
+    @for (item of items; track item.product.id) {
+      <div class="flex gap-3">
+        <!-- Thumbnail -->
+        <div class="w-[72px] h-[72px] flex-shrink-0 rounded-xl overflow-hidden bg-zinc-100">
+          <img [src]="item.product.imageUrl ?? '/assets/products/placeholder.jpg'"
+               [alt]="item.product.name" class="w-full h-full object-cover"/>
+        </div>
+        <!-- Details -->
+        <div class="flex-1 min-w-0 space-y-0.5">
+          @if (item.product.brand) {
+            <p class="text-[10px] text-amber-600 font-semibold uppercase tracking-wide">{{ item.product.brand }}</p>
+          }
+          <p class="text-sm font-semibold text-zinc-900 leading-tight line-clamp-2 font-display">
+            {{ item.product.name }}
+          </p>
+          @if (item.selectedColor || item.selectedStorage) {
+            <p class="text-xs text-zinc-400">
+              @if (item.selectedColor) { {{ item.selectedColor }} }
+              @if (item.selectedColor && item.selectedStorage) { · }
+              @if (item.selectedStorage) { {{ item.selectedStorage }} }
+            </p>
+          }
+          <div class="flex items-center justify-between pt-1">
+            <span class="text-xs text-zinc-500 bg-zinc-100 px-2 py-0.5 rounded-full">
+              Qty {{ item.quantity }}
+            </span>
+            <span class="text-sm font-bold text-zinc-900">
+              ${{ lineTotal(item).toFixed(2) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="h-px bg-zinc-100"></div>
+
+  <!-- Promo code -->
+  <div class="space-y-2">
+    <div class="flex gap-2">
+      <input
+        type="text"
+        [(ngModel)]="promoInput"
+        placeholder="Promo code (e.g. TECH20)"
+        class="flex-1 px-3 py-2.5 text-sm border border-zinc-200 rounded-xl bg-white
+               focus:outline-none focus:ring-2 focus:ring-amber-400 placeholder-zinc-400
+               transition-all"
+        [class.border-green-400]="promoStatus === 'valid'"
+        [class.border-red-400]="promoStatus === 'invalid'"
+      />
+      <button
+        type="button"
+        (click)="applyPromo.emit(promoInput)"
+        class="px-4 py-2.5 border-2 border-amber-500 text-amber-600 font-semibold text-sm
+               rounded-xl hover:bg-amber-50 transition-colors flex-shrink-0 font-display"
+      >Apply</button>
+    </div>
+    @if (promoMessage) {
+      <p class="text-xs" [class]="promoMessage.color">{{ promoMessage.text }}</p>
+    }
+  </div>
+
+  <div class="h-px bg-zinc-100"></div>
+
+  <!-- Price breakdown -->
+  <div class="space-y-2.5">
+    <div class="flex justify-between text-sm text-zinc-500">
+      <span>Subtotal</span>
+      <span>${{ subtotal.toFixed(2) }}</span>
+    </div>
+
+    @if (promoSavings > 0) {
+      <div class="flex justify-between text-sm">
+        <span class="text-green-600 font-medium">Promo savings</span>
+        <span class="text-green-600 font-bold">-${{ promoSavings.toFixed(2) }}</span>
+      </div>
+    }
+
+    <div class="flex justify-between text-sm text-zinc-500">
+      <span>Shipping</span>
+      <span [class.text-green-500]="shippingCost === 0"
+            [class.font-medium]="shippingCost === 0">
+        {{ shippingCost === 0 ? 'FREE' : ('$' + shippingCost.toFixed(2)) }}
+      </span>
+    </div>
+
+    <div class="flex justify-between text-sm text-zinc-500">
+      <span>Estimated Tax</span>
+      <span>${{ tax.toFixed(2) }}</span>
+    </div>
+  </div>
+
+  <div class="h-px bg-zinc-100"></div>
+
+  <!-- Total -->
+  <div class="flex justify-between items-center">
+    <span class="text-base font-bold text-zinc-900 font-display">Total</span>
+    <span class="text-xl font-black text-zinc-900 font-display">${{ total.toFixed(2) }}</span>
+  </div>
+
+  <!-- Place Order CTA -->
+  @if (showPlaceOrder) {
+    <button
+      type="button"
+      (click)="placeOrder.emit()"
+      [disabled]="isPlacingOrder"
+      class="w-full py-4 rounded-xl text-white font-bold text-sm transition-all duration-150
+             font-display flex items-center justify-center gap-2"
+      [class.bg-amber-500]="!isPlacingOrder"
+      [class.hover:bg-amber-600]="!isPlacingOrder"
+      [class.active:scale-[0.98]]="!isPlacingOrder"
+      [class.shadow-md]="!isPlacingOrder"
+      [class.shadow-amber-200]="!isPlacingOrder"
+      [class.bg-amber-300]="isPlacingOrder"
+      [class.cursor-not-allowed]="isPlacingOrder"
+      [class.opacity-70]="isPlacingOrder"
+    >
+      @if (isPlacingOrder) {
+        <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+        </svg>
+        Processing…
+      } @else {
+        Place Order →
+      }
+    </button>
+
+    <!-- Trust badges -->
+    <div class="flex items-center justify-center gap-5 pt-1">
+      @for (badge of trustBadges; track badge.label) {
+        <div class="flex items-center gap-1 text-zinc-400">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="badge.icon"/>
+          </svg>
+          <span class="text-[10px] font-medium">{{ badge.label }}</span>
+        </div>
+      }
+    </div>
+  }
+
+</div>

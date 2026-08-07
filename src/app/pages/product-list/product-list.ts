@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { Product } from '../../core/models/product.model';
 import { ProductCard } from '../../shared/product-card/product-card';
 import { CartService } from '../../core/services/cart.service';
+import { ProductsService } from '../../core/services/products.service';
 
 type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'rating';
 
@@ -51,9 +52,13 @@ const RATING_OPTIONS: RatingOption[] = [
 export class ProductList implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private productsService = inject(ProductsService);
   protected cartService = inject(CartService);
 
+  private _inputProvided = false;
+
   @Input() set products(val: Product[]) {
+    this._inputProvided = true;
     this._products.set(val ?? []);
   }
   @Input() set activeCategoryId(val: string) {
@@ -61,7 +66,6 @@ export class ProductList implements OnInit {
   }
 
   @Output() addToCart = new EventEmitter<Product>();
-
 
   private _products = signal<Product[]>([]);
   private _activeCategoryId = signal<string>('');
@@ -82,6 +86,21 @@ export class ProductList implements OnInit {
   ngOnInit() {
     this.route.queryParamMap.subscribe((params) => {
       this.wishlistOnly.set(params.get('wishlist') === 'true');
+
+      const catId = params.get('category');
+      if (catId) this._activeCategoryId.set(catId);
+
+      // Auto-charge les produits uniquement si utilisé comme page de route
+      // (pas d'@Input fourni par un parent comme Home)
+      if (!this._inputProvided) {
+        this.productsService.getAll().subscribe({
+          next: (res: any) => {
+            const list = Array.isArray(res) ? res : (res?.data ?? []);
+            this._products.set(list);
+          },
+          error: (err: unknown) => console.error('Erreur chargement produits', err),
+        });
+      }
     });
   }
 
@@ -102,7 +121,7 @@ export class ProductList implements OnInit {
 
     if (this.wishlistOnly()) {
       const wishlist = this.cartService.wishlist();
-      list = list.filter((p) => wishlist.includes(p.id));
+      list = list.filter((p) => wishlist.includes(String(p.id)));
     }
     if (catId) {
       list = list.filter((p) => p.categoryId === catId);

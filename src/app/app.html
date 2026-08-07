@@ -19,5 +19,9 @@
     [subtotal]="cartService.subtotal()"
     [savings]="cartService.savings()"
     [shipping]="cartService.shipping()"
+    [total]="cartService.total()"
+    (close)="cartService.close()"
+    (updateQty)="cartService.updateQty($event.id, $event.qty)"
+    (remove)="cartService.remove($event)"
   />
 </div>

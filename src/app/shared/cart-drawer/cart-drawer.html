@@ -115,10 +115,10 @@
         <span class="font-display">Total</span>
         <span class="font-display">${{ total.toFixed(2) }}</span>
       </div>
-      <button class="w-full py-3.5 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all text-sm font-display">
-        Checkout →
-      </button>
-      <button (click)="close.emit()" class="w-full py-2.5 text-sm text-gray-500 hover:text-gray-700">
+      <button type="button" (click)="goToCheckout()" class="w-full py-3.5 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-all text-sm font-display">
+  Checkout →
+</button>
+      <button type="button" (click)="close.emit()" class="w-full py-2.5 text-sm text-gray-500 hover:text-gray-700">
         Continue Shopping
       </button>
     </div>

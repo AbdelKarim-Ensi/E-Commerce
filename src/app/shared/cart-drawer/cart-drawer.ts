@@ -1,5 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CartItem } from '../../core/models/cartItem.model';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-cart-drawer',
@@ -21,6 +22,12 @@ export class CartDrawer {
   get totalCount() {
     return this.items.reduce((s, i) => s + i.quantity, 0);
   }
+  private router = inject(Router); // import { Router } from '@angular/router';
+
+goToCheckout() {
+  this.close.emit();
+  this.router.navigate(['/checkout']);
+}
 
   lineTotal(item: CartItem): number {
     return parseFloat(item.product.price) * item.quantity;

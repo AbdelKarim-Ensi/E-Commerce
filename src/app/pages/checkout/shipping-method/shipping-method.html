@@ -1,0 +1,56 @@
+<div class="bg-white rounded-2xl border border-zinc-200/70 p-6 space-y-4"
+     style="box-shadow: 0 2px 12px rgba(0,0,0,0.05)">
+
+  <!-- Title -->
+  <div class="flex items-center gap-2.5">
+    <div class="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center">
+      <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/>
+      </svg>
+    </div>
+    <div>
+      <h2 class="text-base font-bold text-zinc-900 font-display">Shipping Method</h2>
+      <p class="text-xs text-zinc-400">Choose your preferred delivery speed</p>
+    </div>
+  </div>
+
+  <!-- Options -->
+  <div class="space-y-3">
+    @for (option of options; track option.id) {
+      <button
+        type="button"
+        (click)="select.emit(option)"
+        class="w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-150"
+        [class.border-amber-400]="selected.id === option.id"
+        [class.bg-amber-50]="selected.id === option.id"
+        [class.border-zinc-200]="selected.id !== option.id"
+        [class.bg-white]="selected.id !== option.id"
+        [class.hover:border-zinc-300]="selected.id !== option.id"
+      >
+        <!-- Radio dot -->
+        <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+             [class.border-amber-500]="selected.id === option.id"
+             [class.border-zinc-300]="selected.id !== option.id">
+          @if (selected.id === option.id) {
+            <div class="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+          }
+        </div>
+
+        <!-- Labels -->
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <p class="font-semibold text-sm text-zinc-900 font-display">{{ option.label }}</p>
+            <p class="font-bold text-sm"
+               [class.text-green-600]="option.price === 0"
+               [class.text-zinc-900]="option.price > 0">
+              {{ option.price === 0 ? 'FREE' : ('$' + option.price.toFixed(2)) }}
+            </p>
+          </div>
+          <p class="text-xs text-zinc-400 mt-0.5">{{ option.description }}</p>
+        </div>
+      </button>
+    }
+  </div>
+
+</div>

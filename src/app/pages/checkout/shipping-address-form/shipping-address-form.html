@@ -1,0 +1,129 @@
+<div class="bg-white rounded-2xl border border-zinc-200/70 p-6 space-y-5"
+     style="box-shadow: 0 2px 12px rgba(0,0,0,0.05)">
+
+  <!-- Title -->
+  <div class="flex items-center gap-2.5">
+    <div class="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center">
+      <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </div>
+    <div>
+      <h2 class="text-base font-bold text-zinc-900 font-display">Shipping Address</h2>
+      <p class="text-xs text-zinc-400">Where should we deliver your order?</p>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+
+    <!-- Full Name + Email -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-zinc-700 mb-1.5">Full Name *</label>
+        <input formControlName="fullName" type="text" placeholder="John Doe"
+               class="form-input" [class.input-error]="isInvalid('fullName')"/>
+        @if (isInvalid('fullName')) {
+          <p class="input-error-msg">{{ getError('fullName') }}</p>
+        }
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-zinc-700 mb-1.5">Email Address *</label>
+        <input formControlName="email" type="email" placeholder="john@example.com"
+               class="form-input" [class.input-error]="isInvalid('email')"/>
+        @if (isInvalid('email')) {
+          <p class="input-error-msg">{{ getError('email') }}</p>
+        }
+      </div>
+    </div>
+
+    <!-- Phone -->
+    <div>
+      <label class="block text-sm font-medium text-zinc-700 mb-1.5">Phone Number *</label>
+      <input formControlName="phone" type="tel" placeholder="+1 (555) 000-0000"
+             class="form-input" [class.input-error]="isInvalid('phone')"/>
+      @if (isInvalid('phone')) {
+        <p class="input-error-msg">{{ getError('phone') }}</p>
+      }
+    </div>
+
+    <!-- Street address -->
+    <div>
+      <label class="block text-sm font-medium text-zinc-700 mb-1.5">Street Address *</label>
+      <input formControlName="street" type="text" placeholder="123 Main Street"
+             class="form-input" [class.input-error]="isInvalid('street')"/>
+      @if (isInvalid('street')) {
+        <p class="input-error-msg">{{ getError('street') }}</p>
+      }
+    </div>
+
+    <!-- Apartment (optional) -->
+    <div>
+      <label class="block text-sm font-medium text-zinc-700 mb-1.5">
+        Apartment / Suite
+        <span class="text-zinc-400 font-normal ml-1">(optional)</span>
+      </label>
+      <input formControlName="apartment" type="text" placeholder="Apt 4B"
+             class="form-input"/>
+    </div>
+
+    <!-- City / State / ZIP -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-zinc-700 mb-1.5">City *</label>
+        <input formControlName="city" type="text" placeholder="New York"
+               class="form-input" [class.input-error]="isInvalid('city')"/>
+        @if (isInvalid('city')) {
+          <p class="input-error-msg">{{ getError('city') }}</p>
+        }
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-zinc-700 mb-1.5">State *</label>
+        <input formControlName="state" type="text" placeholder="NY"
+               class="form-input" [class.input-error]="isInvalid('state')"/>
+        @if (isInvalid('state')) {
+          <p class="input-error-msg">{{ getError('state') }}</p>
+        }
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-zinc-700 mb-1.5">ZIP Code *</label>
+        <input formControlName="zip" type="text" placeholder="10001"
+               class="form-input" [class.input-error]="isInvalid('zip')"/>
+        @if (isInvalid('zip')) {
+          <p class="input-error-msg">{{ getError('zip') }}</p>
+        }
+      </div>
+    </div>
+
+    <!-- Country -->
+    <div>
+      <label class="block text-sm font-medium text-zinc-700 mb-1.5">Country *</label>
+      <select formControlName="country" class="form-input bg-white">
+        @for (c of countries; track c.code) {
+          <option [value]="c.code">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Save address -->
+    <label class="flex items-center gap-3 cursor-pointer group">
+      <input type="checkbox" formControlName="saveAddress"
+             class="w-4 h-4 rounded accent-amber-500 cursor-pointer"/>
+      <span class="text-sm text-zinc-600 group-hover:text-zinc-900 transition-colors">
+        Save this address for next time
+      </span>
+    </label>
+
+    <!-- CTA -->
+    <div class="pt-2">
+      <button type="submit"
+              class="w-full sm:w-auto px-8 py-3.5 bg-amber-500 text-white font-bold rounded-xl
+                     hover:bg-amber-600 active:scale-[0.98] transition-all duration-150 text-sm font-display
+                     shadow-sm shadow-amber-200">
+        Continue to Payment →
+      </button>
+    </div>
+
+  </form>
+</div>
