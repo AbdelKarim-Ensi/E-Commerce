@@ -4,10 +4,11 @@ import { ProductList } from '@pages/product-list/product-list';
 import { ProductDetail } from '@pages/product-detail/product-detail';
 import { Cart } from '@pages/cart/cart';
 import { Checkout } from '@pages/checkout/checkout';
-import { Login } from '@pages/login/login';
-import { Register } from '@pages/register/register';
+import { Auth } from '@pages/auth/auth';
 import { OrderHistory } from '@pages/order-history/order-history';
 import { EarbudShowcase } from '@pages/product-list/earbud-showcase/earbud-showcase';
+import { Profile } from '@pages/profile/profile';
+import { authGuard } from '@guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -42,18 +43,24 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    component: Login,
+    component: Auth,
     title: 'TechGear — Connexion'
   },
   {
     path: 'register',
-    component: Register,
+    component: Auth,
     title: 'TechGear — Inscription'
   },
   {
     path: 'orders',
     component: OrderHistory,
     title: 'TechGear — Mes commandes'
+  },
+  {
+    path: 'profile',
+    component: Profile,
+    canActivate: [authGuard],
+    title: 'TechGear — Mon profil'
   },
   {
     path: '**',
