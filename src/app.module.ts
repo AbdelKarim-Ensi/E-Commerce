@@ -20,6 +20,7 @@ import { RateLimitModule } from './config/rate-limit.module';
 import { PaymentModule } from './modules/payment/payment.module';
 
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     ProductsModule,
     PaymentModule,
     UploadsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

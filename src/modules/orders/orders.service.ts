@@ -75,14 +75,15 @@ export class OrdersService {
         }
 
         const order = await tx.order.create({
-          data: {
-            userId,
-            status: OrderStatus.PENDING,
-            totalAmount,
-            items: { create: orderItemsData },
-          },
-          include: { items: true },
-        });
+        data: {
+          userId,
+          status: OrderStatus.PENDING,
+          totalAmount,
+          shippingAddress: dto.shippingAddress,
+          items: { create: orderItemsData },
+        },
+        include: { items: true },
+      });
 
         return order;
       },

@@ -8,13 +8,13 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 const SALT_ROUNDS = 12;
-const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
+const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60; 
 
 interface RefreshPayload {
   sub: string;
   email: string;
   role: string;
-  jti: string; // unique token id, lets us target one specific token in Redis
+  jti: string;
 }
 
 @Injectable()
@@ -44,8 +44,6 @@ export class AuthService {
     return this.jwtService.sign({ sub: userId, email, role }, { expiresIn: '15m' });
   }
 
-  // Creates a new refresh token, stores its hash in Redis with a 7-day TTL,
-  // and returns the signed JWT to hand to the client.
   private async issueRefreshToken(userId: string, email: string, role: string) {
     const jti = crypto.randomUUID();
     const refreshToken = this.jwtService.sign(
@@ -54,7 +52,7 @@ export class AuthService {
     );
 
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    // Redis only ever stores the HASH, never the raw token — same principle as passwords
+   
     await this.redis.client.set(this.redisKey(userId, jti), tokenHash, 'EX', REFRESH_TTL_SECONDS);
 
     return refreshToken;
@@ -97,14 +95,6 @@ export class AuthService {
     return { user: this.sanitizeUser(user), accessToken, refreshToken };
   }
 
-  // Refresh token rotation with reuse detection:
-  // 1. Verify JWT signature/expiry.
-  // 2. Look up its hash in Redis under refresh:{userId}:{jti}.
-  //    - Found + matches  -> legit, single-use token: delete it, issue a fresh pair.
-  //    - Not found         -> this exact token was already consumed (or forged with a
-  //                           valid signature but never issued). Treat as theft: nuke
-  //                           EVERY refresh token for this user, forcing a full re-login
-  //                           everywhere. This is what "reuse detection" means in practice.
   async refresh(refreshToken: string) {
     let payload: RefreshPayload;
     try {
@@ -120,12 +110,12 @@ export class AuthService {
     const incomingHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
     if (!storedHash || storedHash !== incomingHash) {
-      // Reuse or forgery detected — revoke every session for this user
+     
       await this.revokeAllForUser(payload.sub);
       throw new UnauthorizedException('Refresh token reuse detected — all sessions revoked');
     }
 
-    // Rotation: burn the old token before minting the new one
+   
     await this.redis.client.del(key);
 
     const accessToken = this.signAccessToken(payload.sub, payload.email, payload.role);
@@ -141,7 +131,7 @@ export class AuthService {
       });
       await this.redis.client.del(this.redisKey(payload.sub, payload.jti));
     } catch {
-      // Invalid/expired token on logout is a no-op, not an error
+     
     }
     return { success: true };
   }

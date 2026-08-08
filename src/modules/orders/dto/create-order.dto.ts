@@ -4,6 +4,8 @@ import {
   IsArray,
   IsInt,
   IsUUID,
+  IsString,
+  MinLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -23,4 +25,8 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items!: OrderItemDto[];
+
+  @IsString()
+  @MinLength(5)
+  shippingAddress!: string;
 }
