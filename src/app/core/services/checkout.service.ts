@@ -71,6 +71,17 @@ export class CheckoutService {
   nextStep() { if (this.step() < 3) this.step.update(s => (s + 1) as CheckoutStep); }
   prevStep() { if (this.step() > 1) this.step.update(s => (s - 1) as CheckoutStep); }
 
+  private formatShippingAddress(address: ShippingAddress): string {
+    const parts = [
+      address.fullName,
+      address.street + (address.apartment ? `, ${address.apartment}` : ''),
+      `${address.city}, ${address.state} ${address.zip}`,
+      address.country,
+      address.phone,
+    ];
+    return parts.filter(Boolean).join(', ');
+  }
+
   async placeOrder() {
     const address = this.shippingAddress();
     if (!address) {
@@ -87,12 +98,8 @@ export class CheckoutService {
           items: this.items().map(i => ({
             productId: i.product.id,
             quantity: i.quantity,
-            selectedColor: i.selectedColor,
-            selectedStorage: i.selectedStorage,
           })),
-          shippingAddress: address,
-          shippingMethod: this.selectedShipping().id,
-          promoCode: this.promoStatus() === 'valid' ? this.promoCode() : null,
+          shippingAddress: this.formatShippingAddress(address),
         })
       );
 
@@ -100,7 +107,7 @@ export class CheckoutService {
 
       this.cartService.items().forEach(i => this.cartService.remove(i.product.id));
 
-      this.router.navigate(['/orders', order.id]);
+      this.router.navigate(['/orders']);
 
     } catch (err) {
       console.error('Erreur lors de la création de la commande', err);

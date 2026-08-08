@@ -8,21 +8,22 @@ export interface OrderItem {
   productId: string;
   product?: Product;
   quantity: number;
-  unitPrice: string; // Decimal Prisma → string
+  unitPrice: string;
 }
 
 export interface Order {
   id: string;
   userId: string;
   status: OrderStatus;
-  totalAmount: string; // Decimal Prisma → string
+  totalAmount: string;
+  shippingAddress: string;
   stripePaymentIntentId: string | null;
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;
 }
 
-// Payload pour POST /orders
 export interface CreateOrderPayload {
   items: { productId: string; quantity: number }[];
+  shippingAddress: string;
 }

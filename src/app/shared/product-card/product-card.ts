@@ -20,29 +20,30 @@ export class ProductCard {
   @Input({ required: true }) product!: Product;
   @Output() addToCart = new EventEmitter<Product>();
 
-  protected isAnimating = false;
+  protected isWishlistAnimating = false;
+  protected isCartAnimating = false;
 
   get wishlisted(): boolean {
     return this.cartService.isWishlisted(this.product.id);
   }
 
   onCardClick() {
-    // Stocke le produit cliqué et navigue vers le showcase avec CE produit
     this.showcaseService.setProduct(this.product);
-    this.router.navigate(['/products/earbud-showcase'], {
-      queryParams: { slug: this.product.id }
-    });
+    this.router.navigate(['/products', this.product.id]);
   }
 
   onWishlistClick(event: MouseEvent) {
     event.stopPropagation();
-    this.isAnimating = true;
-    setTimeout(() => (this.isAnimating = false), 200);
+    this.isWishlistAnimating = true;
+    setTimeout(() => (this.isWishlistAnimating = false), 200);
     this.cartService.toggleWishlist(this.product.id);
   }
 
   onCartClick(event: MouseEvent) {
     event.stopPropagation();
+    this.isCartAnimating = true;
+    setTimeout(() => (this.isCartAnimating = false), 200);
+    this.cartService.addItem(this.product);
     this.addToCart.emit(this.product);
   }
 }

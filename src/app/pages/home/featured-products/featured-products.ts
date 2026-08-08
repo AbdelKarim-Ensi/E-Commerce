@@ -11,12 +11,5 @@ import { ProductCard } from '../../../shared/product-card/product-card';
 })
 export class FeaturedProducts {
   @Input() products: Product[] = [];
-  @Input() wishlist: string[] = [];
   @Output() addToCart = new EventEmitter<Product>();
-  @Output() toggleWishlist = new EventEmitter<string>();
-  @Output() selectProduct = new EventEmitter<Product>();
-
-  isWishlisted(id: string) {
-    return this.wishlist.includes(id);
-  }
 }

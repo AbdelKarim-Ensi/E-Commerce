@@ -1,6 +1,5 @@
 import { AfterViewInit, Component, signal, computed, inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-
 import { ActivatedRoute } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import { ShowcaseService } from '../../../core/services/showcase.service';
@@ -52,7 +51,6 @@ const DEFAULT_FEATURES: Record<Side, FeatureMetric[]> = {
   templateUrl: './earbud-showcase.html',
   styleUrl: './earbud-showcase.css',
   animations: [
-    // Équivalent de ANIMATIONS.container + ANIMATIONS.item (stagger + spring approx)
     trigger('detailsAnim', [
       transition(':enter', [
         query('.stagger-item', [
@@ -75,7 +73,6 @@ const DEFAULT_FEATURES: Record<Side, FeatureMetric[]> = {
       ]),
     ]),
 
-    // Équivalent de ANIMATIONS.image(isLeft) — direction dynamique via params
     trigger('imageAnim', [
       transition(':enter', [
         style({
@@ -84,7 +81,7 @@ const DEFAULT_FEATURES: Record<Side, FeatureMetric[]> = {
           filter: 'blur(15px)',
         }),
         animate(
-          '0.9s cubic-bezier(0.34, 1.56, 0.64, 1)', // overshoot ≈ spring stiffness:260 damping:20
+          '0.9s cubic-bezier(0.34, 1.56, 0.64, 1)',
           style({ opacity: 1, transform: 'scale(1) rotate(0) translateX(0)', filter: 'blur(0)' })
         ),
       ], { params: { fromTransform: 'scale(1.5) rotate(-30deg) translateX(-80px)' } }),
@@ -102,11 +99,11 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
   private route = inject(ActivatedRoute);
   private showcaseService = inject(ShowcaseService);
   private productsService = inject(ProductsService);
+  private platformId = inject(PLATFORM_ID);
 
   protected activeSide = signal<Side>('left');
   protected product = signal<Product | null>(null);
 
-  // Empêche l'animation de jouer pendant le warm-up silencieux au chargement
   protected skipAnimation = signal(true);
 
   protected sides = computed<Record<Side, SideData>>(() => {
@@ -164,7 +161,6 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
   protected isLeft = computed(() => this.activeSide() === 'left');
   protected price = computed(() => this.product()?.price ?? null);
 
-  // Params passés au trigger imageAnim selon le côté actif
   protected imageAnimParams = computed(() => ({
     value: this.activeSide(),
     params: {
@@ -176,22 +172,24 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     const inMemory = this.showcaseService.product();
-    if (inMemory) {
+    const routeId = this.route.snapshot.paramMap.get('id');
+
+    // Cache mémoire valide seulement s'il correspond au produit demandé dans l'URL
+    if (inMemory && inMemory.id === routeId) {
       this.product.set(inMemory);
       return;
     }
 
-    const slug = this.route.snapshot.queryParamMap.get('slug');
-    if (slug) {
-      this.productsService.getById(slug).subscribe({
+    // Fallback API : couvre le refresh, le lien partagé direct, et permet le SSR
+    if (routeId) {
+      this.productsService.getById(routeId).subscribe({
         next: (p) => this.product.set(p),
         error: () => this.product.set(null),
       });
     }
   }
 
-    ngAfterViewInit(): void {
-    // requestAnimationFrame n'existe pas côté serveur (SSR) — on skip le warm-up
+  ngAfterViewInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
       this.skipAnimation.set(false);
       return;
@@ -206,12 +204,8 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
       });
     });
   }
-  platformId(platformId: any) {
-    throw new Error('Method not implemented.');
-  }
 
   setSide(id: Side) {
     this.activeSide.set(id);
   }
-
 }

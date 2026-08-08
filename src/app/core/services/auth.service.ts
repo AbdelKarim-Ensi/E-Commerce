@@ -1,17 +1,15 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { catchError, tap, throwError } from 'rxjs';
+import { catchError, tap, throwError, of } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  isAuthenticated() {
-      throw new Error('Method not implemented.');
-  }
+  private http = inject(HttpClient);
+
   private url = environment.apiUrl + '/auth/';
   isLoggedIn = signal(false);
-
-  constructor(private http: HttpClient) {}
+  sessionChecked = signal(false);
 
   register(data: any) {
     return this.http.post(this.url + 'register', data);
@@ -36,6 +34,13 @@ export class AuthService {
         this.isLoggedIn.set(false);
         return throwError(() => err);
       })
+    );
+  }
+
+  checkSession() {
+    return this.refresh().pipe(
+      catchError(() => of(null)),
+      tap(() => this.sessionChecked.set(true))
     );
   }
 }

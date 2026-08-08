@@ -61,7 +61,7 @@
           <div
             class="product-card group flex-shrink-0 w-64 bg-white rounded-2xl border border-gray-100 overflow-hidden cursor-pointer"
             style="scroll-snap-align: start; box-shadow: 0 2px 16px rgba(0,0,0,0.06)"
-           (click)="onCardClick(product)"
+            (click)="onCardClick(product)"
           >
             <div class="relative bg-gray-50 h-44 flex items-center justify-center overflow-hidden">
               @if (product.discountPercent) {
@@ -91,8 +91,9 @@
                   }
                 </div>
                 <button
-                  (click)="$event.stopPropagation(); addToCart.emit(product)"
-                  class="w-8 h-8 bg-amber-500 text-white rounded-lg flex items-center justify-center hover:bg-amber-600"
+                  (click)="onCartClick($event, product)"
+                  class="w-8 h-8 bg-amber-500 text-white rounded-lg flex items-center justify-center hover:bg-amber-600 active:scale-95 transition-all"
+                  [class.animate-pop]="isCartAnimating[product.id]"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>

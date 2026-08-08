@@ -36,7 +36,7 @@ export class Navbar {
   scrolled = false;
   catOpen = false;
 
-  // --- User dropdown menu ---
+  
   userMenuOpen = false;
   private hoverCloseTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -74,16 +74,12 @@ export class Navbar {
     this.cartOpen.emit();
   }
 
-  // --- User menu behavior ---
-
-  /** Ouvre le menu au survol (desktop). Annule toute fermeture programmée. */
   onUserMenuMouseEnter() {
     this.cancelScheduledClose();
     this.userMenuOpen = true;
   }
 
-  /** Ferme le menu avec un léger délai pour permettre à la souris de
-   *  traverser l'espace entre l'icône et le menu sans le fermer. */
+ 
   onUserMenuMouseLeave() {
     this.cancelScheduledClose();
     this.hoverCloseTimeout = setTimeout(() => {
@@ -98,9 +94,7 @@ export class Navbar {
     }
   }
 
-  /** Vrai sur les appareils qui supportent réellement le survol (souris précise).
-   *  Sur ces appareils, seul le hover doit piloter le menu — le clic sur l'icône
-   *  ne doit jamais entrer en conflit avec lui. */
+ 
   private supportsHover(): boolean {
     return (
       typeof window !== 'undefined' &&
@@ -109,9 +103,7 @@ export class Navbar {
     );
   }
 
-  /** Toggle au clic — nécessaire uniquement sur mobile/tactile où le hover n'existe pas.
-   *  Sur desktop, le survol gère déjà l'ouverture/fermeture : on ignore le clic sur
-   *  l'icône pour éviter qu'il ne referme un menu que la souris vient d'ouvrir. */
+ 
   toggleUserMenu(event: Event) {
     event.stopPropagation();
     if (this.supportsHover()) {
@@ -138,14 +130,14 @@ export class Navbar {
         this.router.navigate(['/']);
       },
       error: () => {
-        // Même en cas d'erreur réseau, on considère la session locale terminée.
+
         this.closeUserMenu();
         this.router.navigate(['/']);
       },
     });
   }
 
-  /** Ferme le menu utilisateur si un clic a lieu en dehors de celui-ci. */
+ 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
     if (!this.userMenuOpen) return;
@@ -155,7 +147,7 @@ export class Navbar {
     }
   }
 
-  /** Ferme le menu utilisateur avec la touche Escape. */
+ 
   @HostListener('document:keydown.escape')
   onEscapeKey() {
     if (this.userMenuOpen) {

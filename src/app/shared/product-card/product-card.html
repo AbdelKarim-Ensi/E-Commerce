@@ -10,14 +10,13 @@
       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
     />
 
-    <!-- Bouton Wishlist de la Carte Produit -->
     <button
       type="button"
       (click)="onWishlistClick($event)"
       class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-all duration-200 z-10 hover:scale-110 active:scale-95"
       [class.bg-red-50]="wishlisted"
       [class.bg-white]="!wishlisted"
-      [class.animate-pop]="isAnimating"
+      [class.animate-pop]="isWishlistAnimating"
       [attr.aria-label]="wishlisted ? 'Remove from wishlist' : 'Add to wishlist'"
       style="cursor: pointer;"
     >
@@ -40,7 +39,7 @@
     </button>
   </div>
 
-  <!-- Contenu / Détails Produit -->
+
   <div class="p-5 flex flex-col flex-1 justify-between">
     <div>
       <p class="text-xs font-semibold text-amber-500 uppercase tracking-wider mb-1">{{ product.brand }}</p>
@@ -50,10 +49,11 @@
     <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
       <span class="text-xl font-black text-gray-900">${{ product.price }}</span>
       <button
-        type="button"
-        (click)="onCartClick($event)"
-        class="w-9 h-9 rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center shadow-md active:scale-95 transition-all"
-      >
+  type="button"
+  (click)="onCartClick($event)"
+  class="w-9 h-9 rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center shadow-md active:scale-95 transition-all"
+  [class.animate-pop]="isCartAnimating"
+>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>

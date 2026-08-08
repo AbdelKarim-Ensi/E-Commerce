@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { Hero } from './hero/hero';
 import { TrustSection } from './trust-section/trust-section';
 import { Categories } from './categories/categories';
@@ -18,6 +19,8 @@ import { CartService } from '@services/cart.service';
   styleUrl: './home.css',
 })
 export class Home implements OnInit {
+  private router = inject(Router);
+
   products: Product[] = [];
   dealProducts: Product[] = [];
   categories: Category[] = [];
@@ -46,7 +49,7 @@ export class Home implements OnInit {
   }
 
   onSelectCategory(categoryId: string): void {
-    this.activeCategory = categoryId;
+    this.router.navigate(['/products'], { queryParams: { category: categoryId } });
   }
 
   onAddToCart(product: Product): void {

@@ -1,22 +1,27 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { Order, CreateOrderPayload } from '@models/order.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
+  private http = inject(HttpClient);
   private url = environment.apiUrl + '/orders/';
 
-  constructor(private http: HttpClient) {}
-
-  create(order: any) {
-    return this.http.post(this.url, order, { withCredentials: true });
+  create(order: CreateOrderPayload): Observable<Order> {
+    return this.http.post<Order>(this.url, order, { withCredentials: true });
   }
 
-  getAll() {
-    return this.http.get(this.url, { withCredentials: true });
+  getAll(): Observable<Order[]> {
+    return this.http.get<Order[]>(this.url, { withCredentials: true });
   }
 
-  updateStatus(id: string, status: string) {
-    return this.http.patch(this.url + id + '/status', { status }, { withCredentials: true });
+  getById(id: string): Observable<Order> {
+    return this.http.get<Order>(this.url + id, { withCredentials: true });
+  }
+
+  updateStatus(id: string, status: string): Observable<Order> {
+    return this.http.patch<Order>(this.url + id + '/status', { status }, { withCredentials: true });
   }
 }

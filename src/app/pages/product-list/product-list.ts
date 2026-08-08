@@ -90,8 +90,7 @@ export class ProductList implements OnInit {
       const catId = params.get('category');
       if (catId) this._activeCategoryId.set(catId);
 
-      // Auto-charge les produits uniquement si utilisé comme page de route
-      // (pas d'@Input fourni par un parent comme Home)
+     
       if (!this._inputProvided) {
         this.productsService.getAll().subscribe({
           next: (res: any) => {

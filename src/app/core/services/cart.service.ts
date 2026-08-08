@@ -64,9 +64,7 @@ export class CartService {
     this._items.update(items => items.filter(i => i.product.id !== productId));
   }
 
-  // frontend/src/app/core/services/cart.service.ts
 
-// ...
 readonly wishlistCount = computed(() => this._wishlist().length);
 
 toggleWishlist(id: string | number) {
