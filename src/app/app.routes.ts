@@ -9,7 +9,12 @@ import { OrderConfirmation } from '@pages/order-confirmation/order-confirmation'
 import { EarbudShowcase } from '@pages/product-list/earbud-showcase/earbud-showcase';
 import { Profile } from '@pages/profile/profile';
 import { authGuard } from '@guards/auth.guard';
+import { adminGuard } from '@guards/admin.guard';
 import { NotFound } from '@pages/not-found/not-found';
+import { AdminLayout } from '@pages/admin/admin-layout/admin-layout';
+import { AdminDashboard } from '@pages/admin/admin-dashboard/admin-dashboard';
+import { AdminProducts } from '@pages/admin/admin-products/admin-products';
+import { AdminOrders } from '@pages/admin/admin-orders/admin-orders';
 
 export const routes: Routes = [
   {
@@ -60,8 +65,30 @@ export const routes: Routes = [
   {
     path: 'profile',
     component: Profile,
-    // canActivate: [authGuard],
+    canActivate: [authGuard],
     title: 'TechGear — Mon profil'
+  },
+  {
+    path: 'admin',
+    component: AdminLayout,
+    canActivate: [adminGuard],
+    children: [
+      {
+        path: '',
+        component: AdminDashboard,
+        title: 'TechGear — Administration'
+      },
+      {
+        path: 'products',
+        component: AdminProducts,
+        title: 'TechGear — Admin Produits'
+      },
+      {
+        path: 'orders',
+        component: AdminOrders,
+        title: 'TechGear — Admin Commandes'
+      }
+    ]
   },
   {
     path: '**',

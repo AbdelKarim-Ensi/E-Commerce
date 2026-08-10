@@ -1,0 +1,35 @@
+<div class="p-8">
+  <h1 class="text-2xl font-bold text-slate-900">Commandes</h1>
+  <p class="mt-1 text-sm text-gray-500">Toutes les commandes clients.</p>
+
+  @if (loading()) {
+    <p class="mt-8 text-sm text-gray-500">Chargement...</p>
+  } @else if (orders().length === 0) {
+    <p class="mt-8 text-sm text-gray-500">Aucune commande pour le moment.</p>
+  } @else {
+    <div class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
+          <tr>
+            <th class="px-4 py-3">Commande</th>
+            <th class="px-4 py-3">Statut</th>
+            <th class="px-4 py-3">Total</th>
+            <th class="px-4 py-3">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of orders(); track order.id) {
+            <tr class="border-b border-gray-100 last:border-0">
+              <td class="px-4 py-3 font-medium text-slate-900">
+                #{{ order.id.slice(0, 8) }}
+              </td>
+              <td class="px-4 py-3">{{ order.status }}</td>
+              <td class="px-4 py-3">{{ parsePrice(order.totalAmount) | number: '1.2-2' }} DT</td>
+              <td class="px-4 py-3 text-gray-500">{{ order.createdAt | date: 'dd/MM/yyyy' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

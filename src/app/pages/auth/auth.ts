@@ -38,7 +38,7 @@ export class Auth implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
-    // Si déjà connecté, /login et /register n'ont rien à faire ici.
+    
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/profile']);
       return;
@@ -46,8 +46,7 @@ export class Auth implements OnInit, OnDestroy {
 
     this.syncModeFromUrl(this.router.url);
 
-    // Garde la synchronisation si l'utilisateur navigue directement via l'URL
-    // (barre d'adresse, lien externe, bouton retour du navigateur).
+ 
     this.routerSub = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => this.syncModeFromUrl(event.urlAfterRedirects));
@@ -61,14 +60,7 @@ export class Auth implements OnInit, OnDestroy {
     this.isSignUp = url.startsWith('/register');
   }
 
-  /**
-   * Bascule visuelle vers le mode Sign up, déclenchée par les boutons du panneau.
-   * Met à jour la barre d'URL SANS déclencher de navigation Angular Router complète :
-   * les routes /login et /register pointent vers ce même composant, et une navigation
-   * "classique" détruirait puis recréerait l'instance (comportement par défaut du
-   * Router), ce qui casserait l'animation de transition entre les deux panneaux.
-   * Location.go() met à jour l'URL affichée tout en conservant l'instance du composant.
-   */
+ 
   showSignUp() {
     if (this.isSignUp) return;
     this.isSignUp = true;

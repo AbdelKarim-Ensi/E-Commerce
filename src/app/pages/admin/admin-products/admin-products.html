@@ -1,0 +1,56 @@
+<div class="p-8">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Produits</h1>
+      <p class="mt-1 text-sm text-gray-500">Gérer le catalogue de produits.</p>
+    </div>
+
+    <a
+      routerLink="/admin/products/new"
+      class="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-700"
+    >
+      <lucide-icon [img]="Plus" [size]="18" />
+      Ajouter un produit
+    </a>
+  </div>
+
+  @if (loading()) {
+    <p class="mt-8 text-sm text-gray-500">Chargement...</p>
+  } @else if (products().length === 0) {
+    <p class="mt-8 text-sm text-gray-500">Aucun produit pour le moment.</p>
+  } @else {
+    <div class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <table class="w-full text-left text-sm">
+        <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
+          <tr>
+            <th class="px-4 py-3">Nom</th>
+            <th class="px-4 py-3">Prix</th>
+            <th class="px-4 py-3">Stock</th>
+            <th class="px-4 py-3">Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products(); track product.id) {
+            <tr class="border-b border-gray-100 last:border-0">
+              <td class="px-4 py-3 font-medium text-slate-900">{{ product.name }}</td>
+              <td class="px-4 py-3">{{ parsePrice(product.price) | number: '1.2-2' }} DT</td>
+              <td class="px-4 py-3">{{ product.stock }}</td>
+              <td class="px-4 py-3">
+                <span
+                  class="rounded-full px-2.5 py-1 text-xs font-semibold"
+                  [ngClass]="
+                    product.isActive
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-gray-100 text-gray-600'
+                  "
+                >
+                  {{ product.isActive ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

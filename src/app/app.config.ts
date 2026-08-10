@@ -6,6 +6,7 @@ import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { ssrCookieInterceptor } from './core/interceptors/ssr-cookie.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { firstValueFrom } from 'rxjs';
 
@@ -20,7 +21,7 @@ export const appConfig: ApplicationConfig = {
       })
     ),
     provideClientHydration(withEventReplay()),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([ssrCookieInterceptor, authInterceptor])),
     provideAnimations(),
     provideAppInitializer(() => {
       const authService = inject(AuthService);
