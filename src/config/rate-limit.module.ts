@@ -6,10 +6,9 @@ import { APP_GUARD } from '@nestjs/core';
   imports: [
     ThrottlerModule.forRoot([
       {
-        // Default global limit: generous, just to stop obvious abuse/scraping
         name: 'default',
-        ttl: 60000, // 1 minute window
-        limit: 100, // 100 requests / minute / IP
+        ttl: 60000,
+        limit: 100,
       },
     ]),
   ],
