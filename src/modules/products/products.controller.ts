@@ -1,13 +1,14 @@
 import {
-  Controller, Get, Post, Body, Param, Patch, Delete,
+  Controller, Get, Post, Body, Param, Patch, Delete, Query,
   UseGuards, UseInterceptors, UploadedFile, ParseFilePipeBuilder,
-  HttpStatus,
+  HttpStatus, Optional,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { StorageService } from '../uploads/storage.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { FindProductsQueryDto } from './dto/find-products-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -28,8 +29,31 @@ export class ProductsController {
   }
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query() query: FindProductsQueryDto) {
+    return this.productsService.findAll({
+      categoryId: query.categoryId,
+      search: query.search,
+      page: query.page,
+      limit: query.limit,
+      isFeatured: query.isFeatured,
+      // includeInactive n'est PAS exposé ici : la route publique ne doit
+      // jamais renvoyer de produits désactivés, quel que soit ce que
+      // l'appelant demande. Voir findAllAdmin() ci-dessous pour l'usage admin.
+    });
+  }
+
+  @Get('admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.STOCK_MANAGER)
+  findAllAdmin(@Query() query: FindProductsQueryDto) {
+    return this.productsService.findAll({
+      categoryId: query.categoryId,
+      search: query.search,
+      page: query.page,
+      limit: query.limit,
+      isFeatured: query.isFeatured,
+      includeInactive: true,
+    });
   }
 
   @Get(':id')
@@ -60,7 +84,7 @@ export class ProductsController {
     )
     file: Express.Multer.File,
   ) {
-    await this.productsService.findOne(id); // vérifie que le produit existe
+    await this.productsService.findOne(id);
 
     await this.storageService.deleteProductImages(id);
     const { imageUrl, thumbnailUrl } = await this.storageService.uploadProductImage(

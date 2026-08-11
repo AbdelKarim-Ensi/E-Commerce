@@ -11,6 +11,13 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderStatus, Role } from '@prisma/client';
 import { assertValidTransition } from './order-status.state-machine';
 
+const USER_SELECT = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+} as const;
+
 @Injectable()
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
@@ -99,7 +106,12 @@ export class OrdersService {
     const where = role === Role.CLIENT ? { userId } : {};
     return this.prisma.order.findMany({
       where,
-      include: { items: true },
+      include: {
+        items: true,
+        // Le client n'a pas besoin de voir ses propres infos utilisateur
+        // ré-attachées ; on inclut quand même pour garder une forme cohérente.
+        user: { select: USER_SELECT },
+      },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -107,7 +119,7 @@ export class OrdersService {
   async findOne(id: string, userId: string, role: Role) {
     const order = await this.prisma.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, user: { select: USER_SELECT } },
     });
 
     if (!order) throw new NotFoundException('Commande introuvable');
@@ -140,7 +152,7 @@ export class OrdersService {
       return tx.order.update({
         where: { id },
         data: { status: dto.status },
-        include: { items: true },
+        include: { items: true, user: { select: USER_SELECT } },
       });
     });
   }

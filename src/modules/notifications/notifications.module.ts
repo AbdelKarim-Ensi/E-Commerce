@@ -5,6 +5,8 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { NotificationsQueue } from './queues/notifications.queue';
 import { EmailProcessor } from './processors/email.processor';
 import { InvoiceProcessor } from './processors/invoice.processor';
+import { PasswordResetProcessor } from './processors/password-reset.processor';
+import { EmailVerificationProcessor } from './processors/email-verification.processor';
 
 @Module({
   imports: [
@@ -20,9 +22,20 @@ import { InvoiceProcessor } from './processors/invoice.processor';
         },
       }),
     }),
-    BullModule.registerQueue({ name: 'invoices' }, { name: 'emails' }),
+    BullModule.registerQueue(
+      { name: 'invoices' },
+      { name: 'emails' },
+      { name: 'password-reset' },
+      { name: 'email-verification' },
+    ),
   ],
-  providers: [NotificationsQueue, InvoiceProcessor, EmailProcessor],
+  providers: [
+    NotificationsQueue,
+    InvoiceProcessor,
+    EmailProcessor,
+    PasswordResetProcessor,
+    EmailVerificationProcessor,
+  ],
   exports: [NotificationsQueue],
 })
 export class NotificationsModule {}
