@@ -4,6 +4,9 @@ import { CartItem } from '@models/cartItem.model';
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
+openDrawer() {
+throw new Error('Method not implemented.');
+}
   private _items = signal<CartItem[]>([]);
   private _wishlist = signal<string[]>([]);
   private _isOpen = signal(false);

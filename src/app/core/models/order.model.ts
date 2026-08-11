@@ -11,9 +11,18 @@ export interface OrderItem {
   unitPrice: string;
 }
 
+export interface OrderUser {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+}
+
 export interface Order {
+  total: unknown;
   id: string;
   userId: string;
+  user?: OrderUser;
   status: OrderStatus;
   totalAmount: string;
   shippingAddress: string;

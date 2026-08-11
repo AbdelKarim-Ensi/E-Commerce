@@ -1,5 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs';
 import { Navbar } from './shared/navbar/navbar';
 import { Footer } from './shared/footer/footer';
 import { CartDrawer } from './shared/cart-drawer/cart-drawer';
@@ -17,19 +18,31 @@ import { Category } from '@models/category.model';
 export class App implements OnInit {
   protected readonly cartService = inject(CartService);
   private categoriesService = inject(CategoriesService);
+  private router = inject(Router);
 
   protected searchQuery = '';
   protected categories = signal<Category[]>([]);
 
+  // Vrai dès que l'URL courante commence par /admin.
+  // Navbar/Footer (boutique) n'ont rien à faire sur les pages admin,
+  // qui ont leur propre layout (AdminLayout, sidebar dédiée).
+  protected isAdminRoute = signal(this.router.url.startsWith('/admin'));
+
   ngOnInit() {
     this.categoriesService.getCategories().subscribe({
-      next: cats => this.categories.set(cats),
-      error: err => console.error('Erreur chargement catégories', err),
+      next: (cats) => this.categories.set(cats),
+      error: (err) => console.error('Erreur chargement catégories', err),
     });
+
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.isAdminRoute.set(event.urlAfterRedirects.startsWith('/admin'));
+      });
   }
 
   protected onSearch(query: string) {
     this.searchQuery = query;
-    // TODO: navigation vers /products?search=...
+    
   }
 }

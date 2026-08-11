@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { AdminOrders } from './admin-orders';
 
 describe('AdminOrders', () => {
@@ -8,13 +8,12 @@ describe('AdminOrders', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdminOrders]
-    })
-    .compileComponents();
+      imports: [AdminOrders, HttpClientTestingModule],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(AdminOrders);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
   it('should create', () => {

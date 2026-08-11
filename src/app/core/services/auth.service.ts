@@ -111,4 +111,23 @@ export class AuthService {
     const role = this.currentUser()?.role;
     return role === 'ADMIN' || role === 'STOCK_MANAGER';
   }
+
+  forgotPassword(email: string) {
+    return this.http.post<{ success: boolean; message: string }>(this.url + 'forgot-password', {
+      email,
+    });
+  }
+
+  resetPassword(token: string, newPassword: string) {
+    return this.http.post<{ success: boolean }>(this.url + 'reset-password', {
+      token,
+      newPassword,
+    });
+  }
+
+  verifyEmail(token: string) {
+    return this.http.post<{ success: boolean }>(this.url + 'verify-email', {
+      token,
+    });
+  }
 }

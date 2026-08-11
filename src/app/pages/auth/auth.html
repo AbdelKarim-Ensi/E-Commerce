@@ -66,6 +66,10 @@
             <p class="field-error">Password is required.</p>
           }
 
+          <a routerLink="/forgot-password" class="forgot-password-link">
+            Mot de passe oublié ?
+          </a>
+
           <button type="submit" class="btn solid" [disabled]="isLoading()">
             {{ isLoading() && !isSignUp ? 'Signing in…' : 'Login' }}
           </button>

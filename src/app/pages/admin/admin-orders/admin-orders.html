@@ -1,35 +1,235 @@
-<div class="p-8">
-  <h1 class="text-2xl font-bold text-slate-900">Commandes</h1>
-  <p class="mt-1 text-sm text-gray-500">Toutes les commandes clients.</p>
+<div>
+  <!-- Header -->
+  <header class="mb-8">
+    <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-orange-500">Administration</p>
+    <h1 class="text-2xl font-bold text-slate-900">Commandes</h1>
+    <p class="mt-1 text-sm text-slate-500">Suivez et gérez le statut des commandes.</p>
+  </header>
 
-  @if (loading()) {
-    <p class="mt-8 text-sm text-gray-500">Chargement...</p>
-  } @else if (orders().length === 0) {
-    <p class="mt-8 text-sm text-gray-500">Aucune commande pour le moment.</p>
-  } @else {
-    <div class="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white">
-      <table class="w-full text-left text-sm">
-        <thead class="border-b border-gray-200 bg-gray-50 text-xs uppercase text-gray-500">
-          <tr>
-            <th class="px-4 py-3">Commande</th>
-            <th class="px-4 py-3">Statut</th>
-            <th class="px-4 py-3">Total</th>
-            <th class="px-4 py-3">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (order of orders(); track order.id) {
-            <tr class="border-b border-gray-100 last:border-0">
-              <td class="px-4 py-3 font-medium text-slate-900">
-                #{{ order.id.slice(0, 8) }}
-              </td>
-              <td class="px-4 py-3">{{ order.status }}</td>
-              <td class="px-4 py-3">{{ parsePrice(order.totalAmount) | number: '1.2-2' }} DT</td>
-              <td class="px-4 py-3 text-gray-500">{{ order.createdAt | date: 'dd/MM/yyyy' }}</td>
+  <!-- Panel -->
+  <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+    <!-- Tabs -->
+    <div class="flex flex-wrap gap-1 border-b border-slate-200 p-3">
+      @for (tab of tabs; track tab.value) {
+        <button
+          type="button"
+          (click)="setFilter(tab.value)"
+          class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition"
+          [class.bg-slate-900]="statusFilter() === tab.value"
+          [class.text-white]="statusFilter() === tab.value"
+          [class.text-slate-600]="statusFilter() !== tab.value"
+          [class.hover:bg-slate-100]="statusFilter() !== tab.value"
+        >
+          {{ tab.label }}
+          <span
+            class="rounded-full px-1.5 py-0.5 text-[11px] font-semibold"
+            [class.bg-slate-700]="statusFilter() === tab.value"
+            [class.text-white]="statusFilter() === tab.value"
+            [class.bg-slate-100]="statusFilter() !== tab.value"
+            [class.text-slate-500]="statusFilter() !== tab.value"
+          >
+            {{ countFor(tab.value) }}
+          </span>
+        </button>
+      }
+    </div>
+
+    <!-- Table -->
+    @if (isLoading()) {
+      <p class="px-5 py-8 text-center text-sm text-slate-400">Chargement...</p>
+    } @else if (filteredOrders().length === 0) {
+      <div class="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
+        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13 5.4 5M7 13l-2.3 4.6A1 1 0 0 0 5.6 19H19M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm10 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+          </svg>
+        </span>
+        <p class="text-sm font-medium text-slate-900">Aucune commande</p>
+        <p class="text-sm text-slate-500">Aucune commande ne correspond à ce filtre.</p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
+              <th class="px-5 py-3 font-medium">Commande</th>
+              <th class="px-5 py-3 font-medium">Client</th>
+              <th class="px-5 py-3 font-medium">Articles</th>
+              <th class="px-5 py-3 font-medium">Total</th>
+              <th class="px-5 py-3 font-medium">Statut</th>
+              <th class="px-5 py-3 font-medium">Date</th>
+              <th class="px-5 py-3 font-medium"></th>
             </tr>
+          </thead>
+          <tbody>
+            @for (order of filteredOrders(); track order.id) {
+              <tr class="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50" (click)="openDrawer(order)">
+                <td class="px-5 py-3 font-medium text-slate-900">#{{ shortUserId(order.id) }}</td>
+                <td class="px-5 py-3">
+                  <p class="font-medium text-slate-700">{{ customerLabel(order) }}</p>
+                  @if (customerEmail(order)) {
+                    <p class="text-xs text-slate-400">{{ customerEmail(order) }}</p>
+                  }
+                </td>
+                <td class="px-5 py-3 text-slate-600">{{ order.items.length }}</td>
+                <td class="px-5 py-3 font-semibold text-slate-900">{{ formatPrice(order.totalAmount) }} €</td>
+                <td class="px-5 py-3">
+                  <span
+                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
+                    [class]="statusBadgeClasses(order.status)"
+                  >
+                    {{ statusLabels[order.status] }}
+                  </span>
+                </td>
+                <td class="px-5 py-3 text-slate-500">{{ formatDate(order.createdAt) }}</td>
+                <td class="px-5 py-3 text-right">
+                  <button
+                    type="button"
+                    (click)="openDrawer(order); $event.stopPropagation()"
+                    class="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                    aria-label="Voir le détail"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6" />
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <!-- Drawer de détail -->
+  @if (selectedOrder(); as order) {
+    <div class="fixed inset-0 z-40 flex justify-end">
+      <!-- Overlay -->
+      <div class="absolute inset-0 bg-slate-900/40" (click)="closeDrawer()"></div>
+
+      <!-- Panel -->
+      <div class="relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-white shadow-xl">
+        <div class="flex items-start justify-between border-b border-slate-200 p-5">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-orange-500">Commande</p>
+            <h2 class="text-lg font-bold text-slate-900">#{{ shortUserId(order.id) }}</h2>
+            <p class="mt-0.5 text-sm text-slate-500">{{ formatDate(order.createdAt) }}</p>
+          </div>
+          <button
+            type="button"
+            (click)="closeDrawer()"
+            aria-label="Fermer"
+            class="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex-1 space-y-6 p-5">
+          <!-- Erreur -->
+          @if (errorMessage()) {
+            <div class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-600/20">
+              {{ errorMessage() }}
+            </div>
           }
-        </tbody>
-      </table>
+
+          <!-- Stepper de statut -->
+          @if (order.status !== 'CANCELLED') {
+            <div>
+              <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Progression</p>
+              <div class="flex items-center">
+                @for (step of statusSteps; track step; let i = $index; let last = $last) {
+                  <div class="flex flex-1 items-center">
+                    <div class="flex flex-col items-center gap-1.5">
+                      <div
+                        class="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ring-2"
+                        [class.bg-slate-900]="stepIndex(order.status) >= i"
+                        [class.ring-slate-900]="stepIndex(order.status) >= i"
+                        [class.text-white]="stepIndex(order.status) >= i"
+                        [class.bg-white]="stepIndex(order.status) < i"
+                        [class.ring-slate-200]="stepIndex(order.status) < i"
+                        [class.text-slate-400]="stepIndex(order.status) < i"
+                      >
+                        {{ i + 1 }}
+                      </div>
+                      <span class="text-[10px] font-medium text-slate-500">{{ statusLabels[step] }}</span>
+                    </div>
+                    @if (!last) {
+                      <div
+                        class="mx-1 h-0.5 flex-1"
+                        [class.bg-slate-900]="stepIndex(order.status) > i"
+                        [class.bg-slate-200]="stepIndex(order.status) <= i"
+                      ></div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+              Cette commande a été annulée.
+            </div>
+          }
+
+          <!-- Changer le statut -->
+          @if (nextStatuses(order).length > 0) {
+            <div>
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Changer le statut</p>
+              <div class="flex flex-wrap gap-2">
+                @for (next of nextStatuses(order); track next) {
+                  <button
+                    type="button"
+                    [disabled]="isUpdatingStatus()"
+                    (click)="changeStatus(order, next)"
+                    class="rounded-lg border px-3 py-1.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+                    [class.border-red-200]="next === 'CANCELLED'"
+                    [class.text-red-600]="next === 'CANCELLED'"
+                    [class.hover:bg-red-50]="next === 'CANCELLED'"
+                    [class.border-slate-200]="next !== 'CANCELLED'"
+                    [class.text-slate-700]="next !== 'CANCELLED'"
+                    [class.hover:bg-slate-50]="next !== 'CANCELLED'"
+                  >
+                    Marquer comme {{ statusLabels[next] }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Adresse de livraison -->
+          <div>
+            <p class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Adresse de livraison</p>
+            <p class="text-sm text-slate-700">{{ order.shippingAddress }}</p>
+          </div>
+
+          <!-- Articles -->
+          <div>
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Articles ({{ order.items.length }})
+            </p>
+            <div class="divide-y divide-slate-100 rounded-lg border border-slate-200">
+              @for (item of order.items; track item.id) {
+                <div class="flex items-center justify-between px-3 py-2.5 text-sm">
+                  <div>
+                    <p class="font-medium text-slate-900">{{ item.product?.name ?? 'Produit supprimé' }}</p>
+                    <p class="text-xs text-slate-500">Qté : {{ item.quantity }}</p>
+                  </div>
+                  <p class="font-semibold text-slate-900">{{ formatPrice(item.unitPrice) }} €</p>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Total -->
+          <div class="flex items-center justify-between border-t border-slate-200 pt-4">
+            <span class="text-sm font-medium text-slate-600">Total</span>
+            <span class="text-lg font-bold text-slate-900">{{ formatPrice(order.totalAmount) }} €</span>
+          </div>
+        </div>
+      </div>
     </div>
   }
 </div>

@@ -109,7 +109,11 @@ export class Auth implements OnInit, OnDestroy {
 
     const { email, password, username } = this.signUpForm.getRawValue();
 
-    this.authService.register({ email, password, username }).subscribe({
+    // Le backend (RegisterDto) n'a pas de champ `username` — il attend
+    // `firstName`/`lastName`. On mappe la saisie du champ "username" sur
+    // `firstName` pour rester compatible avec le DTO whitelisté côté Nest,
+    // sans changer le formulaire ni le template.
+    this.authService.register({ email, password, firstName: username }).subscribe({
       next: () => {
         this.isLoading.set(false);
         this.successMessage.set('Account created! Please sign in.');

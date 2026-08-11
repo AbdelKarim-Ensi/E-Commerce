@@ -23,6 +23,7 @@ export class ProductsService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/products`;
 
+  /** Route publique : ne renvoie que les produits actifs (boutique). */
   getAll(params?: ProductQueryParams): Observable<PaginatedProducts> {
     let httpParams = new HttpParams();
     if (params?.categoryId) httpParams = httpParams.set('categoryId', params.categoryId);
@@ -31,6 +32,16 @@ export class ProductsService {
     if (params?.limit)      httpParams = httpParams.set('limit', params.limit);
 
     return this.http.get<PaginatedProducts>(this.baseUrl, { params: httpParams });
+  }
+
+  getAllAdmin(params?: ProductQueryParams): Observable<PaginatedProducts> {
+    let httpParams = new HttpParams();
+    if (params?.categoryId) httpParams = httpParams.set('categoryId', params.categoryId);
+    if (params?.search)     httpParams = httpParams.set('search', params.search);
+    if (params?.page)       httpParams = httpParams.set('page', params.page);
+    if (params?.limit)      httpParams = httpParams.set('limit', params.limit);
+
+    return this.http.get<PaginatedProducts>(`${this.baseUrl}/admin`, { params: httpParams });
   }
 
   getById(id: string): Observable<Product> {

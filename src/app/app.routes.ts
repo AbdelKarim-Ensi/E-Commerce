@@ -4,6 +4,9 @@ import { ProductList } from '@pages/product-list/product-list';
 import { Cart } from '@pages/cart/cart';
 import { Checkout } from '@pages/checkout/checkout';
 import { Auth } from '@pages/auth/auth';
+import { ForgotPassword } from '@pages/forgot-password/forgot-password';
+import { ResetPassword } from '@pages/reset-password/reset-password';
+import { VerifyEmail } from '@pages/verify-email/verify-email';
 import { OrderHistory } from '@pages/order-history/order-history';
 import { OrderConfirmation } from '@pages/order-confirmation/order-confirmation';
 import { EarbudShowcase } from '@pages/product-list/earbud-showcase/earbud-showcase';
@@ -14,6 +17,7 @@ import { NotFound } from '@pages/not-found/not-found';
 import { AdminLayout } from '@pages/admin/admin-layout/admin-layout';
 import { AdminDashboard } from '@pages/admin/admin-dashboard/admin-dashboard';
 import { AdminProducts } from '@pages/admin/admin-products/admin-products';
+import { AdminProductForm } from '@pages/admin/admin-product-form/admin-product-form';
 import { AdminOrders } from '@pages/admin/admin-orders/admin-orders';
 
 export const routes: Routes = [
@@ -53,6 +57,21 @@ export const routes: Routes = [
     title: 'TechGear — Inscription'
   },
   {
+    path: 'forgot-password',
+    component: ForgotPassword,
+    title: 'TechGear — Mot de passe oublié'
+  },
+  {
+    path: 'reset-password',
+    component: ResetPassword,
+    title: 'TechGear — Réinitialiser le mot de passe'
+  },
+  {
+    path: 'verify-email',
+    component: VerifyEmail,
+    title: 'TechGear — Vérification de l\'email'
+  },
+  {
     path: 'orders/:id',
     component: OrderConfirmation,
     title: 'TechGear — Confirmation de commande'
@@ -82,6 +101,17 @@ export const routes: Routes = [
         path: 'products',
         component: AdminProducts,
         title: 'TechGear — Admin Produits'
+      },
+      {
+       
+        path: 'products/new',
+        component: AdminProductForm,
+        title: 'TechGear — Ajouter un produit'
+      },
+      {
+        path: 'products/:id/edit',
+        component: AdminProductForm,
+        title: 'TechGear — Modifier le produit'
       },
       {
         path: 'orders',
