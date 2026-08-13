@@ -24,4 +24,8 @@ export class OrdersService {
   updateStatus(id: string, status: string): Observable<Order> {
     return this.http.patch<Order>(this.url + id + '/status', { status }, { withCredentials: true });
   }
+
+  refund(id: string): Observable<Order> {
+    return this.http.post<Order>(this.url + id + '/refund', {}, { withCredentials: true });
+  }
 }

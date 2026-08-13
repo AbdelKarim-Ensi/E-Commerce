@@ -4,9 +4,6 @@ import { CartItem } from '@models/cartItem.model';
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
-openDrawer() {
-throw new Error('Method not implemented.');
-}
   private _items = signal<CartItem[]>([]);
   private _wishlist = signal<string[]>([]);
   private _isOpen = signal(false);
@@ -67,18 +64,17 @@ throw new Error('Method not implemented.');
     this._items.update(items => items.filter(i => i.product.id !== productId));
   }
 
+  readonly wishlistCount = computed(() => this._wishlist().length);
 
-readonly wishlistCount = computed(() => this._wishlist().length);
+  toggleWishlist(id: string | number) {
+    const strId = String(id);
+    this._wishlist.update(wl =>
+      wl.includes(strId) ? wl.filter(x => x !== strId) : [...wl, strId]
+    );
+  }
 
-toggleWishlist(id: string | number) {
-  const strId = String(id);
-  this._wishlist.update(wl =>
-    wl.includes(strId) ? wl.filter(x => x !== strId) : [...wl, strId]
-  );
-}
-
-isWishlisted(id: string | number): boolean {
-  if (!id) return false;
-  return this._wishlist().includes(String(id));
-}
+  isWishlisted(id: string | number): boolean {
+    if (!id) return false;
+    return this._wishlist().includes(String(id));
+  }
 }

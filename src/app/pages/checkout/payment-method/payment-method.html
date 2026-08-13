@@ -33,62 +33,22 @@
 
   <!-- Credit card form -->
   @if (activeTab === 'card') {
-    <form [formGroup]="cardForm" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+    <form [formGroup]="cardholderForm" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
 
-      <!-- Card number -->
+      <!-- Stripe Card Element -->
       <div>
-        <label class="block text-sm font-medium text-zinc-700 mb-1.5">Card Number *</label>
-        <div class="relative">
-          <input
-            formControlName="cardNumber"
-            type="text" inputmode="numeric"
-            placeholder="1234 5678 9012 3456"
-            maxlength="19"
-            (input)="onCardNumberInput($event)"
-            class="form-input pr-14"
-            [class.input-error]="isInvalid('cardNumber')"
-          />
-          @if (cardBrand) {
-            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase
-                         text-zinc-500 bg-zinc-100 px-2 py-1 rounded">
-              {{ cardBrand }}
-            </span>
-          }
-        </div>
-        @if (isInvalid('cardNumber')) {
-          <p class="input-error-msg">{{ getError('cardNumber') }}</p>
+        <label class="block text-sm font-medium text-zinc-700 mb-1.5">Card Details *</label>
+          <div
+          id="stripe-card-element"
+          class="form-input"
+          [class.input-error]="stripeService.cardError()"
+        ></div>
+        @if (stripeService.cardError(); as cardErr) {
+          <p class="input-error-msg">{{ cardErr }}</p>
         }
-      </div>
-
-      <!-- Expiry + CVV -->
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-zinc-700 mb-1.5">Expiry Date *</label>
-          <input
-            formControlName="expiry"
-            type="text" inputmode="numeric"
-            placeholder="MM/YY" maxlength="5"
-            (input)="onExpiryInput($event)"
-            class="form-input"
-            [class.input-error]="isInvalid('expiry')"
-          />
-          @if (isInvalid('expiry')) {
-            <p class="input-error-msg">{{ getError('expiry') }}</p>
-          }
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-zinc-700 mb-1.5">CVV *</label>
-          <input
-            formControlName="cvv"
-            type="text" inputmode="numeric"
-            placeholder="123" maxlength="4"
-            class="form-input"
-            [class.input-error]="isInvalid('cvv')"
-          />
-          @if (isInvalid('cvv')) {
-            <p class="input-error-msg">{{ getError('cvv') }}</p>
-          }
-        </div>
+        @if (mountError) {
+          <p class="input-error-msg">{{ mountError }}</p>
+        }
       </div>
 
       <!-- Name on card -->
@@ -101,7 +61,7 @@
           [class.input-error]="isInvalid('nameOnCard')"
         />
         @if (isInvalid('nameOnCard')) {
-          <p class="input-error-msg">{{ getError('nameOnCard') }}</p>
+          <p class="input-error-msg">This field is required.</p>
         }
       </div>
 
@@ -131,8 +91,10 @@
           ← Back
         </button>
         <button type="submit"
+                [disabled]="submitted && !canSubmitCard"
                 class="flex-1 sm:flex-none px-8 py-3 bg-amber-500 text-white font-bold rounded-xl
-                       hover:bg-amber-600 transition-colors text-sm font-display shadow-sm shadow-amber-200">
+                       hover:bg-amber-600 transition-colors text-sm font-display shadow-sm shadow-amber-200
+                       disabled:opacity-50 disabled:cursor-not-allowed">
           Review Order →
         </button>
       </div>

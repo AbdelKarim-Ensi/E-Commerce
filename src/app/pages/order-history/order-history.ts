@@ -29,6 +29,13 @@ export class OrderHistory implements OnInit {
   loading = signal<boolean>(true);
   error = signal<string | null>(null);
 
+  // Suivi par commande : quelle carte est en confirmation, laquelle est
+  // en cours d'annulation, et l'éventuelle erreur associée à CETTE commande.
+  confirmingCancelId = signal<string | null>(null);
+  cancellingId = signal<string | null>(null);
+  cancelErrorId = signal<string | null>(null);
+  cancelErrorMessage = signal<string | null>(null);
+
   ngOnInit(): void {
     this.loadOrders();
   }
@@ -89,5 +96,41 @@ export class OrderHistory implements OnInit {
       default:
         return '';
     }
+  }
+
+  askCancelConfirmation(orderId: string, event: Event): void {
+    event.stopPropagation(); // évite de déclencher le routerLink de la carte
+    this.confirmingCancelId.set(orderId);
+    this.cancelErrorId.set(null);
+  }
+
+  dismissCancelConfirmation(event: Event): void {
+    event.stopPropagation();
+    this.confirmingCancelId.set(null);
+  }
+
+  confirmCancel(orderId: string, event: Event): void {
+    event.stopPropagation();
+
+    this.cancellingId.set(orderId);
+    this.cancelErrorId.set(null);
+
+    this.ordersService.refund(orderId).subscribe({
+      next: (updatedOrder) => {
+        this.orders.update((list) =>
+          list.map((o) => (o.id === orderId ? updatedOrder : o)),
+        );
+        this.cancellingId.set(null);
+        this.confirmingCancelId.set(null);
+      },
+      error: (err) => {
+        this.cancelErrorId.set(orderId);
+        this.cancelErrorMessage.set(
+          err?.error?.message ?? "Le remboursement a échoué. Veuillez réessayer.",
+        );
+        this.cancellingId.set(null);
+        this.confirmingCancelId.set(null);
+      },
+    });
   }
 }

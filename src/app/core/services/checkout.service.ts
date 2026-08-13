@@ -1,10 +1,11 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { Router } from '@angular/router';
-import { CartService } from './cart.service';
-import { OrdersService } from './orders.service';
-import { PaymentService } from './payment.service';
-import { ShippingOption, PaymentTab, CheckoutStep, ShippingAddress } from '../models/checkout.model';
+import { CartService } from '@services/cart.service';
+import { OrdersService } from '@services/orders.service';
+import { PaymentService } from '@services/payment.service';
+import { StripeService } from '@services/stripe.service';
+import { ShippingOption, PaymentTab, CheckoutStep, ShippingAddress, PaymentMethodSubmit } from '@models/checkout.model';
 
 export const SHIPPING_OPTIONS: ShippingOption[] = [
   { id: 'standard', label: 'Standard Delivery', description: '5-7 business days', price: 0 },
@@ -22,6 +23,7 @@ export class CheckoutService {
   private cartService = inject(CartService);
   private ordersService = inject(OrdersService);
   private paymentService = inject(PaymentService);
+  private stripeService = inject(StripeService);
   private router = inject(Router);
 
   readonly items = this.cartService.items;
@@ -36,6 +38,8 @@ export class CheckoutService {
   readonly mobileSummaryOpen = signal(false);
   readonly shippingAddress = signal<ShippingAddress | null>(null);
   readonly orderError = signal<string | null>(null);
+
+  private cardholderName = signal<string | null>(null);
 
   readonly subtotal = this.cartService.subtotal;
 
@@ -67,6 +71,13 @@ export class CheckoutService {
     this.nextStep();
   }
 
+  onPaymentSubmit(event: PaymentMethodSubmit | void) {
+    if (event) {
+      this.cardholderName.set(event.cardholderName);
+    }
+    this.nextStep();
+  }
+
   goToStep(s: CheckoutStep) { this.step.set(s); }
   nextStep() { if (this.step() < 3) this.step.update(s => (s + 1) as CheckoutStep); }
   prevStep() { if (this.step() > 1) this.step.update(s => (s - 1) as CheckoutStep); }
@@ -83,9 +94,19 @@ export class CheckoutService {
   }
 
   async placeOrder() {
+
+    if (this.isPlacingOrder()) {
+      return;
+    }
+
     const address = this.shippingAddress();
     if (!address) {
       this.orderError.set('Missing shipping address.');
+      return;
+    }
+
+    if (this.paymentTab() === 'card' && !this.cardholderName()) {
+      this.orderError.set('Missing card details. Please go back to the payment step.');
       return;
     }
 
@@ -103,11 +124,26 @@ export class CheckoutService {
         })
       );
 
-      await firstValueFrom(this.paymentService.createIntent(order.id));
+      if (this.paymentTab() === 'card') {
+        const intentResponse = await firstValueFrom(
+          this.paymentService.createIntent(order.id)
+        ) as { clientSecret: string; paymentIntentId: string };
 
+        const result = await this.stripeService.confirmCardPayment(intentResponse.clientSecret, {
+          name: this.cardholderName()!,
+        });
+
+        if (!result.success) {
+          this.orderError.set(result.message);
+          this.isPlacingOrder.set(false);
+          return;
+        }
+      }
+
+      this.stripeService.destroy();
       this.cartService.items().forEach(i => this.cartService.remove(i.product.id));
 
-      this.router.navigate(['/orders']);
+     this.router.navigate(['/orders', order.id]);
 
     } catch (err) {
       console.error('Erreur lors de la création de la commande', err);

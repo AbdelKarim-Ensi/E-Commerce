@@ -4,12 +4,6 @@ import { OrdersService } from '@services/orders.service';
 import { Order, OrderStatus } from '@models/order.model';
 
 type StatusFilter = 'ALL' | OrderStatus;
-
-/**
- * Miroir côté client de order-status.state-machine.ts (backend).
- * Sert uniquement à proposer les bons boutons dans l'UI — le backend
- * reste la seule source de vérité et revalidera via assertValidTransition().
- */
 const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['PAID', 'CANCELLED'],
   PAID: ['SHIPPED', 'CANCELLED'],
@@ -46,6 +40,9 @@ export class AdminOrders {
   isUpdatingStatus = signal(false);
   errorMessage = signal<string | null>(null);
 
+  // Confirmation dédiée au remboursement (action irréversible, argent réel)
+  confirmingRefund = signal(false);
+
   readonly statusSteps = STATUS_STEPS;
   readonly statusLabels = STATUS_LABELS;
 
@@ -81,7 +78,6 @@ export class AdminOrders {
         this.orders.set(orders ?? []);
         this.isLoading.set(false);
 
-        // Garde le drawer synchronisé si une commande ouverte a changé
         const current = this.selectedOrder();
         if (current) {
           const refreshed = orders.find((o) => o.id === current.id);
@@ -102,15 +98,34 @@ export class AdminOrders {
   openDrawer(order: Order) {
     this.selectedOrder.set(order);
     this.errorMessage.set(null);
+    this.confirmingRefund.set(false);
   }
 
   closeDrawer() {
     this.selectedOrder.set(null);
     this.errorMessage.set(null);
+    this.confirmingRefund.set(false);
   }
 
   nextStatuses(order: Order): OrderStatus[] {
     return ORDER_TRANSITIONS[order.status] ?? [];
+  }
+
+ 
+  isRefundAction(order: Order, newStatus: OrderStatus): boolean {
+    return order.status === 'PAID' && newStatus === 'CANCELLED';
+  }
+
+  onStatusButtonClick(order: Order, newStatus: OrderStatus) {
+    if (this.isRefundAction(order, newStatus)) {
+      this.confirmingRefund.set(true);
+      return;
+    }
+    this.changeStatus(order, newStatus);
+  }
+
+  dismissRefundConfirmation() {
+    this.confirmingRefund.set(false);
   }
 
   changeStatus(order: Order, newStatus: OrderStatus) {
@@ -125,6 +140,26 @@ export class AdminOrders {
       error: () => {
         this.isUpdatingStatus.set(false);
         this.errorMessage.set('Impossible de changer le statut de cette commande.');
+      },
+    });
+  }
+
+  confirmRefund(order: Order) {
+    this.isUpdatingStatus.set(true);
+    this.errorMessage.set(null);
+
+    this.ordersService.refund(order.id).subscribe({
+      next: () => {
+        this.isUpdatingStatus.set(false);
+        this.confirmingRefund.set(false);
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.isUpdatingStatus.set(false);
+        this.confirmingRefund.set(false);
+        this.errorMessage.set(
+          err?.error?.message ?? 'Le remboursement a échoué. Veuillez réessayer.',
+        );
       },
     });
   }

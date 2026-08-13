@@ -42,10 +42,10 @@ export const routes: Routes = [
     title: 'TechGear — Panier'
   },
   {
-    path: 'checkout',
-    component: Checkout,
-    title: 'TechGear — Commande'
-  },
+  path: 'checkout',
+  component: Checkout,
+  title: 'TechGear — Commande'
+},
   {
     path: 'login',
     component: Auth,

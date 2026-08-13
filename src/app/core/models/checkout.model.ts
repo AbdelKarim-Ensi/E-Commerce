@@ -20,3 +20,8 @@ export interface ShippingAddress {
   country: string;
   saveAddress: boolean;
 }
+
+/** Payload émis par PaymentMethod à l'étape 2 du checkout (onglet carte uniquement). */
+export interface PaymentMethodSubmit {
+  cardholderName: string;
+}

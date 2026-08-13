@@ -16,24 +16,34 @@
       <!-- Left: Form column -->
       <div class="flex-1 min-w-0 space-y-6">
 
-        @if (checkout.step() === 1) {
-          <app-shipping-address-form (next)="onShippingSubmit($event)" />
-          <app-shipping-method
-            [selected]="checkout.selectedShipping()"
-            (select)="checkout.selectedShipping.set($event)"
-          />
-        }
+        <!--
+          [hidden] au lieu de @if : les 3 étapes restent montées dans le DOM
+          pendant toute la session de checkout. C'est nécessaire pour l'étape 2
+          (paiement) car l'élément carte Stripe est monté une seule fois dans
+          <app-payment-method> et doit rester en vie jusqu'à ce que l'étape 3
+          appelle stripeService.confirmCardPayment() — un @if aurait détruit
+          le composant (et l'élément Stripe avec) dès le passage à l'étape 3.
+        -->
+        <div [hidden]="checkout.step() !== 1">
+          <div class="space-y-6">
+            <app-shipping-address-form (next)="onShippingSubmit($event)" />
+            <app-shipping-method
+              [selected]="checkout.selectedShipping()"
+              (select)="checkout.selectedShipping.set($event)"
+            />
+          </div>
+        </div>
 
-        @if (checkout.step() === 2) {
+        <div [hidden]="checkout.step() !== 2">
           <app-payment-method
             [activeTab]="checkout.paymentTab()"
             (tabChange)="checkout.paymentTab.set($event)"
             (back)="checkout.prevStep()"
-            (next)="checkout.nextStep()"
+            (next)="checkout.onPaymentSubmit($event)"
           />
-        }
+        </div>
 
-        @if (checkout.step() === 3) {
+        <div [hidden]="checkout.step() !== 3">
           <div class="bg-white rounded-2xl border border-zinc-200/70 p-6 space-y-4"
                style="box-shadow: 0 2px 12px rgba(0,0,0,0.05)">
             <h2 class="text-lg font-bold text-zinc-900 font-display">Review Your Order</h2>
@@ -67,7 +77,7 @@
               >← Edit Payment</button>
             </div>
           </div>
-        }
+        </div>
       </div>
 
       <!-- Right: Order summary (sticky) -->

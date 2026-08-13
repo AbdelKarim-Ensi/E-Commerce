@@ -33,6 +33,7 @@
     "@angular/platform-server": "^21.1.0",
     "@angular/router": "^21.1.0",
     "@angular/ssr": "^21.1.2",
+    "@stripe/stripe-js": "^9.13.0",
     "@tailwindcss/postcss": "^4.3.3",
     "express": "^5.1.0",
     "lucide-angular": "^1.0.0",

@@ -9,7 +9,6 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6">
     <div class="flex items-center gap-4 h-16">
       
-      <!-- Logo -->
       <a routerLink="/" class="flex items-center gap-2 flex-shrink-0 cursor-pointer">
         <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center">
           <span class="text-white font-bold text-sm font-display">T</span>
@@ -19,7 +18,6 @@
         </span>
       </a>
 
-      <!-- Category dropdown -->
       <div class="relative hidden md:block" #dropRef>
         <button
           type="button"
@@ -52,7 +50,6 @@
         }
       </div>
 
-      <!-- Search -->
       <div class="flex-1 max-w-xl">
         <div class="relative">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,10 +65,8 @@
         </div>
       </div>
 
-      <!-- Right icons -->
       <div class="flex items-center gap-1">
         
-        <!-- Wishlist Button (Icône TOUJOURS NEUTRE gris, seul le badge ambre réagit) -->
         <button 
           type="button" 
           [routerLink]="['/products']"
@@ -95,7 +90,6 @@
           }
         </button>
 
-        <!-- User Menu -->
         <div
           class="relative hidden sm:block"
           (mouseenter)="onUserMenuMouseEnter()"
@@ -126,6 +120,17 @@
 
               <div class="p-2">
                 @if (isLoggedIn) {
+                  <a
+                    routerLink="/orders"
+                    role="menuitem"
+                    (click)="closeUserMenu()"
+                    class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                  >
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 7h6m-6 4h6" />
+                    </svg>
+                    My Orders
+                  </a>
                   <button
                     type="button"
                     role="menuitem"
@@ -183,7 +188,6 @@
           }
         </div>
 
-        <!-- Cart Button -->
         <button
           type="button"
           (click)="onCartOpen()"
