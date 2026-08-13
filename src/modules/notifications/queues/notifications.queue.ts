@@ -10,6 +10,7 @@ export class NotificationsQueue {
     @InjectQueue('invoices') private readonly invoicesQueue: Queue,
     @InjectQueue('password-reset') private readonly passwordResetQueue: Queue,
     @InjectQueue('email-verification') private readonly emailVerificationQueue: Queue,
+    @InjectQueue('order-cancelled') private readonly orderCancelledQueue: Queue,
   ) {}
 
   async enqueueOrderConfirmation(orderId: string) {
@@ -52,5 +53,24 @@ export class NotificationsQueue {
       },
     );
     this.logger.log(`Job 'send-email-verification' enfilé pour ${email}`);
+  }
+
+  async enqueueOrderCancelled(
+    email: string,
+    orderId: string,
+    totalAmount: number,
+    refunded: boolean,
+  ) {
+    await this.orderCancelledQueue.add(
+      'send-order-cancelled',
+      { email, orderId, totalAmount, refunded },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+    this.logger.log(`Job 'send-order-cancelled' enfilé pour la commande ${orderId}`);
   }
 }

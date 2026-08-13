@@ -7,6 +7,7 @@ import { EmailProcessor } from './processors/email.processor';
 import { InvoiceProcessor } from './processors/invoice.processor';
 import { PasswordResetProcessor } from './processors/password-reset.processor';
 import { EmailVerificationProcessor } from './processors/email-verification.processor';
+import { OrderCancelledProcessor } from './processors/order-cancelled.processor';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { EmailVerificationProcessor } from './processors/email-verification.proc
       { name: 'emails' },
       { name: 'password-reset' },
       { name: 'email-verification' },
+      { name: 'order-cancelled' },
     ),
   ],
   providers: [
@@ -35,6 +37,7 @@ import { EmailVerificationProcessor } from './processors/email-verification.proc
     EmailProcessor,
     PasswordResetProcessor,
     EmailVerificationProcessor,
+    OrderCancelledProcessor,
   ],
   exports: [NotificationsQueue],
 })

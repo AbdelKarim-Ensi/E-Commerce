@@ -65,6 +65,31 @@ export class PaymentService {
     };
   }
 
+  /**
+   * Crée un remboursement Stripe pour un PaymentIntent déjà capturé.
+   * Ne touche ni au stock ni au statut de la commande — c'est le rôle
+   * d'OrdersService, qui appelle cette méthode puis gère la restitution
+   * de stock et la transition de statut dans sa propre transaction.
+   */
+  async refundPayment(paymentIntentId: string) {
+    try {
+      const refund = await this.stripe.refunds.create({
+        payment_intent: paymentIntentId,
+      });
+      this.logger.log(
+        `Remboursement ${refund.id} créé pour PaymentIntent ${paymentIntentId} (statut Stripe : ${refund.status})`,
+      );
+      return refund;
+    } catch (err) {
+      this.logger.error(
+        `Échec du remboursement pour PaymentIntent ${paymentIntentId}: ${(err as Error).message}`,
+      );
+      throw new BadRequestException(
+        'Le remboursement a échoué côté Stripe. Aucune modification appliquée à la commande.',
+      );
+    }
+  }
+
   async handleWebhookEvent(rawBody: Buffer, signature: string) {
     let event: Stripe.Event;
 
@@ -156,7 +181,7 @@ export class PaymentService {
       data: { status: OrderStatus.PAID },
     });
     this.logger.log(`Commande ${orderId} marquée PAID`);
-await this.notificationsQueue.enqueueOrderConfirmation(orderId)
+    await this.notificationsQueue.enqueueOrderConfirmation(orderId);
 
     
   }

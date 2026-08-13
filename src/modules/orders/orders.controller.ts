@@ -50,4 +50,12 @@ export class OrdersController {
   updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderDto) {
     return this.ordersService.updateStatus(id, dto);
   }
+
+  // Pas de @Roles ici volontairement : un CLIENT doit pouvoir rembourser sa
+  // propre commande. Le contrôle d'accès fin (propriétaire vs admin) est
+  // fait dans OrdersService.refundOrder(), pas au niveau du guard.
+  @Post(':id/refund')
+  refund(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
+    return this.ordersService.refundOrder(id, user);
+  }
 }
