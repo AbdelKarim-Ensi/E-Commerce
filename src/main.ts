@@ -49,5 +49,6 @@ const app = await NestFactory.create(AppModule, { rawBody: true });  const confi
 
   const port = config.get<number>('PORT') ?? 3000;
   await app.listen(port);
+console.log(`🚀 Server running on http://localhost:${port}`);
 }
 bootstrap();

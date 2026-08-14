@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
@@ -36,8 +37,17 @@ export class OrdersController {
   }
 
   @Get()
-  findAll(@CurrentUser() user: AuthenticatedUser) {
-    return this.ordersService.findAll(user.userId, user.role);
+  findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.ordersService.findAll(
+      user.userId,
+      user.role,
+      page ? parseInt(page, 10) : undefined,
+      limit ? parseInt(limit, 10) : undefined,
+    );
   }
 
   @Get(':id')
@@ -51,9 +61,7 @@ export class OrdersController {
     return this.ordersService.updateStatus(id, dto);
   }
 
-  // Pas de @Roles ici volontairement : un CLIENT doit pouvoir rembourser sa
-  // propre commande. Le contrôle d'accès fin (propriétaire vs admin) est
-  // fait dans OrdersService.refundOrder(), pas au niveau du guard.
+  
   @Post(':id/refund')
   refund(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.ordersService.refundOrder(id, user);

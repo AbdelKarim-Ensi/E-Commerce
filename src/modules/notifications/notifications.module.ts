@@ -8,6 +8,7 @@ import { InvoiceProcessor } from './processors/invoice.processor';
 import { PasswordResetProcessor } from './processors/password-reset.processor';
 import { EmailVerificationProcessor } from './processors/email-verification.processor';
 import { OrderCancelledProcessor } from './processors/order-cancelled.processor';
+import { NewsletterProcessor } from './processors/newsletter.processor';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { OrderCancelledProcessor } from './processors/order-cancelled.processor'
       { name: 'password-reset' },
       { name: 'email-verification' },
       { name: 'order-cancelled' },
+      { name: 'newsletter' },
     ),
   ],
   providers: [
@@ -38,6 +40,7 @@ import { OrderCancelledProcessor } from './processors/order-cancelled.processor'
     PasswordResetProcessor,
     EmailVerificationProcessor,
     OrderCancelledProcessor,
+    NewsletterProcessor,
   ],
   exports: [NotificationsQueue],
 })

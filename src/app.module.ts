@@ -21,7 +21,9 @@ import { PaymentModule } from './modules/payment/payment.module';
 
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
-
+import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { CouponsModule } from './modules/coupons/coupons.module';
+import { NewsletterModule } from './modules/newsletter/newsletter.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -50,6 +52,9 @@ import { UsersModule } from './modules/users/users.module';
     PaymentModule,
     UploadsModule,
     UsersModule,
+    WishlistModule,
+    CouponsModule,
+    NewsletterModule,
   ],
   controllers: [AppController],
   providers: [AppService],

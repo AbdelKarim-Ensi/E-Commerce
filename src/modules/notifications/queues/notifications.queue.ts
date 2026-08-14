@@ -11,6 +11,7 @@ export class NotificationsQueue {
     @InjectQueue('password-reset') private readonly passwordResetQueue: Queue,
     @InjectQueue('email-verification') private readonly emailVerificationQueue: Queue,
     @InjectQueue('order-cancelled') private readonly orderCancelledQueue: Queue,
+    @InjectQueue('newsletter') private readonly newsletterQueue: Queue,
   ) {}
 
   async enqueueOrderConfirmation(orderId: string) {
@@ -72,5 +73,28 @@ export class NotificationsQueue {
       },
     );
     this.logger.log(`Job 'send-order-cancelled' enfilé pour la commande ${orderId}`);
+  }
+
+  /**
+   * Enfile UN job d'envoi par abonné. Permet retry individuel sans
+   * bloquer les autres si un envoi échoue (email invalide, etc.).
+   */
+  async enqueueNewsletterEmail(
+    email: string,
+    subject: string,
+    message: string,
+    ctaLink?: string,
+    ctaText?: string,
+  ) {
+    await this.newsletterQueue.add(
+      'send-newsletter',
+      { email, subject, message, ctaLink, ctaText },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
   }
 }

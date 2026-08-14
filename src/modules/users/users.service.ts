@@ -1,10 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
+import { Role } from '@prisma/client';
 
 const SALT_ROUNDS = 12;
+
+const USER_LIST_SELECT = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  role: true,
+  createdAt: true,
+} as const;
 
 @Injectable()
 export class UsersService {
@@ -60,5 +71,54 @@ export class UsersService {
     });
 
     return { success: true };
+  }
+
+  /**
+   * Liste paginée des utilisateurs, réservée aux ADMIN (vérifié au niveau
+   * du controller via @Roles). Ne retourne jamais passwordHash.
+   */
+  async findAll(page = 1, limit = 20) {
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(Math.max(1, limit), 100);
+    const skip = (safePage - 1) * safeLimit;
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.user.findMany({
+        select: USER_LIST_SELECT,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: safeLimit,
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return {
+      data,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.ceil(total / safeLimit),
+    };
+  }
+
+  /**
+   * Change le rôle d'un utilisateur. Un ADMIN ne peut pas modifier son
+   * propre rôle par cette route — évite qu'un admin se rétrograde par
+   * erreur et se retrouve bloqué hors de l'admin sans personne d'autre
+   * pour l'y remettre.
+   */
+  async updateRole(targetUserId: string, currentUserId: string, dto: UpdateUserRoleDto) {
+    if (targetUserId === currentUserId) {
+      throw new ForbiddenException('Vous ne pouvez pas modifier votre propre rôle');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!user) throw new NotFoundException('Utilisateur introuvable');
+
+    return this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { role: dto.role },
+      select: USER_LIST_SELECT,
+    });
   }
 }

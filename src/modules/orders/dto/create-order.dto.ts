@@ -5,6 +5,7 @@ import {
   IsInt,
   IsUUID,
   IsString,
+  IsOptional,
   MinLength,
   Min,
   ValidateNested,
@@ -29,4 +30,8 @@ export class CreateOrderDto {
   @IsString()
   @MinLength(5)
   shippingAddress!: string;
+
+  @IsOptional()
+  @IsString()
+  couponCode?: string;
 }

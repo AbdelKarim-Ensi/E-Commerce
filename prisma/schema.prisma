@@ -36,6 +36,7 @@ model User {
 
   orders        Order[]
   refreshTokens RefreshToken[]
+  wishlistItems WishlistItem[]
 
   @@index([email])
 }
@@ -55,6 +56,19 @@ model RefreshToken {
   revoked   Boolean  @default(false)
   createdAt DateTime @default(now())
 
+  @@index([userId])
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId]) // empêche les doublons
   @@index([userId])
 }
 
@@ -78,8 +92,8 @@ model Product {
   isActive        Boolean  @default(true)
   isFeatured      Boolean  @default(false)
   brand           String?
-  rating          Float?         // ← AJOUT
-  reviewsCount    Int?           // ← AJOUT
+  rating          Float? // ← AJOUT
+  reviewsCount    Int? // ← AJOUT
   attributes      Json?
   imageUrl        String?
   thumbnailUrl    String?
@@ -88,17 +102,46 @@ model Product {
   category        Category @relation(fields: [categoryId], references: [id])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
- 
-  specDetails     Json?
-  colors          Json?
- 
 
-  orderItems OrderItem[]
+  specDetails Json?
+  colors      Json?
+
+  orderItems    OrderItem[]
+  wishlistItems WishlistItem[]
 
   @@index([categoryId])
   @@index([isActive])
   @@index([isFeatured])
   @@index([brand])
+}
+
+model NewsletterSubscriber {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  isActive     Boolean  @default(true)
+  subscribedAt DateTime @default(now())
+
+  @@index([email])
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+model Coupon {
+  id            String       @id @default(cuid())
+  code          String       @unique
+  type          DiscountType
+  value         Float // ex: 10 (=10%) ou 15.00 (=15 unités monétaires)
+  minOrderValue Float? // montant minimum du panier pour appliquer
+  maxUses       Int? // null = illimité
+  usedCount     Int          @default(0)
+  expiresAt     DateTime?
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  orders Order[]
 }
 
 model Order {
@@ -111,12 +154,16 @@ model Order {
   stripePaymentIntentId String?     @unique
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
+  couponId              String?
+  coupon                Coupon?     @relation(fields: [couponId], references: [id])
+  discountAmount        Float       @default(0)
 
   items OrderItem[]
 
   @@index([userId])
   @@index([status])
 }
+
 model OrderItem {
   id        String  @id @default(uuid())
   orderId   String

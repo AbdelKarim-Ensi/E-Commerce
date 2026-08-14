@@ -66,7 +66,6 @@ export class OrdersService {
         for (const item of dto.items) {
           const product = products.find((p) => p.id === item.productId)!;
 
-          // Décrément atomique — condition vérifiée directement par Postgres
           const updateResult = await tx.product.updateMany({
             where: {
               id: item.productId,
@@ -89,20 +88,62 @@ export class OrdersService {
           orderItemsData.push({
             productId: item.productId,
             quantity: item.quantity,
-            unitPrice, // prix figé au moment T
+            unitPrice,
           });
         }
 
+       
+        let couponId: string | undefined;
+        let discountAmount = 0;
+
+        if (dto.couponCode) {
+          const coupon = await tx.coupon.findUnique({
+            where: { code: dto.couponCode.toUpperCase() },
+          });
+
+          if (!coupon || !coupon.isActive) {
+            throw new BadRequestException('Coupon invalide');
+          }
+          if (coupon.expiresAt && coupon.expiresAt < new Date()) {
+            throw new BadRequestException('Coupon expiré');
+          }
+          if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) {
+            throw new BadRequestException('Coupon épuisé');
+          }
+          if (coupon.minOrderValue && totalAmount < coupon.minOrderValue) {
+            throw new BadRequestException(
+              `Montant minimum requis : ${coupon.minOrderValue}`,
+            );
+          }
+
+          const rawDiscount =
+            coupon.type === 'PERCENTAGE'
+              ? totalAmount * (coupon.value / 100)
+              : coupon.value;
+          discountAmount = Math.min(rawDiscount, totalAmount);
+          couponId = coupon.id;
+
+          
+          await tx.coupon.update({
+            where: { id: coupon.id },
+            data: { usedCount: { increment: 1 } },
+          });
+        }
+
+        const finalAmount = totalAmount - discountAmount;
+
         const order = await tx.order.create({
-        data: {
-          userId,
-          status: OrderStatus.PENDING,
-          totalAmount,
-          shippingAddress: dto.shippingAddress,
-          items: { create: orderItemsData },
-        },
-        include: { items: true },
-      });
+          data: {
+            userId,
+            status: OrderStatus.PENDING,
+            totalAmount: finalAmount,
+            shippingAddress: dto.shippingAddress,
+            couponId,
+            discountAmount,
+            items: { create: orderItemsData },
+          },
+          include: { items: true },
+        });
 
         return order;
       },
@@ -113,35 +154,54 @@ export class OrdersService {
     );
   }
 
-async findAll(userId: string, role: Role) {
-  const where = role === Role.CLIENT ? { userId } : {};
-  return this.prisma.order.findMany({
-    where,
-    include: {
-      items: { include: { product: true } },
-      user: { select: USER_SELECT },
-    },
-    orderBy: { createdAt: 'desc' },
-  });
-}
+ 
+  async findAll(userId: string, role: Role, page = 1, limit = 20) {
+    const where = role === Role.CLIENT ? { userId } : {};
 
-async findOne(id: string, userId: string, role: Role) {
-  const order = await this.prisma.order.findUnique({
-    where: { id },
-    include: {
-      items: { include: { product: true } },
-      user: { select: USER_SELECT },
-    },
-  });
+    const safePage = Math.max(1, page);
+    const safeLimit = Math.min(Math.max(1, limit), 100); // borne haute anti-abus
+    const skip = (safePage - 1) * safeLimit;
 
-  if (!order) throw new NotFoundException('Commande introuvable');
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.order.findMany({
+        where,
+        include: {
+          items: { include: { product: true } },
+          user: { select: USER_SELECT },
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: safeLimit,
+      }),
+      this.prisma.order.count({ where }),
+    ]);
 
-  if (role === Role.CLIENT && order.userId !== userId) {
-    throw new ForbiddenException('Accès refusé à cette commande');
+    return {
+      data,
+      total,
+      page: safePage,
+      limit: safeLimit,
+      totalPages: Math.ceil(total / safeLimit),
+    };
   }
 
-  return order;
-}
+  async findOne(id: string, userId: string, role: Role) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: { include: { product: true } },
+        user: { select: USER_SELECT },
+      },
+    });
+
+    if (!order) throw new NotFoundException('Commande introuvable');
+
+    if (role === Role.CLIENT && order.userId !== userId) {
+      throw new ForbiddenException('Accès refusé à cette commande');
+    }
+
+    return order;
+  }
 
   async updateStatus(id: string, dto: UpdateOrderDto) {
     const updatedOrder = await this.prisma.$transaction(async (tx) => {
@@ -168,7 +228,6 @@ async findOne(id: string, userId: string, role: Role) {
       });
     });
 
-    
     if (dto.status === OrderStatus.CANCELLED) {
       await this.notificationsQueue.enqueueOrderCancelled(
         updatedOrder.user.email,
@@ -181,7 +240,7 @@ async findOne(id: string, userId: string, role: Role) {
     return updatedOrder;
   }
 
- 
+  
   async refundOrder(id: string, currentUser: AuthenticatedUser) {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new NotFoundException('Commande introuvable');
@@ -202,7 +261,6 @@ async findOne(id: string, userId: string, role: Role) {
       );
     }
 
-    
     assertValidTransition(order.status, OrderStatus.CANCELLED);
 
     await this.paymentService.refundPayment(order.stripePaymentIntentId);
