@@ -41,20 +41,20 @@ export class OrderHistory implements OnInit {
   }
 
   loadOrders(): void {
-    this.loading.set(true);
-    this.error.set(null);
+  this.loading.set(true);
+  this.error.set(null);
 
-    this.ordersService.getAll().subscribe({
-      next: (orders) => {
-        this.orders.set(orders);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.error.set('Impossible de charger vos commandes. Veuillez réessayer.');
-        this.loading.set(false);
-      },
-    });
-  }
+  this.ordersService.getAll().subscribe({
+    next: (result) => {
+      this.orders.set(result.data);
+      this.loading.set(false);
+    },
+    error: () => {
+      this.error.set('Impossible de charger vos commandes. Veuillez réessayer.');
+      this.loading.set(false);
+    },
+  });
+}
 
   parsePrice(value: string): number {
     return parseFloat(value) ?? 0;

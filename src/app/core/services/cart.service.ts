@@ -1,9 +1,12 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { Product } from '@models/product.model';
 import { CartItem } from '@models/cartItem.model';
+import { WishlistApiService } from './wishlist.service';
 
 @Injectable({ providedIn: 'root' })
 export class CartService {
+  private wishlistApi = inject(WishlistApiService);
+
   private _items = signal<CartItem[]>([]);
   private _wishlist = signal<string[]>([]);
   private _isOpen = signal(false);
@@ -66,11 +69,45 @@ export class CartService {
 
   readonly wishlistCount = computed(() => this._wishlist().length);
 
+  /**
+   * Charge la wishlist depuis le backend. À appeler après une connexion
+   * réussie (login, refresh, ou vérif de session SSR).
+   */
+  loadWishlist() {
+    this.wishlistApi.getWishlist().subscribe({
+      next: (products) => {
+        this._wishlist.set(products.map(p => String(p.id)));
+      },
+      error: (err) => console.error('Erreur chargement wishlist', err),
+    });
+  }
+
+  /**
+   * Vide la wishlist locale. À appeler à la déconnexion pour éviter
+   * qu'un autre utilisateur voie les favoris du précédent.
+   */
+  clearWishlist() {
+    this._wishlist.set([]);
+  }
+
   toggleWishlist(id: string | number) {
     const strId = String(id);
+
+    // Optimistic update : l'UI réagit immédiatement
     this._wishlist.update(wl =>
       wl.includes(strId) ? wl.filter(x => x !== strId) : [...wl, strId]
     );
+
+    // Synchronisation avec le backend
+    this.wishlistApi.toggle(strId).subscribe({
+      error: (err) => {
+        console.error('Erreur toggle wishlist', err);
+        // Rollback si l'appel échoue
+        this._wishlist.update(wl =>
+          wl.includes(strId) ? wl.filter(x => x !== strId) : [...wl, strId]
+        );
+      },
+    });
   }
 
   isWishlisted(id: string | number): boolean {

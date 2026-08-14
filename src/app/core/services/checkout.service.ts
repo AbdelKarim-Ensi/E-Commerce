@@ -5,6 +5,7 @@ import { CartService } from '@services/cart.service';
 import { OrdersService } from '@services/orders.service';
 import { PaymentService } from '@services/payment.service';
 import { StripeService } from '@services/stripe.service';
+import { CouponsService } from '@services/coupons.service';
 import { ShippingOption, PaymentTab, CheckoutStep, ShippingAddress, PaymentMethodSubmit } from '@models/checkout.model';
 
 export const SHIPPING_OPTIONS: ShippingOption[] = [
@@ -13,17 +14,13 @@ export const SHIPPING_OPTIONS: ShippingOption[] = [
   { id: 'nextday',  label: 'Next Day Delivery', description: 'Arrives tomorrow',  price: 24.99 },
 ];
 
-const VALID_PROMOS: Record<string, number> = {
-  TECH20: 0.20,
-  GEAR10: 0.10,
-};
-
 @Injectable({ providedIn: 'root' })
 export class CheckoutService {
   private cartService = inject(CartService);
   private ordersService = inject(OrdersService);
   private paymentService = inject(PaymentService);
   private stripeService = inject(StripeService);
+  private couponsService = inject(CouponsService);
   private router = inject(Router);
 
   readonly items = this.cartService.items;
@@ -32,20 +29,20 @@ export class CheckoutService {
   readonly selectedShipping = signal<ShippingOption>(SHIPPING_OPTIONS[0]);
   readonly paymentTab = signal<PaymentTab>('card');
   readonly promoCode = signal('');
-  readonly promoDiscount = signal(0);
+  readonly promoDiscount = signal(0); // montant fixe en devise, renvoyé par le backend
   readonly promoStatus = signal<'idle' | 'valid' | 'invalid' | 'empty'>('idle');
+  readonly isApplyingPromo = signal(false);
   readonly isPlacingOrder = signal(false);
   readonly mobileSummaryOpen = signal(false);
   readonly shippingAddress = signal<ShippingAddress | null>(null);
   readonly orderError = signal<string | null>(null);
 
+  private appliedCouponCode = signal<string | null>(null);
   private cardholderName = signal<string | null>(null);
 
   readonly subtotal = this.cartService.subtotal;
 
-  readonly promoSavings = computed(() =>
-    Math.round(this.subtotal() * this.promoDiscount() * 100) / 100
-  );
+  readonly promoSavings = computed(() => this.promoDiscount());
   readonly shippingCost = computed(() => this.selectedShipping().price);
   readonly tax = computed(() =>
     Math.round((this.subtotal() - this.promoSavings()) * 0.085 * 100) / 100
@@ -54,15 +51,28 @@ export class CheckoutService {
     this.subtotal() - this.promoSavings() + this.shippingCost() + this.tax()
   );
 
-  applyPromo(code: string) {
-    if (!code.trim()) { this.promoStatus.set('empty'); return; }
-    const rate = VALID_PROMOS[code.trim().toUpperCase()];
-    if (rate) {
-      this.promoDiscount.set(rate);
+  async applyPromo(code: string) {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      this.promoStatus.set('empty');
+      return;
+    }
+
+    this.isApplyingPromo.set(true);
+
+    try {
+      const result = await firstValueFrom(
+        this.couponsService.validate(trimmed.toUpperCase(), this.subtotal())
+      );
+      this.promoDiscount.set(result.discountAmount);
+      this.appliedCouponCode.set(result.code);
       this.promoStatus.set('valid');
-    } else {
+    } catch (err) {
       this.promoDiscount.set(0);
+      this.appliedCouponCode.set(null);
       this.promoStatus.set('invalid');
+    } finally {
+      this.isApplyingPromo.set(false);
     }
   }
 
@@ -121,6 +131,7 @@ export class CheckoutService {
             quantity: i.quantity,
           })),
           shippingAddress: this.formatShippingAddress(address),
+          ...(this.appliedCouponCode() ? { couponCode: this.appliedCouponCode()! } : {}),
         })
       );
 

@@ -34,9 +34,14 @@ export class AdminDashboard {
       error: () => this.productsCount.set(0),
     });
 
-    this.ordersService.getAll().subscribe({
-      next: (orders) => {
-        this.ordersCount.set(orders.length);
+    // limit=100 pour avoir un échantillon représentatif du calcul de revenu
+    // et du top 5 récent — le vrai total vient de result.total, pas de la
+    // taille du tableau reçu (qui n'est qu'une page, plafonnée à 100 max
+    // côté backend).
+    this.ordersService.getAll(1, 100).subscribe({
+      next: (result) => {
+        const orders = result.data;
+        this.ordersCount.set(result.total);
         this.recentOrders.set(
           [...orders]
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

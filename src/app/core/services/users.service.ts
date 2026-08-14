@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User } from '@models/user.model';
+import { User, Role, PaginatedUsers } from '@models/user.model';
 import { environment } from '../../../environments/environment';
 
 export interface UpdateUserPayload {
@@ -32,5 +32,15 @@ export class UsersService {
 
   changePassword(payload: ChangePasswordPayload): Observable<{ success: boolean }> {
     return this.http.patch<{ success: boolean }>(`${this.baseUrl}/me/password`, payload);
+  }
+
+  getAll(page = 1, limit = 20): Observable<PaginatedUsers> {
+    return this.http.get<PaginatedUsers>(this.baseUrl, {
+      params: { page: page.toString(), limit: limit.toString() },
+    });
+  }
+
+  updateRole(userId: string, role: Role): Observable<User> {
+    return this.http.patch<User>(`${this.baseUrl}/${userId}/role`, { role });
   }
 }

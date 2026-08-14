@@ -146,6 +146,9 @@ export class Navbar {
       this.closeUserMenu();
     }
   }
+  get isAdmin(): boolean {
+  return this.authService.isAdmin();
+}
 
  
   @HostListener('document:keydown.escape')

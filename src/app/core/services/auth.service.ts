@@ -4,12 +4,14 @@ import { isPlatformServer } from '@angular/common';
 import { environment } from '../../../environments/environment';
 import { catchError, tap, throwError, of, switchMap } from 'rxjs';
 import { UsersService } from './users.service';
+import { CartService } from './cart.service';
 import { User } from '@models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
   private usersService = inject(UsersService);
+  private cartService = inject(CartService);
   private platformId = inject(PLATFORM_ID);
 
   private url = environment.apiUrl + '/auth/';
@@ -33,6 +35,7 @@ export class AuthService {
       tap(() => {
         this.isLoggedIn.set(false);
         this.currentUser.set(null);
+        this.cartService.clearWishlist();
       })
     );
   }
@@ -99,7 +102,10 @@ export class AuthService {
 
   private loadCurrentUser() {
     return this.usersService.getMe().pipe(
-      tap((user) => this.currentUser.set(user)),
+      tap((user) => {
+        this.currentUser.set(user);
+        this.cartService.loadWishlist();
+      }),
       catchError((err) => {
         this.currentUser.set(null);
         return throwError(() => err);

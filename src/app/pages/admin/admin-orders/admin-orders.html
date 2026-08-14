@@ -99,6 +99,45 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-3">
+          <p class="text-xs text-slate-500">
+            Page {{ currentPage() }} sur {{ totalPages() }} — {{ totalOrders() }} commande{{ totalOrders() > 1 ? 's' : '' }} au total
+          </p>
+
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              [disabled]="currentPage() === 1"
+              (click)="prevPage()"
+              class="flex items-center gap-1 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6" />
+              </svg>
+              Précédent
+            </button>
+
+            <span class="mx-2 text-sm font-semibold text-slate-900">
+              {{ currentPage() }} / {{ totalPages() }}
+            </span>
+
+            <button
+              type="button"
+              [disabled]="currentPage() === totalPages()"
+              (click)="nextPage()"
+              class="flex items-center gap-1 rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Suivant
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      }
     }
   </section>
 

@@ -4,6 +4,7 @@ import { OrdersService } from '@services/orders.service';
 import { Order, OrderStatus } from '@models/order.model';
 
 type StatusFilter = 'ALL' | OrderStatus;
+
 const ORDER_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   PENDING: ['PAID', 'CANCELLED'],
   PAID: ['SHIPPED', 'CANCELLED'],
@@ -22,6 +23,8 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: 'Annulée',
 };
 
+const PAGE_SIZE = 20;
+
 @Component({
   selector: 'app-admin-orders',
   standalone: true,
@@ -36,11 +39,16 @@ export class AdminOrders {
   orders = signal<Order[]>([]);
   statusFilter = signal<StatusFilter>('ALL');
 
+  // État de pagination — reflète ce que renvoie le backend
+  currentPage = signal(1);
+  totalPages = signal(1);
+  totalOrders = signal(0);
+  readonly pageSize = PAGE_SIZE;
+
   selectedOrder = signal<Order | null>(null);
   isUpdatingStatus = signal(false);
   errorMessage = signal<string | null>(null);
 
-  // Confirmation dédiée au remboursement (action irréversible, argent réel)
   confirmingRefund = signal(false);
 
   readonly statusSteps = STATUS_STEPS;
@@ -55,6 +63,10 @@ export class AdminOrders {
     { value: 'CANCELLED', label: 'Annulées' },
   ];
 
+  // Le filtre par statut s'applique uniquement à la page actuellement
+  // chargée (pas à l'ensemble des commandes en DB). C'est un compromis
+  // volontaire pour rester simple : filtrer server-side viendrait plus
+  // tard si le besoin se confirme.
   filteredOrders = computed(() => {
     const filter = this.statusFilter();
     const orders = this.orders();
@@ -68,19 +80,22 @@ export class AdminOrders {
   }
 
   ngOnInit() {
-    this.loadOrders();
+    this.loadOrders(1);
   }
 
-  private loadOrders() {
+  private loadOrders(page: number) {
     this.isLoading.set(true);
-    this.ordersService.getAll().subscribe({
-      next: (orders) => {
-        this.orders.set(orders ?? []);
+    this.ordersService.getAll(page, this.pageSize).subscribe({
+      next: (result) => {
+        this.orders.set(result.data ?? []);
+        this.currentPage.set(result.page);
+        this.totalPages.set(result.totalPages);
+        this.totalOrders.set(result.total);
         this.isLoading.set(false);
 
         const current = this.selectedOrder();
         if (current) {
-          const refreshed = orders.find((o) => o.id === current.id);
+          const refreshed = result.data.find((o) => o.id === current.id);
           this.selectedOrder.set(refreshed ?? null);
         }
       },
@@ -89,6 +104,19 @@ export class AdminOrders {
         this.isLoading.set(false);
       },
     });
+  }
+
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages()) return;
+    this.loadOrders(page);
+  }
+
+  nextPage() {
+    this.goToPage(this.currentPage() + 1);
+  }
+
+  prevPage() {
+    this.goToPage(this.currentPage() - 1);
   }
 
   setFilter(filter: StatusFilter) {
@@ -111,7 +139,6 @@ export class AdminOrders {
     return ORDER_TRANSITIONS[order.status] ?? [];
   }
 
- 
   isRefundAction(order: Order, newStatus: OrderStatus): boolean {
     return order.status === 'PAID' && newStatus === 'CANCELLED';
   }
@@ -135,7 +162,7 @@ export class AdminOrders {
     this.ordersService.updateStatus(order.id, newStatus).subscribe({
       next: () => {
         this.isUpdatingStatus.set(false);
-        this.loadOrders();
+        this.loadOrders(this.currentPage());
       },
       error: () => {
         this.isUpdatingStatus.set(false);
@@ -152,7 +179,7 @@ export class AdminOrders {
       next: () => {
         this.isUpdatingStatus.set(false);
         this.confirmingRefund.set(false);
-        this.loadOrders();
+        this.loadOrders(this.currentPage());
       },
       error: (err) => {
         this.isUpdatingStatus.set(false);

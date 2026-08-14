@@ -108,21 +108,21 @@ export class Profile implements OnInit {
     }
   }
 
-  private loadOrders() {
-    this.ordersLoading.set(true);
-    this.ordersError.set(null);
-    this.ordersService.getAll().subscribe({
-      next: (orders) => {
-        this.orders.set(orders);
-        this.ordersLoaded = true;
-        this.ordersLoading.set(false);
-      },
-      error: () => {
-        this.ordersError.set('Impossible de charger vos commandes.');
-        this.ordersLoading.set(false);
-      },
-    });
-  }
+ private loadOrders() {
+  this.ordersLoading.set(true);
+  this.ordersError.set(null);
+  this.ordersService.getAll().subscribe({
+    next: (result) => {
+      this.orders.set(result.data);
+      this.ordersLoaded = true;
+      this.ordersLoading.set(false);
+    },
+    error: () => {
+      this.ordersError.set('Impossible de charger vos commandes.');
+      this.ordersLoading.set(false);
+    },
+  });
+}
 
   protected statusLabel(status: string): string {
     const labels: Record<string, string> = {

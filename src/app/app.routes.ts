@@ -19,6 +19,7 @@ import { AdminDashboard } from '@pages/admin/admin-dashboard/admin-dashboard';
 import { AdminProducts } from '@pages/admin/admin-products/admin-products';
 import { AdminProductForm } from '@pages/admin/admin-product-form/admin-product-form';
 import { AdminOrders } from '@pages/admin/admin-orders/admin-orders';
+import { AdminUsers } from '@pages/admin/admin-users/admin-users';
 
 export const routes: Routes = [
   {
@@ -117,6 +118,11 @@ export const routes: Routes = [
         path: 'orders',
         component: AdminOrders,
         title: 'TechGear — Admin Commandes'
+      },
+      {
+        path: 'users',
+        component: AdminUsers,
+        title: 'TechGear — Admin Utilisateurs'
       }
     ]
   },

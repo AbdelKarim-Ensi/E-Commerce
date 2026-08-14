@@ -27,12 +27,22 @@ export interface Order {
   totalAmount: string;
   shippingAddress: string;
   stripePaymentIntentId: string | null;
+  couponId: string | null;
+  discountAmount: number;
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;
+}
+export interface PaginatedOrders {
+  data: Order[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface CreateOrderPayload {
   items: { productId: string; quantity: number }[];
   shippingAddress: string;
+  couponCode?: string;
 }

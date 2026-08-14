@@ -188,6 +188,21 @@
           }
         </div>
 
+        @if (isAdmin) {
+          <a
+            routerLink="/admin"
+            class="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors ml-1"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2" />
+              <rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2" />
+              <rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2" />
+              <rect x="14" y="14" width="7" height="7" rx="1" stroke-width="2" />
+            </svg>
+            <span class="text-sm font-semibold hidden sm:block">Dashboard</span>
+          </a>
+        }
+
         <button
           type="button"
           (click)="onCartOpen()"
