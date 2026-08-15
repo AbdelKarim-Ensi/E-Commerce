@@ -54,6 +54,18 @@ export class OrdersController {
     );
   }
 
+  /**
+   * IMPORTANT : cette route doit rester déclarée AVANT @Get(':id').
+   * NestJS matche les routes dans l'ordre de déclaration — si elle était
+   * après, une requête sur /orders/status-counts serait interceptée par
+   * @Get(':id') avec id = "status-counts", ce qui plante côté Prisma.
+   */
+  @Get('status-counts')
+  @Roles(Role.ADMIN, Role.STOCK_MANAGER)
+  getStatusCounts() {
+    return this.ordersService.getStatusCounts();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.ordersService.findOne(id, user.userId, user.role);

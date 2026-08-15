@@ -212,6 +212,39 @@ export class OrdersService {
     };
   }
 
+  /**
+   * Retourne le nombre total de commandes par statut, calculé sur
+   * l'intégralité de la table (pas seulement la page chargée).
+   * Utilisé pour les badges de comptage dans AdminOrders, qui doivent
+   * rester exacts quel que soit le filtre/recherche/page actifs côté UI.
+   *
+   * Note : contrairement à findAll(), ce count n'est PAS scopé par
+   * utilisateur — cette méthode est réservée à l'admin (voir @Roles
+   * dans le contrôleur), donc on compte bien sur toutes les commandes.
+   */
+  async getStatusCounts(): Promise<Record<string, number>> {
+    const counts = await this.prisma.order.groupBy({
+      by: ['status'],
+      _count: true,
+    });
+
+    const total = counts.reduce((sum, c) => sum + c._count, 0);
+
+    const result: Record<string, number> = { ALL: total };
+
+    // Initialise tous les statuts possibles à 0 pour que le frontend
+    // n'ait jamais à gérer une clé manquante (statut sans aucune commande)
+    for (const status of Object.values(OrderStatus)) {
+      result[status] = 0;
+    }
+
+    for (const c of counts) {
+      result[c.status] = c._count;
+    }
+
+    return result;
+  }
+
   async findOne(id: string, userId: string, role: Role) {
     const order = await this.prisma.order.findUnique({
       where: { id },

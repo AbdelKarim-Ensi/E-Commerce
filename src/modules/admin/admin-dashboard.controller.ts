@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -14,5 +14,11 @@ export class AdminDashboardController {
   @Get()
   getAnalytics() {
     return this.adminDashboardService.getAnalytics();
+  }
+
+  @Get('charts')
+  getChartsData(@Query('days') days?: string) {
+    const parsedDays = days ? parseInt(days, 10) : 30;
+    return this.adminDashboardService.getChartsData(parsedDays);
   }
 }
