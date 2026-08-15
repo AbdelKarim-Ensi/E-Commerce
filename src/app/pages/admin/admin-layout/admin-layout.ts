@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '@services/auth.service';
 
@@ -14,6 +14,14 @@ export class AdminLayout {
   private router = inject(Router);
 
   currentUser = this.authService.currentUser;
+
+  // true = sidebar visible (comportement par défaut), false = repliée
+  // complètement (largeur à zéro).
+  sidebarOpen = signal(true);
+
+  toggleSidebar() {
+    this.sidebarOpen.update((open) => !open);
+  }
 
   logout() {
     this.authService.logout().subscribe({

@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { OrdersService } from '@services/orders.service';
+import { OrdersService, OrderStatusCounts } from '@services/orders.service';
 import { Order, OrderStatus } from '@models/order.model';
 
 type StatusFilter = 'ALL' | OrderStatus;
@@ -49,6 +49,10 @@ export class AdminOrders {
   totalOrders = signal(0);
   readonly pageSize = PAGE_SIZE;
 
+  // Comptage par statut, indépendant du filtre/page/recherche actifs.
+  // Calculé sur toute la table côté backend (GET /orders/status-counts).
+  statusCounts = signal<OrderStatusCounts | null>(null);
+
   selectedOrder = signal<Order | null>(null);
   isUpdatingStatus = signal(false);
   errorMessage = signal<string | null>(null);
@@ -69,6 +73,7 @@ export class AdminOrders {
 
   ngOnInit() {
     this.loadOrders(1);
+    this.loadStatusCounts();
   }
 
   private loadOrders(page: number) {
@@ -96,6 +101,24 @@ export class AdminOrders {
         this.isLoading.set(false);
       },
     });
+  }
+
+  // Chargé une fois au démarrage, puis rafraîchi après toute mutation qui
+  // change le statut d'une commande (changeStatus / confirmRefund).
+  // Ne dépend jamais du filtre ou de la page actifs.
+  private loadStatusCounts() {
+    this.ordersService.getStatusCounts().subscribe({
+      next: (counts) => this.statusCounts.set(counts),
+      error: () => {
+        // Non bloquant : si ça échoue, les badges restent simplement absents.
+      },
+    });
+  }
+
+  // Retourne le compte pour un onglet donné, ou null tant que non chargé
+  // (le template masque le badge dans ce cas plutôt que d'afficher 0).
+  countFor(filter: StatusFilter): number | null {
+    return this.statusCounts()?.[filter] ?? null;
   }
 
   goToPage(page: number) {
@@ -172,6 +195,7 @@ export class AdminOrders {
       next: () => {
         this.isUpdatingStatus.set(false);
         this.loadOrders(this.currentPage());
+        this.loadStatusCounts();
       },
       error: () => {
         this.isUpdatingStatus.set(false);
@@ -189,6 +213,7 @@ export class AdminOrders {
         this.isUpdatingStatus.set(false);
         this.confirmingRefund.set(false);
         this.loadOrders(this.currentPage());
+        this.loadStatusCounts();
       },
       error: (err) => {
         this.isUpdatingStatus.set(false);

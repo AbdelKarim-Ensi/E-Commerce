@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Order, CreateOrderPayload, PaginatedOrders, OrderStatus } from '@models/order.model';
 
+export type OrderStatusCounts = Record<'ALL' | OrderStatus, number>;
+
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
   private http = inject(HttpClient);
@@ -34,6 +36,16 @@ export class OrdersService {
 
   getById(id: string): Observable<Order> {
     return this.http.get<Order>(this.url + id, { withCredentials: true });
+  }
+
+  // Comptage par statut sur l'INTÉGRALITÉ de la table (pas seulement la
+  // page/recherche/filtre actifs côté UI). Utilisé pour les badges des
+  // onglets dans AdminOrders — ils doivent rester exacts indépendamment
+  // du filtre sélectionné.
+  getStatusCounts(): Observable<OrderStatusCounts> {
+    return this.http.get<OrderStatusCounts>(this.url + 'status-counts', {
+      withCredentials: true,
+    });
   }
 
   updateStatus(id: string, status: string): Observable<Order> {

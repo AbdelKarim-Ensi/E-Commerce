@@ -44,6 +44,102 @@
       </article>
     </section>
 
+    <!-- Graphique revenu (pleine largeur) -->
+    <section class="mb-8 rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div class="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 class="text-base font-semibold text-slate-900">Revenu</h2>
+          <p class="text-sm text-slate-500">Évolution du chiffre d'affaires sur la période</p>
+        </div>
+
+        <div class="flex gap-1">
+          @for (period of periodOptions; track period) {
+            <button
+              type="button"
+              (click)="setPeriod(period)"
+              class="rounded-md px-3 py-1.5 text-sm font-medium transition"
+              [class.bg-slate-900]="selectedPeriod() === period"
+              [class.text-white]="selectedPeriod() === period"
+              [class.text-slate-600]="selectedPeriod() !== period"
+              [class.hover:bg-slate-100]="selectedPeriod() !== period"
+            >
+              {{ period }}j
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="p-5">
+        @if (isLoadingCharts()) {
+          <p class="py-12 text-center text-sm text-slate-400">Chargement du graphique...</p>
+        } @else {
+          <div class="h-72">
+            <app-chart-canvas
+              [type]="'line'"
+              [data]="revenueChartData()"
+              [options]="revenueChartOptions"
+            />
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Statuts + Top produits (2 colonnes) -->
+    <section class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Doughnut statuts -->
+      <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+          <h2 class="text-base font-semibold text-slate-900">Commandes par statut</h2>
+          <p class="text-sm text-slate-500">Répartition actuelle, toutes commandes</p>
+        </div>
+        <div class="flex items-center justify-center gap-10 p-6">
+          <!-- Chart : taille fixe, centré verticalement et horizontalement -->
+          <div class="flex h-[260px] w-[260px] flex-shrink-0 items-center justify-center">
+            <app-chart-canvas
+              [type]="'doughnut'"
+              [data]="statusChartData()"
+              [options]="statusChartOptions"
+            />
+          </div>
+
+          <!-- Légende HTML custom : contrôle total du spacing -->
+          <div class="flex flex-col gap-3">
+            @for (item of statusLegendItems(); track item.status) {
+              <div class="flex items-center gap-3">
+                <span
+                  class="h-3 w-3 flex-shrink-0 rounded-sm"
+                  [style.background-color]="item.color"
+                ></span>
+                <span class="text-sm text-slate-700">{{ item.label }}:</span>
+                <span class="text-sm font-semibold text-slate-900">{{ item.value }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </article>
+
+      <!-- Bar chart top produits -->
+      <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+          <h2 class="text-base font-semibold text-slate-900">Top produits vendus</h2>
+          <p class="text-sm text-slate-500">Quantité vendue sur la période sélectionnée</p>
+        </div>
+        <div class="p-5">
+          @if (isLoadingCharts()) {
+            <p class="py-12 text-center text-sm text-slate-400">Chargement du graphique...</p>
+          } @else {
+            <div class="h-64">
+              <app-chart-canvas
+                [type]="'bar'"
+                [data]="topProductsChartData()"
+                [options]="topProductsChartOptions"
+              />
+            </div>
+          }
+        </div>
+      </article>
+    </section>
+
     <!-- Recent orders -->
     <section class="mb-8 rounded-lg border border-slate-200 bg-white shadow-sm">
       <div class="border-b border-slate-200 px-5 py-4">
