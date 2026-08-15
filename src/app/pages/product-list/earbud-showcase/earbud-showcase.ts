@@ -5,7 +5,7 @@ import { trigger, transition, style, animate, query, stagger } from '@angular/an
 import { ShowcaseService } from '../../../core/services/showcase.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { Product } from '../../../core/models/product.model';
-
+import { ProductReviews } from '../../../shared/product-reviews/product-reviews';
 type Side = 'left' | 'right';
 
 interface FeatureMetric {
@@ -47,7 +47,7 @@ const DEFAULT_FEATURES: Record<Side, FeatureMetric[]> = {
 @Component({
   selector: 'app-earbud-showcase',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ProductReviews],
   templateUrl: './earbud-showcase.html',
   styleUrl: './earbud-showcase.css',
   animations: [

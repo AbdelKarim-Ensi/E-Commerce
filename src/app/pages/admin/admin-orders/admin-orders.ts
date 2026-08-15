@@ -1,5 +1,6 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { OrdersService } from '@services/orders.service';
 import { Order, OrderStatus } from '@models/order.model';
 
@@ -24,11 +25,12 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 const PAGE_SIZE = 20;
+const SEARCH_DEBOUNCE_MS = 400;
 
 @Component({
   selector: 'app-admin-orders',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './admin-orders.html',
   styleUrl: './admin-orders.css',
 })
@@ -38,6 +40,8 @@ export class AdminOrders {
   isLoading = signal(true);
   orders = signal<Order[]>([]);
   statusFilter = signal<StatusFilter>('ALL');
+  searchQuery = signal('');
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   // État de pagination — reflète ce que renvoie le backend
   currentPage = signal(1);
@@ -63,29 +67,17 @@ export class AdminOrders {
     { value: 'CANCELLED', label: 'Annulées' },
   ];
 
-  // Le filtre par statut s'applique uniquement à la page actuellement
-  // chargée (pas à l'ensemble des commandes en DB). C'est un compromis
-  // volontaire pour rester simple : filtrer server-side viendrait plus
-  // tard si le besoin se confirme.
-  filteredOrders = computed(() => {
-    const filter = this.statusFilter();
-    const orders = this.orders();
-    if (filter === 'ALL') return orders;
-    return orders.filter((o) => o.status === filter);
-  });
-
-  countFor(status: StatusFilter): number {
-    if (status === 'ALL') return this.orders().length;
-    return this.orders().filter((o) => o.status === status).length;
-  }
-
   ngOnInit() {
     this.loadOrders(1);
   }
 
   private loadOrders(page: number) {
     this.isLoading.set(true);
-    this.ordersService.getAll(page, this.pageSize).subscribe({
+
+    const status = this.statusFilter() === 'ALL' ? undefined : (this.statusFilter() as OrderStatus);
+    const search = this.searchQuery();
+
+    this.ordersService.getAll(page, this.pageSize, status, search).subscribe({
       next: (result) => {
         this.orders.set(result.data ?? []);
         this.currentPage.set(result.page);
@@ -119,8 +111,25 @@ export class AdminOrders {
     this.goToPage(this.currentPage() - 1);
   }
 
+  // Changer de filtre relance la recherche depuis la page 1 côté backend
+  // (auparavant, ça ne faisait que masquer des lignes déjà chargées).
   setFilter(filter: StatusFilter) {
     this.statusFilter.set(filter);
+    this.loadOrders(1);
+  }
+
+  onSearchInput(value: string) {
+    this.searchQuery.set(value);
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadOrders(1);
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  clearSearch() {
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+    this.searchQuery.set('');
+    this.loadOrders(1);
   }
 
   openDrawer(order: Order) {

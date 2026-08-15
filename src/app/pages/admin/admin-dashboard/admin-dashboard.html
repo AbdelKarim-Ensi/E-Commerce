@@ -45,7 +45,7 @@
     </section>
 
     <!-- Recent orders -->
-    <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+    <section class="mb-8 rounded-lg border border-slate-200 bg-white shadow-sm">
       <div class="border-b border-slate-200 px-5 py-4">
         <h2 class="text-base font-semibold text-slate-900">Commandes récentes</h2>
         <p class="text-sm text-slate-500">Les dernières commandes passées sur la boutique</p>
@@ -86,6 +86,87 @@
           </table>
         </div>
       }
+    </section>
+
+    <!-- Ratings: Top / Flop -->
+    <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Top rated -->
+      <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+          <h2 class="text-base font-semibold text-slate-900">Produits les mieux notés</h2>
+          <p class="text-sm text-slate-500">Basé sur les avis clients</p>
+        </div>
+
+        @if (isLoadingRatings()) {
+          <p class="px-5 py-8 text-center text-sm text-slate-400">Chargement...</p>
+        } @else if (topRatedProducts().length === 0) {
+          <p class="px-5 py-8 text-center text-sm text-slate-400">Aucun produit noté pour le moment.</p>
+        } @else {
+          <ul class="divide-y divide-slate-100">
+            @for (product of topRatedProducts(); track product.id) {
+              <li class="flex items-center gap-3 px-5 py-3">
+                <img
+                  [src]="productImage(product)"
+                  [alt]="product.name"
+                  class="h-12 w-12 flex-shrink-0 rounded-md object-cover ring-1 ring-slate-200"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-900">{{ product.name }}</p>
+                  <div class="mt-0.5 flex items-center gap-1">
+                    <span class="inline-flex items-center gap-0.5 text-amber-500 text-sm">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <span [style.opacity]="star <= (product.rating ?? 0) ? 1 : 0.25">★</span>
+                      }
+                    </span>
+                    <span class="text-xs text-slate-500">
+                      {{ product.rating?.toFixed(1) }} ({{ product.reviewsCount }})
+                    </span>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+
+      <!-- Low rated -->
+      <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+          <h2 class="text-base font-semibold text-slate-900">Produits à surveiller</h2>
+          <p class="text-sm text-slate-500">Notes les plus basses — nécessitent peut-être une action</p>
+        </div>
+
+        @if (isLoadingRatings()) {
+          <p class="px-5 py-8 text-center text-sm text-slate-400">Chargement...</p>
+        } @else if (lowRatedProducts().length === 0) {
+          <p class="px-5 py-8 text-center text-sm text-slate-400">Aucun produit noté pour le moment.</p>
+        } @else {
+          <ul class="divide-y divide-slate-100">
+            @for (product of lowRatedProducts(); track product.id) {
+              <li class="flex items-center gap-3 px-5 py-3">
+                <img
+                  [src]="productImage(product)"
+                  [alt]="product.name"
+                  class="h-12 w-12 flex-shrink-0 rounded-md object-cover ring-1 ring-slate-200"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-900">{{ product.name }}</p>
+                  <div class="mt-0.5 flex items-center gap-1">
+                    <span class="inline-flex items-center gap-0.5 text-amber-500 text-sm">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <span [style.opacity]="star <= (product.rating ?? 0) ? 1 : 0.25">★</span>
+                      }
+                    </span>
+                    <span class="text-xs text-slate-500">
+                      {{ product.rating?.toFixed(1) }} ({{ product.reviewsCount }})
+                    </span>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </article>
     </section>
   }
 </div>

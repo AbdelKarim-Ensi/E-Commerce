@@ -125,5 +125,10 @@
       </div>
 
     </div>
+
+    @if (product()) {
+      <app-product-reviews [productId]="product()!.id" />
+    }
+
   </div>
 </div>

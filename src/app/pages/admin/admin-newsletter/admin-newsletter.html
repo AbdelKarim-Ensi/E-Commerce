@@ -1,0 +1,96 @@
+<div>
+  <!-- Header -->
+  <header class="mb-8">
+    <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-orange-500">Administration</p>
+    <h1 class="text-2xl font-bold text-slate-900">Newsletter</h1>
+    <p class="mt-1 text-sm text-slate-500">Envoyez un email à tous les abonnés actifs.</p>
+  </header>
+
+  <!-- Succès -->
+  @if (successCount() !== null) {
+    <div class="mb-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+      Newsletter mise en file d'attente pour {{ successCount() }} abonné{{ successCount()! > 1 ? 's' : '' }}.
+    </div>
+  }
+
+  <!-- Erreur -->
+  @if (errorMessage()) {
+    <div class="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-inset ring-red-600/20">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <!-- Panel -->
+  <section class="rounded-lg border border-slate-200 bg-white shadow-sm p-6">
+    <form (submit)="$event.preventDefault(); send()" class="space-y-5">
+
+      <div>
+        <label for="subject" class="mb-1.5 block text-sm font-medium text-slate-700">Sujet</label>
+        <input
+          id="subject"
+          type="text"
+          [ngModel]="subject()"
+          (ngModelChange)="subject.set($event)"
+          name="subject"
+          placeholder="Nouveau produit disponible !"
+          class="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-orange-500"
+        />
+      </div>
+
+      <div>
+        <label for="message" class="mb-1.5 block text-sm font-medium text-slate-700">Message</label>
+        <textarea
+          id="message"
+          rows="6"
+          [ngModel]="message()"
+          (ngModelChange)="message.set($event)"
+          name="message"
+          placeholder="Découvrez notre dernière arrivée en stock, à prix imbattable."
+          class="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-orange-500"
+        ></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+        <div>
+          <label for="ctaLink" class="mb-1.5 block text-sm font-medium text-slate-700">
+            Lien du bouton <span class="text-slate-400">(optionnel)</span>
+          </label>
+          <input
+            id="ctaLink"
+            type="text"
+            [ngModel]="ctaLink()"
+            (ngModelChange)="ctaLink.set($event)"
+            name="ctaLink"
+            placeholder="https://techgear.tn/products/123"
+            class="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-orange-500"
+          />
+        </div>
+        <div>
+          <label for="ctaText" class="mb-1.5 block text-sm font-medium text-slate-700">
+            Texte du bouton <span class="text-slate-400">(optionnel)</span>
+          </label>
+          <input
+            id="ctaText"
+            type="text"
+            [ngModel]="ctaText()"
+            (ngModelChange)="ctaText.set($event)"
+            name="ctaText"
+            placeholder="Voir le produit"
+            class="w-full rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-orange-500"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 border-t border-slate-100 pt-5">
+        <button
+          type="submit"
+          [disabled]="!isValid || isSending()"
+          class="rounded-md bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ isSending() ? 'Envoi en cours...' : 'Envoyer à tous les abonnés' }}
+        </button>
+      </div>
+
+    </form>
+  </section>
+</div>

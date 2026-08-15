@@ -20,6 +20,9 @@ import { AdminProducts } from '@pages/admin/admin-products/admin-products';
 import { AdminProductForm } from '@pages/admin/admin-product-form/admin-product-form';
 import { AdminOrders } from '@pages/admin/admin-orders/admin-orders';
 import { AdminUsers } from '@pages/admin/admin-users/admin-users';
+import { AdminNewsletter } from '@pages/admin/admin-newsletter/admin-newsletter';
+import { AdminReviews } from '@pages/admin/admin-reviews/admin-reviews';
+import { AdminCategories } from '@pages/admin/admin-categories/admin-categories';
 
 export const routes: Routes = [
   {
@@ -123,6 +126,21 @@ export const routes: Routes = [
         path: 'users',
         component: AdminUsers,
         title: 'TechGear — Admin Utilisateurs'
+      },
+      {
+        path: 'newsletter',
+        component: AdminNewsletter,
+        title: 'TechGear — Admin Newsletter'
+      },
+      {
+        path: 'reviews',
+        component: AdminReviews,
+        title: 'TechGear — Admin Avis'
+      },
+      {
+        path: 'categories',
+        component: AdminCategories,
+        title: 'TechGear — Admin Catégories'
       }
     ]
   },

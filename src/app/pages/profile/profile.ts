@@ -6,8 +6,10 @@ import { LucideAngularModule, User as UserIcon, Package, MapPin, Shield } from '
 import { AuthService } from '@services/auth.service';
 import { UsersService } from '@services/users.service';
 import { OrdersService } from '@services/orders.service';
+import { AddressesService } from '@services/address.service';
 import { User } from '@models/user.model';
 import { Order } from '@models/order.model';
+import { Address, CreateAddressPayload } from '@models/address.model';
 
 interface ProfileForm {
   firstName: string;
@@ -23,6 +25,28 @@ interface PasswordForm {
   confirmPassword: string;
 }
 
+interface AddressForm {
+  label: string;
+  fullName: string;
+  phone: string;
+  line1: string;
+  line2: string;
+  city: string;
+  postalCode: string;
+  country: string;
+}
+
+const EMPTY_ADDRESS_FORM: AddressForm = {
+  label: '',
+  fullName: '',
+  phone: '',
+  line1: '',
+  line2: '',
+  city: '',
+  postalCode: '',
+  country: 'Tunisie',
+};
+
 type NavKey = 'profil' | 'commandes' | 'adresses' | 'securite';
 
 @Component({
@@ -36,6 +60,7 @@ export class Profile implements OnInit {
   private authService = inject(AuthService);
   private usersService = inject(UsersService);
   private ordersService = inject(OrdersService);
+  private addressesService = inject(AddressesService);
   private router = inject(Router);
 
   protected readonly isLoggedIn = this.authService.isLoggedIn;
@@ -56,6 +81,20 @@ export class Profile implements OnInit {
   protected ordersError = signal<string | null>(null);
   protected ordersLoaded = false; // évite de recharger à chaque clic sur l'onglet
 
+  // Adresses
+  protected addresses = signal<Address[]>([]);
+  protected addressesLoading = signal(false);
+  protected addressesError = signal<string | null>(null);
+  protected addressesLoaded = false;
+
+  protected addressFormOpen = signal(false);
+  protected editingAddressId = signal<string | null>(null);
+  protected addressForm: AddressForm = { ...EMPTY_ADDRESS_FORM };
+  protected addressSaving = signal(false);
+  protected addressFormError = signal<string | null>(null);
+  protected deletingAddressId = signal<string | null>(null);
+  protected settingDefaultId = signal<string | null>(null);
+
   // Sécurité
   protected passwordForm: PasswordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
   protected passwordSaving = signal(false);
@@ -73,6 +112,18 @@ export class Profile implements OnInit {
     const f = this.form.firstName?.[0] ?? '';
     const l = this.form.lastName?.[0] ?? '';
     return (f + l).toUpperCase() || '?';
+  }
+
+  get isEditingAddress(): boolean {
+    return this.editingAddressId() !== null;
+  }
+
+  get isAddressFormValid(): boolean {
+    return (
+      this.addressForm.fullName.trim().length >= 2 &&
+      this.addressForm.line1.trim().length >= 3 &&
+      this.addressForm.city.trim().length >= 2
+    );
   }
 
   ngOnInit() {
@@ -106,23 +157,26 @@ export class Profile implements OnInit {
     if (key === 'commandes' && !this.ordersLoaded) {
       this.loadOrders();
     }
+    if (key === 'adresses' && !this.addressesLoaded) {
+      this.loadAddresses();
+    }
   }
 
- private loadOrders() {
-  this.ordersLoading.set(true);
-  this.ordersError.set(null);
-  this.ordersService.getAll().subscribe({
-    next: (result) => {
-      this.orders.set(result.data);
-      this.ordersLoaded = true;
-      this.ordersLoading.set(false);
-    },
-    error: () => {
-      this.ordersError.set('Impossible de charger vos commandes.');
-      this.ordersLoading.set(false);
-    },
-  });
-}
+  private loadOrders() {
+    this.ordersLoading.set(true);
+    this.ordersError.set(null);
+    this.ordersService.getAll().subscribe({
+      next: (result) => {
+        this.orders.set(result.data);
+        this.ordersLoaded = true;
+        this.ordersLoading.set(false);
+      },
+      error: () => {
+        this.ordersError.set('Impossible de charger vos commandes.');
+        this.ordersLoading.set(false);
+      },
+    });
+  }
 
   protected statusLabel(status: string): string {
     const labels: Record<string, string> = {
@@ -204,6 +258,139 @@ export class Profile implements OnInit {
         } else {
           this.passwordError.set('Une erreur est survenue. Réessayez.');
         }
+      },
+    });
+  }
+
+  // --- Adresses ---
+
+  private loadAddresses() {
+    this.addressesLoading.set(true);
+    this.addressesError.set(null);
+    this.addressesService.getAll().subscribe({
+      next: (addresses) => {
+        this.addresses.set(addresses);
+        this.addressesLoaded = true;
+        this.addressesLoading.set(false);
+      },
+      error: () => {
+        this.addressesError.set('Impossible de charger vos adresses.');
+        this.addressesLoading.set(false);
+      },
+    });
+  }
+
+  startAddAddress() {
+    this.editingAddressId.set(null);
+    this.addressForm = { ...EMPTY_ADDRESS_FORM };
+    this.addressFormError.set(null);
+    this.addressFormOpen.set(true);
+  }
+
+  startEditAddress(address: Address) {
+    this.editingAddressId.set(address.id);
+    this.addressForm = {
+      label: address.label ?? '',
+      fullName: address.fullName,
+      phone: address.phone ?? '',
+      line1: address.line1,
+      line2: address.line2 ?? '',
+      city: address.city,
+      postalCode: address.postalCode ?? '',
+      country: address.country,
+    };
+    this.addressFormError.set(null);
+    this.addressFormOpen.set(true);
+  }
+
+  cancelAddressForm() {
+    this.addressFormOpen.set(false);
+    this.editingAddressId.set(null);
+    this.addressForm = { ...EMPTY_ADDRESS_FORM };
+    this.addressFormError.set(null);
+  }
+
+  submitAddressForm() {
+    if (!this.isAddressFormValid || this.addressSaving()) return;
+
+    this.addressSaving.set(true);
+    this.addressFormError.set(null);
+
+    const payload: CreateAddressPayload = {
+      label: this.addressForm.label.trim() || undefined,
+      fullName: this.addressForm.fullName.trim(),
+      phone: this.addressForm.phone.trim() || undefined,
+      line1: this.addressForm.line1.trim(),
+      line2: this.addressForm.line2.trim() || undefined,
+      city: this.addressForm.city.trim(),
+      postalCode: this.addressForm.postalCode.trim() || undefined,
+      country: this.addressForm.country.trim() || undefined,
+    };
+
+    const editingId = this.editingAddressId();
+    const request = editingId
+      ? this.addressesService.update(editingId, payload)
+      : this.addressesService.create(payload);
+
+    request.subscribe({
+      next: (saved) => {
+        this.addressSaving.set(false);
+        this.addresses.update((list) => {
+          const updatedList = editingId
+            ? list.map((a) => (a.id === saved.id ? saved : a))
+            : [...list, saved];
+          // Si l'adresse enregistrée est désormais par défaut (première
+          // adresse ou changement explicite), on désactive ce flag sur
+          // les autres côté affichage local, en cohérence avec le backend.
+          return saved.isDefault
+            ? updatedList.map((a) => (a.id === saved.id ? a : { ...a, isDefault: false }))
+            : updatedList;
+        });
+        this.cancelAddressForm();
+      },
+      error: (err) => {
+        this.addressSaving.set(false);
+        this.addressFormError.set(
+          err?.error?.message ?? "Impossible d'enregistrer cette adresse.",
+        );
+      },
+    });
+  }
+
+  setDefaultAddress(address: Address) {
+    if (address.isDefault || this.settingDefaultId()) return;
+
+    this.settingDefaultId.set(address.id);
+    this.addressesService.setDefault(address.id).subscribe({
+      next: (updated) => {
+        this.settingDefaultId.set(null);
+        this.addresses.update((list) =>
+          list.map((a) => ({ ...a, isDefault: a.id === updated.id })),
+        );
+      },
+      error: () => {
+        this.settingDefaultId.set(null);
+        this.addressesError.set('Impossible de définir cette adresse par défaut.');
+      },
+    });
+  }
+
+  deleteAddress(address: Address) {
+    const confirmed = confirm(`Supprimer l'adresse "${address.label || address.fullName}" ?`);
+    if (!confirmed) return;
+
+    this.deletingAddressId.set(address.id);
+    this.addressesService.remove(address.id).subscribe({
+      next: () => {
+        this.deletingAddressId.set(null);
+        // Recharge pour refléter la promotion éventuelle d'une nouvelle
+        // adresse par défaut, gérée côté backend.
+        this.addressesLoaded = false;
+        this.loadAddresses();
+      },
+      error: () => {
+        this.deletingAddressId.set(null);
+        this.addressesError.set('Impossible de supprimer cette adresse.');
       },
     });
   }

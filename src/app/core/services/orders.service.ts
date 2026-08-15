@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Order, CreateOrderPayload, PaginatedOrders } from '@models/order.model';
+import { Order, CreateOrderPayload, PaginatedOrders, OrderStatus } from '@models/order.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
@@ -13,10 +13,22 @@ export class OrdersService {
     return this.http.post<Order>(this.url, order, { withCredentials: true });
   }
 
-  getAll(page = 1, limit = 20): Observable<PaginatedOrders> {
+  getAll(
+    page = 1,
+    limit = 20,
+    status?: OrderStatus,
+    search?: string,
+  ): Observable<PaginatedOrders> {
+    const params: Record<string, string> = {
+      page: page.toString(),
+      limit: limit.toString(),
+    };
+    if (status) params['status'] = status;
+    if (search && search.trim()) params['search'] = search.trim();
+
     return this.http.get<PaginatedOrders>(this.url, {
       withCredentials: true,
-      params: { page: page.toString(), limit: limit.toString() },
+      params,
     });
   }
 

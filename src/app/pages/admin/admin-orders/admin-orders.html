@@ -8,36 +8,55 @@
 
   <!-- Panel -->
   <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
-    <!-- Tabs -->
-    <div class="flex flex-wrap gap-1 border-b border-slate-200 p-3">
-      @for (tab of tabs; track tab.value) {
-        <button
-          type="button"
-          (click)="setFilter(tab.value)"
-          class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition"
-          [class.bg-slate-900]="statusFilter() === tab.value"
-          [class.text-white]="statusFilter() === tab.value"
-          [class.text-slate-600]="statusFilter() !== tab.value"
-          [class.hover:bg-slate-100]="statusFilter() !== tab.value"
-        >
-          {{ tab.label }}
-          <span
-            class="rounded-full px-1.5 py-0.5 text-[11px] font-semibold"
-            [class.bg-slate-700]="statusFilter() === tab.value"
+    <!-- Tabs + Recherche -->
+    <div class="flex flex-col gap-3 border-b border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-wrap gap-1">
+        @for (tab of tabs; track tab.value) {
+          <button
+            type="button"
+            (click)="setFilter(tab.value)"
+            class="rounded-md px-3 py-1.5 text-sm font-medium transition"
+            [class.bg-slate-900]="statusFilter() === tab.value"
             [class.text-white]="statusFilter() === tab.value"
-            [class.bg-slate-100]="statusFilter() !== tab.value"
-            [class.text-slate-500]="statusFilter() !== tab.value"
+            [class.text-slate-600]="statusFilter() !== tab.value"
+            [class.hover:bg-slate-100]="statusFilter() !== tab.value"
           >
-            {{ countFor(tab.value) }}
-          </span>
-        </button>
-      }
+            {{ tab.label }}
+          </button>
+        }
+      </div>
+
+      <div class="relative w-full sm:w-96">
+        <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" />
+          <path stroke-linecap="round" d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchInput($event)"
+          placeholder="ID, client, email..."
+          class="w-full rounded-md border border-slate-200 py-1.5 pl-8 pr-8 text-sm text-slate-900 outline-none transition focus:border-orange-500"
+        />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            (click)="clearSearch()"
+            aria-label="Effacer la recherche"
+            class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+          </button>
+        }
+      </div>
     </div>
 
     <!-- Table -->
     @if (isLoading()) {
       <p class="px-5 py-8 text-center text-sm text-slate-400">Chargement...</p>
-    } @else if (filteredOrders().length === 0) {
+    } @else if (orders().length === 0) {
       <div class="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
         <span class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -45,7 +64,7 @@
           </svg>
         </span>
         <p class="text-sm font-medium text-slate-900">Aucune commande</p>
-        <p class="text-sm text-slate-500">Aucune commande ne correspond à ce filtre.</p>
+        <p class="text-sm text-slate-500">Aucune commande ne correspond à ces critères.</p>
       </div>
     } @else {
       <div class="overflow-x-auto">
@@ -62,7 +81,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (order of filteredOrders(); track order.id) {
+            @for (order of orders(); track order.id) {
               <tr class="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50" (click)="openDrawer(order)">
                 <td class="px-5 py-3 font-medium text-slate-900">#{{ shortUserId(order.id) }}</td>
                 <td class="px-5 py-3">

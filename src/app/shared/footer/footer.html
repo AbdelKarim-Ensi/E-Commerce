@@ -19,21 +19,30 @@
             You're subscribed!
           </div>
         } @else {
-          <form (submit)="subscribe($event)" class="flex gap-2 w-full max-w-sm">
-            <input type="email"
-                   [ngModel]="email()"
-                   (ngModelChange)="email.set($event)"
-                   placeholder="your@email.com"
-                   required
-                   name="newsletterEmail"
-                   class="flex-1 px-4 py-3 bg-white/10 text-white placeholder-gray-500
-                          border border-white/10 rounded-xl text-sm focus:outline-none
-                          focus:border-amber-400 focus:ring-1 focus:ring-amber-400"/>
-            <button type="submit"
-                    class="px-5 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 text-sm flex-shrink-0">
-              Subscribe
-            </button>
-          </form>
+          <div class="w-full max-w-sm">
+            <form (submit)="subscribe($event)" class="flex gap-2">
+              <input type="email"
+                     [ngModel]="email()"
+                     (ngModelChange)="email.set($event)"
+                     placeholder="your@email.com"
+                     required
+                     name="newsletterEmail"
+                     [disabled]="isLoading()"
+                     class="flex-1 px-4 py-3 bg-white/10 text-white placeholder-gray-500
+                            border border-white/10 rounded-xl text-sm focus:outline-none
+                            focus:border-amber-400 focus:ring-1 focus:ring-amber-400
+                            disabled:opacity-50"/>
+              <button type="submit"
+                      [disabled]="isLoading()"
+                      class="px-5 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 text-sm flex-shrink-0
+                             disabled:opacity-50 disabled:cursor-not-allowed">
+                {{ isLoading() ? '...' : 'Subscribe' }}
+              </button>
+            </form>
+            @if (errorMessage()) {
+              <p class="mt-2 text-xs text-red-400">{{ errorMessage() }}</p>
+            }
+          </div>
         }
       </div>
     </div>
