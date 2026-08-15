@@ -28,6 +28,9 @@ export const envValidationSchema = Joi.object({
   // --- Frontend (used to build links embedded in transactional emails, e.g. password reset) ---
   FRONTEND_URL: Joi.string().uri().default('http://localhost:4200'),
 
+  // --- API (used to build backend-facing links embedded in emails, e.g. newsletter unsubscribe) ---
+  API_URL: Joi.string().uri().default('http://localhost:3000'),
+
   SMTP_HOST: Joi.string().required(),
   SMTP_PORT: Joi.number().port().default(587),
   SMTP_USER: Joi.string().required(),

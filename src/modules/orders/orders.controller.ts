@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { Role } from '@prisma/client';
+import { OrderStatus, Role } from '@prisma/client';
 
 interface AuthenticatedUser {
   userId: string;
@@ -41,12 +41,16 @@ export class OrdersController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('status') status?: OrderStatus,
+    @Query('search') search?: string,
   ) {
     return this.ordersService.findAll(
       user.userId,
       user.role,
       page ? parseInt(page, 10) : undefined,
       limit ? parseInt(limit, 10) : undefined,
+      status,
+      search,
     );
   }
 

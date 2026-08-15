@@ -18,12 +18,14 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { ProductsModule } from './modules/products/products.module';
 import { RateLimitModule } from './config/rate-limit.module';
 import { PaymentModule } from './modules/payment/payment.module';
-
+import { AdminModule } from './modules/admin/admin.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { UsersModule } from './modules/users/users.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 import { CouponsModule } from './modules/coupons/coupons.module';
 import { NewsletterModule } from './modules/newsletter/newsletter.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
+import { AddressesModule } from './modules/addresses/Addresses.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -55,6 +57,10 @@ import { NewsletterModule } from './modules/newsletter/newsletter.module';
     WishlistModule,
     CouponsModule,
     NewsletterModule,
+    ReviewsModule,
+    AddressesModule,
+    AdminModule,
+  
   ],
   controllers: [AppController],
   providers: [AppService],

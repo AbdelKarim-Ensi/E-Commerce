@@ -34,11 +34,36 @@ export class CategoriesService {
 
   async update(id: string, dto: UpdateCategoryDto) {
     await this.findOne(id);
+
+    if (dto.name || dto.slug) {
+      const conflict = await this.prisma.category.findFirst({
+        where: {
+          id: { not: id },
+          OR: [
+            ...(dto.name ? [{ name: dto.name }] : []),
+            ...(dto.slug ? [{ slug: dto.slug }] : []),
+          ],
+        },
+      });
+      if (conflict) {
+        throw new ConflictException('Category with this name or slug already exists');
+      }
+    }
+
     return this.prisma.category.update({ where: { id }, data: dto });
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    const category = await this.findOne(id);
+
+    // Product.categoryId n'est pas nullable et il n'y a pas de cascade en
+    // base : sans ce check, Prisma renverrait une erreur FK brute (500).
+    if (category.products.length > 0) {
+      throw new ConflictException(
+        `Impossible de supprimer cette catégorie : ${category.products.length} produit(s) y sont encore rattachés.`,
+      );
+    }
+
     return this.prisma.category.delete({ where: { id } });
   }
 }

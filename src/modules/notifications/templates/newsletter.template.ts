@@ -3,6 +3,7 @@ interface NewsletterEmailData {
   message: string;
   ctaLink?: string;
   ctaText?: string;
+  unsubscribeLink: string;
 }
 
 export function renderNewsletterEmail(data: NewsletterEmailData): {
@@ -29,6 +30,10 @@ export function renderNewsletterEmail(data: NewsletterEmailData): {
       <hr style="border:none;border-top:1px solid #eee;margin:24px 0;" />
       <p style="font-size:12px;color:#a1a1aa;">
         Vous recevez cet email car vous êtes inscrit à la newsletter TechGear.
+        <br />
+        <a href="${data.unsubscribeLink}" style="color:#a1a1aa;text-decoration:underline;">
+          Se désinscrire
+        </a>
       </p>
     </div>
   `;

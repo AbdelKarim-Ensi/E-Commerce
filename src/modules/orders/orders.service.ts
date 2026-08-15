@@ -10,7 +10,7 @@ import { PaymentService } from '../payment/payment.service';
 import { NotificationsQueue } from '../notifications/queues/notifications.queue';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { OrderStatus, Role } from '@prisma/client';
+import { OrderStatus, Prisma, Role } from '@prisma/client';
 import { assertValidTransition } from './order-status.state-machine';
 
 const USER_SELECT = {
@@ -154,13 +154,40 @@ export class OrdersService {
     );
   }
 
- 
-  async findAll(userId: string, role: Role, page = 1, limit = 20) {
-    const where = role === Role.CLIENT ? { userId } : {};
-
+  /**
+   * @param status  Filtre optionnel par statut exact.
+   * @param search  Filtre optionnel : recherche insensible à la casse sur
+   *                l'ID de commande, l'email du client, ou son nom/prénom.
+   *                Appliqué côté DB pour rester exact quel que soit le
+   *                volume de commandes (contrairement à un filtrage
+   *                uniquement sur la page déjà chargée).
+   */
+  async findAll(
+    userId: string,
+    role: Role,
+    page = 1,
+    limit = 20,
+    status?: OrderStatus,
+    search?: string,
+  ) {
     const safePage = Math.max(1, page);
     const safeLimit = Math.min(Math.max(1, limit), 100); // borne haute anti-abus
     const skip = (safePage - 1) * safeLimit;
+
+    const where: Prisma.OrderWhereInput = {
+      ...(role === Role.CLIENT ? { userId } : {}),
+      ...(status ? { status } : {}),
+      ...(search
+        ? {
+            OR: [
+              { id: { contains: search, mode: 'insensitive' } },
+              { user: { email: { contains: search, mode: 'insensitive' } } },
+              { user: { firstName: { contains: search, mode: 'insensitive' } } },
+              { user: { lastName: { contains: search, mode: 'insensitive' } } },
+            ],
+          }
+        : {}),
+    };
 
     const [data, total] = await this.prisma.$transaction([
       this.prisma.order.findMany({

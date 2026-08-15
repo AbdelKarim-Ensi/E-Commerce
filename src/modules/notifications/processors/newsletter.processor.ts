@@ -18,10 +18,12 @@ export class NewsletterProcessor extends WorkerHost {
   private readonly logger = new Logger(NewsletterProcessor.name);
   private readonly transporter: nodemailer.Transporter;
   private readonly fromAddress: string;
+  private readonly apiUrl: string;
 
   constructor(private readonly config: ConfigService) {
     super();
     this.fromAddress = this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
+    this.apiUrl = this.config.get<string>('API_URL') ?? 'http://localhost:3000';
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>('SMTP_HOST'),
       port: this.config.get<number>('SMTP_PORT'),
@@ -36,7 +38,15 @@ export class NewsletterProcessor extends WorkerHost {
   async process(job: Job<NewsletterJobData>): Promise<void> {
     const { email, subject, message, ctaLink, ctaText } = job.data;
 
-    const { html } = renderNewsletterEmail({ subject, message, ctaLink, ctaText });
+    const unsubscribeLink = `${this.apiUrl}/newsletter/unsubscribe?email=${encodeURIComponent(email)}`;
+
+    const { html } = renderNewsletterEmail({
+      subject,
+      message,
+      ctaLink,
+      ctaText,
+      unsubscribeLink,
+    });
 
     await this.transporter.sendMail({
       from: this.fromAddress,
