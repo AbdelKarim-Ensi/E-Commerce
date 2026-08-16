@@ -5,10 +5,13 @@
     [categories]="categories()"
     (cartOpen)="cartService.open()"
     (searchChange)="onSearch($event)"
+    (searchSubmit)="onSearchSubmit($event)"
   ></app-navbar>
 }
 
+<main id="main-content">
 <router-outlet></router-outlet>
+</main>
 
 @if (!isAdminRoute()) {
   <app-footer></app-footer>

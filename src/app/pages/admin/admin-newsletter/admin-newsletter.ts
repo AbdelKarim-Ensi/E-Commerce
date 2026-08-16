@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NewsletterService } from '@services/newsletter.service';
+import { AlertService } from '@services/alert.service';
 
 @Component({
   selector: 'app-admin-newsletter',
@@ -12,6 +13,7 @@ import { NewsletterService } from '@services/newsletter.service';
 })
 export class AdminNewsletter {
   private newsletterService = inject(NewsletterService);
+  private alertService = inject(AlertService);
 
   subject = signal('');
   message = signal('');
@@ -19,8 +21,6 @@ export class AdminNewsletter {
   ctaText = signal('');
 
   isSending = signal(false);
-  errorMessage = signal<string | null>(null);
-  successCount = signal<number | null>(null);
 
   get isValid(): boolean {
     return this.subject().trim().length >= 3 && this.message().trim().length >= 10;
@@ -30,8 +30,6 @@ export class AdminNewsletter {
     if (!this.isValid || this.isSending()) return;
 
     this.isSending.set(true);
-    this.errorMessage.set(null);
-    this.successCount.set(null);
 
     const ctaLink = this.ctaLink().trim() || undefined;
     const ctaText = this.ctaText().trim() || undefined;
@@ -41,17 +39,19 @@ export class AdminNewsletter {
       .subscribe({
         next: (result) => {
           this.isSending.set(false);
-          this.successCount.set(result.queued);
           this.subject.set('');
           this.message.set('');
           this.ctaLink.set('');
           this.ctaText.set('');
+          this.alertService.success(
+            `Newsletter mise en file d'attente pour ${result.queued} abonné${result.queued > 1 ? 's' : ''}.`,
+            'Newsletter envoyée',
+          );
         },
         error: (err) => {
           this.isSending.set(false);
-          this.errorMessage.set(
-            err?.error?.message ?? "Échec de l'envoi de la newsletter.",
-          );
+          const message = err?.error?.message ?? "Échec de l'envoi de la newsletter.";
+          this.alertService.error(message);
         },
       });
   }

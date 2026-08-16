@@ -10,6 +10,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductsService } from '@services/products.service';
 import { CategoriesService } from '@services/categories.service';
+import { AlertService } from '@services/alert.service';
 import { Category } from '@models/category.model';
 
 @Component({
@@ -23,6 +24,7 @@ export class AdminProductForm {
   private fb = inject(FormBuilder);
   private productsService = inject(ProductsService);
   private categoriesService = inject(CategoriesService);
+  private alertService = inject(AlertService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
@@ -193,6 +195,8 @@ export class AdminProductForm {
   saveProduct() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      // Popup exacte demandée : un champ requis manque.
+      this.alertService.error('Something went wrong!', 'Oops...');
       return;
     }
 
@@ -245,12 +249,17 @@ export class AdminProductForm {
       error: () => {
         this.isSaving.set(false);
         this.errorMessage.set("Impossible d'enregistrer le produit. Vérifiez les champs et réessayez.");
+        this.alertService.error("Impossible d'enregistrer le produit. Vérifiez les champs et réessayez.");
       },
     });
   }
 
   private onSaveSuccess() {
     this.isSaving.set(false);
+    this.alertService.success(
+      this.isEditMode() ? 'Le produit a bien été modifié.' : 'Le produit a bien été ajouté au catalogue.',
+      this.isEditMode() ? 'Produit mis à jour' : 'Produit ajouté',
+    );
     this.router.navigate(['/admin/products']);
   }
 }

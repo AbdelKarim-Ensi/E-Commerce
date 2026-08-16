@@ -66,28 +66,66 @@
                     <div class="stagger-item text-2xl font-bold text-amber-600 mb-2">${{ price() }}</div>
                   }
 
-                  <p class="stagger-item text-zinc-500 mb-8 max-w-sm leading-relaxed mr-auto">
+                  <p class="stagger-item text-zinc-500 mb-6 max-w-sm leading-relaxed mr-auto">
                     {{ current().description }}
                   </p>
 
-                  <div class="stagger-item w-full space-y-6 bg-white/60 p-6 rounded-2xl border border-black/5 backdrop-blur-sm">
-                    @for (feature of current().features; track feature.label) {
-                      <div class="group">
-                        <div class="flex items-center justify-between mb-3 text-sm">
-                          <div class="flex items-center gap-2"
-                               [class.text-zinc-800]="feature.value > 50" [class.text-zinc-400]="feature.value <= 50">
-                            <span class="text-xs uppercase">{{ feature.icon }}</span>
-                            <span>{{ feature.label }}</span>
+                  @if (product()) {
+                    <button
+                      type="button"
+                      (click)="addToCart()"
+                      class="stagger-item mb-6 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors"
+                      [class.bg-emerald-500]="justAdded()"
+                      [class.bg-amber-500]="!justAdded()"
+                      [class.hover:bg-amber-600]="!justAdded()"
+                    >
+                      @if (justAdded()) {
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        Ajouté au panier
+                      } @else {
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Ajouter au panier
+                      }
+                    </button>
+                  }
+
+                  <!-- Couleurs disponibles (saisies par l'admin) -->
+                  @if (colors().length > 0) {
+                    <div class="stagger-item w-full mb-6">
+                      <p class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3">Couleurs disponibles</p>
+                      <div class="flex flex-wrap gap-3">
+                        @for (color of colors(); track color.name) {
+                          <div class="flex items-center gap-2 rounded-full border border-black/5 bg-white/70 pl-1.5 pr-3 py-1.5">
+                            <span
+                              class="h-5 w-5 rounded-full border border-black/10 shrink-0"
+                              [style.background-color]="color.hex"
+                              [attr.title]="color.name"
+                            ></span>
+                            <span class="text-xs font-medium text-zinc-700">{{ color.name }}</span>
                           </div>
-                          <span class="font-mono text-xs text-zinc-500">{{ feature.value }}%</span>
-                        </div>
-                        <div class="relative h-2 w-full bg-zinc-200 rounded-full overflow-hidden">
-                          <div class="absolute top-0 left-0 bottom-0 opacity-80 transition-all duration-1000"
-                               [class.bg-blue-500]="isLeft()"
-                               [class.bg-emerald-500]="!isLeft()"
-                               [style.width.%]="feature.value">
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  <!-- Caractéristiques (saisies par l'admin) — petites cartes, pas de barre % -->
+                  <div class="stagger-item w-full">
+                    @if (current().specs.length > 0) {
+                      <div class="grid grid-cols-2 gap-3">
+                        @for (spec of current().specs; track spec.label) {
+                          <div class="rounded-2xl border border-black/5 bg-white/60 backdrop-blur-sm p-4">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">{{ spec.label }}</p>
+                            <p class="text-base font-semibold text-zinc-800 break-words">{{ spec.value }}</p>
                           </div>
-                        </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="rounded-2xl border border-black/5 bg-white/60 backdrop-blur-sm p-6 text-center">
+                        <p class="text-sm text-zinc-400">Aucune caractéristique renseignée pour ce produit.</p>
                       </div>
                     }
                   </div>

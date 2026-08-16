@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ProductsService } from '@services/products.service';
 import { CategoriesService } from '@services/categories.service';
+import { AlertService } from '@services/alert.service';
 import { Product } from '@models/product.model';
 import { Category } from '@models/category.model';
 
@@ -18,6 +19,7 @@ import { Category } from '@models/category.model';
 export class AdminProducts {
   private productsService = inject(ProductsService);
   private categoriesService = inject(CategoriesService);
+  private alertService = inject(AlertService);
   private router = inject(Router);
 
   private searchSubject = new Subject<string>();
@@ -95,21 +97,31 @@ export class AdminProducts {
   }
 
   goToNewProduct() {
-  
-  this.router.navigate(['/admin/products/new'])
-  
-}
+    this.router.navigate(['/admin/products/new']);
+  }
 
   goToEditProduct(product: Product) {
     this.router.navigate(['/admin/products', product.id, 'edit']);
   }
 
-  deleteProduct(product: Product) {
-    if (!confirm(`Supprimer "${product.name}" ? Cette action est irréversible.`)) return;
+  async deleteProduct(product: Product) {
+    const confirmed = await this.alertService.confirm({
+      title: 'Supprimer ce produit ?',
+      text: `"${product.name}" sera définitivement supprimé. Cette action est irréversible.`,
+      danger: true,
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+    });
+    if (!confirmed) return;
 
     this.productsService.delete(product.id).subscribe({
-      next: () => this.loadProducts(),
-      error: () => alert('Impossible de supprimer ce produit.'),
+      next: () => {
+        this.loadProducts();
+        this.alertService.success('Produit supprimé.');
+      },
+      error: () => {
+        this.alertService.error('Impossible de supprimer ce produit.');
+      },
     });
   }
 

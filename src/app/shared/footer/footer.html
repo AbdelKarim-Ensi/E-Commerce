@@ -13,7 +13,7 @@
 
         @if (subscribed()) {
           <div class="flex items-center gap-2 text-amber-400 font-semibold">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
             You're subscribed!
@@ -21,7 +21,9 @@
         } @else {
           <div class="w-full max-w-sm">
             <form (submit)="subscribe($event)" class="flex gap-2">
+              <label for="newsletterEmail" class="sr-only">Email address</label>
               <input type="email"
+                     id="newsletterEmail"
                      [ngModel]="email()"
                      (ngModelChange)="email.set($event)"
                      placeholder="your@email.com"
@@ -34,7 +36,7 @@
                             disabled:opacity-50"/>
               <button type="submit"
                       [disabled]="isLoading()"
-                      class="px-5 py-3 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600 text-sm flex-shrink-0
+                      class="px-5 py-3 bg-amber-500 text-gray-900 font-semibold rounded-xl hover:bg-amber-600 text-sm flex-shrink-0
                              disabled:opacity-50 disabled:cursor-not-allowed">
                 {{ isLoading() ? '...' : 'Subscribe' }}
               </button>
@@ -53,15 +55,17 @@
           <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center">
             <span class="text-white font-bold text-sm font-display">T</span>
           </div>
-          <span class="text-lg font-bold text-gray-900 font-display">Tech<span class="text-amber-500">Hub</span></span>
+          <span class="text-lg font-bold text-gray-900 font-display">Tech<span class="text-amber-700">Hub</span></span>
         </div>
         <p class="text-sm text-gray-500 leading-relaxed max-w-xs">
           Your one-stop destination for premium tech gadgets and electronics at the best prices.
         </p>
         <div class="flex gap-3 mt-5">
           @for (s of socials; track s) {
-            <button class="w-9 h-9 rounded-lg bg-gray-100 hover:bg-amber-100 hover:text-amber-600
-                           text-gray-500 flex items-center justify-center text-sm font-bold">
+            <button type="button"
+                    [attr.aria-label]="s"
+                    class="w-9 h-9 rounded-lg bg-gray-100 hover:bg-amber-100 hover:text-amber-700
+                           text-gray-600 flex items-center justify-center text-sm font-bold">
               {{ s }}
             </button>
           }
@@ -74,7 +78,7 @@
           <ul class="space-y-2.5">
             @for (link of col.links; track link) {
               <li>
-                <a href="#" class="text-sm text-gray-500 hover:text-amber-500 transition-colors">{{ link }}</a>
+                <a href="#" class="text-sm text-gray-500 hover:text-amber-700 transition-colors">{{ link }}</a>
               </li>
             }
           </ul>
@@ -83,11 +87,11 @@
     </div>
 
     <div class="pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <p class="text-xs text-gray-400">© 2026 TechHub Inc. All rights reserved.</p>
+      <p class="text-xs text-gray-500">© 2026 TechHub Inc. All rights reserved.</p>
       <div class="flex items-center gap-2">
-        <span class="text-xs text-gray-400 mr-1">We accept:</span>
+        <span class="text-xs text-gray-500 mr-1">We accept:</span>
         @for (p of payments; track p) {
-          <div class="px-2 py-1 bg-gray-100 rounded text-[10px] font-bold text-gray-500">{{ p }}</div>
+          <div class="px-2 py-1 bg-gray-100 rounded text-[10px] font-bold text-gray-600">{{ p }}</div>
         }
       </div>
     </div>

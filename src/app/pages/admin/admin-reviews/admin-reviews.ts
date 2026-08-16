@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReviewsService } from '@services/reviews.service';
+import { AlertService } from '@services/alert.service';
 import { AdminReview } from '@models/review.model';
 
 @Component({
@@ -12,6 +13,7 @@ import { AdminReview } from '@models/review.model';
 })
 export class AdminReviews {
   private reviewsService = inject(ReviewsService);
+  private alertService = inject(AlertService);
 
   readonly pageSize = 10;
 
@@ -50,10 +52,14 @@ export class AdminReviews {
     this.loadReviews(page);
   }
 
-  deleteReview(review: AdminReview) {
-    const confirmed = confirm(
-      `Supprimer l'avis de ${this.reviewerLabel(review)} sur "${review.product.name}" ?`,
-    );
+  async deleteReview(review: AdminReview) {
+    const confirmed = await this.alertService.confirm({
+      title: 'Supprimer cet avis ?',
+      text: `L'avis de ${this.reviewerLabel(review)} sur "${review.product.name}" sera définitivement supprimé.`,
+      danger: true,
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+    });
     if (!confirmed) return;
 
     this.deletingId.set(review.id);
@@ -68,12 +74,13 @@ export class AdminReviews {
           ? this.currentPage() - 1
           : this.currentPage();
         this.loadReviews(targetPage);
+        this.alertService.success('Avis supprimé.');
       },
       error: (err) => {
         this.deletingId.set(null);
-        this.errorMessage.set(
-          err?.error?.message ?? "Impossible de supprimer cet avis.",
-        );
+        const message = err?.error?.message ?? "Impossible de supprimer cet avis.";
+        this.errorMessage.set(message);
+        this.alertService.error(message);
       },
     });
   }

@@ -19,8 +19,6 @@ interface RatingOption {
   value: number;
 }
 
-const BRANDS = ['Apple', 'Samsung', 'Sony', 'Dell', 'Logitech', 'Razer', 'LG', 'Amazon'];
-
 const SORT_OPTIONS: { label: string; value: SortOption }[] = [
   { label: 'Featured', value: 'featured' },
   { label: 'Price: Low to High', value: 'price-asc' },
@@ -77,8 +75,21 @@ export class ProductList implements OnInit {
   protected inStockOnly = signal<boolean>(false);
   protected sort = signal<SortOption>('featured');
   protected wishlistOnly = signal<boolean>(false);
+  /** Terme de recherche venant du query param `search` (barre de la navbar). */
+  protected searchTerm = signal<string>('');
 
-  protected readonly brands = BRANDS;
+  /**
+   * Marques disponibles dans les filtres : dérivées dynamiquement des
+   * produits réellement chargés (au lieu d'une liste figée en dur), pour
+   * refléter les vraies marques du catalogue.
+   */
+  protected brands = computed(() => {
+    const set = new Set<string>();
+    for (const p of this._products()) {
+      if (p.brand?.trim()) set.add(p.brand.trim());
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  });
   protected readonly sortOptions = SORT_OPTIONS;
   protected readonly priceRanges = PRICE_RANGES;
   protected readonly ratingOptions = RATING_OPTIONS;
@@ -86,6 +97,7 @@ export class ProductList implements OnInit {
   ngOnInit() {
     this.route.queryParamMap.subscribe((params) => {
       this.wishlistOnly.set(params.get('wishlist') === 'true');
+      this.searchTerm.set(params.get('search')?.trim() ?? '');
 
       const catId = params.get('category');
       if (catId) this._activeCategoryId.set(catId);
@@ -109,7 +121,8 @@ export class ProductList implements OnInit {
       this.maxPrice() < 2000 ||
       this.minRating() > 0 ||
       this.inStockOnly() ||
-      this.wishlistOnly()
+      this.wishlistOnly() ||
+      this.searchTerm().length > 0
     );
   });
 
@@ -117,6 +130,7 @@ export class ProductList implements OnInit {
     let list = [...this._products()];
     const catId = this._activeCategoryId();
     const brands = this.selectedBrands();
+    const search = this.searchTerm().toLowerCase();
 
     if (this.wishlistOnly()) {
       const wishlist = this.cartService.wishlist();
@@ -124,6 +138,15 @@ export class ProductList implements OnInit {
     }
     if (catId) {
       list = list.filter((p) => p.categoryId === catId);
+    }
+    if (search) {
+      list = list.filter((p) => {
+        const haystack = [p.name, p.brand, p.description]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(search);
+      });
     }
     if (brands.length > 0) {
       list = list.filter((p) => p.brand && brands.includes(p.brand));
@@ -166,6 +189,7 @@ export class ProductList implements OnInit {
     this.minRating.set(0);
     this.inStockOnly.set(false);
     this.wishlistOnly.set(false);
+    this.searchTerm.set('');
     this.router.navigate([], { queryParams: {} });
   }
 

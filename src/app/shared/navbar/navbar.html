@@ -14,7 +14,7 @@
           <span class="text-white font-bold text-sm font-display">T</span>
         </div>
         <span class="text-lg font-bold text-gray-900 hidden sm:block font-display">
-          Tech<span class="text-amber-500">Gear</span>
+          Tech<span class="text-amber-700">Gear</span>
         </span>
       </a>
 
@@ -22,13 +22,13 @@
         <button
           type="button"
           (click)="toggleCategoryDropdown()"
-          class="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-amber-500 transition-colors px-3 py-2 rounded-lg hover:bg-amber-50"
+          class="flex items-center gap-1.5 text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-3 py-2 rounded-lg hover:bg-amber-50"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
           Categories
-          <svg class="w-3.5 h-3.5 transition-transform duration-200" [class.rotate-180]="catOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-3.5 h-3.5 transition-transform duration-200" [class.rotate-180]="catOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
@@ -52,14 +52,16 @@
 
       <div class="flex-1 max-w-xl">
         <div class="relative">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
             type="text"
             placeholder='Search "wireless earbuds", "smartwatch"...'
+            aria-label="Search products"
             [value]="searchQuery"
             (input)="onSearchInput($event)"
+            (keyup.enter)="onSearchEnter($event)"
             class="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all placeholder-gray-400"
           />
         </div>
@@ -71,20 +73,21 @@
           type="button" 
           [routerLink]="['/products']"
           [queryParams]="{ wishlist: true }"
-          class="relative p-2.5 text-gray-600 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors group"
+          class="relative p-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors group"
           aria-label="Wishlist"
         >
           <svg 
-            class="w-5 h-5 text-gray-600 group-hover:text-amber-500 transition-colors" 
+            class="w-5 h-5 text-gray-600 group-hover:text-amber-600 transition-colors" 
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
           </svg>
           
           @if (wishlistCount > 0) {
-            <span class="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+            <span class="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-amber-500 text-gray-900 text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
               {{ wishlistCount }}
             </span>
           }
@@ -98,12 +101,12 @@
           <button
             type="button"
             (click)="toggleUserMenu($event)"
-            class="p-2.5 text-gray-600 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+            class="p-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
             [attr.aria-label]="isLoggedIn ? 'Account menu' : 'Sign in or sign up'"
             aria-haspopup="menu"
             [attr.aria-expanded]="userMenuOpen"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </button>
@@ -115,7 +118,7 @@
               (click)="$event.stopPropagation()"
             >
               <div class="px-4 py-3 border-b border-gray-100">
-                <p class="text-sm font-medium text-gray-400">Welcome to TechGear</p>
+                <p class="text-sm font-medium text-gray-500">Welcome to TechGear</p>
               </div>
 
               <div class="p-2">
@@ -126,7 +129,7 @@
                     (click)="closeUserMenu()"
                     class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
                   >
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 7h6m-6 4h6" />
                     </svg>
                     My Orders
@@ -137,7 +140,7 @@
                     (click)="goToProfile()"
                     class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
                   >
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     My Profile
@@ -148,7 +151,7 @@
                     (click)="logout()"
                     class="w-full mt-1 flex items-center justify-center gap-2 px-3 py-3 bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold rounded-xl transition-colors"
                   >
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 17l5-5-5-5" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12H9" />
@@ -162,10 +165,8 @@
                     (click)="closeUserMenu()"
                     class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
                   >
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 17l5-5-5-5" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H3" />
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
                     Sign in
                   </a>
@@ -173,9 +174,9 @@
                     routerLink="/register"
                     role="menuitem"
                     (click)="closeUserMenu()"
-                    class="w-full mt-1 flex items-center justify-center gap-2 px-3 py-3 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition-colors"
+                    class="w-full mt-1 flex items-center justify-center gap-2 px-3 py-3 bg-amber-500 hover:bg-amber-600 text-gray-900 text-sm font-bold rounded-xl transition-colors"
                   >
-                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" />
                       <circle cx="9" cy="7" r="4" stroke-width="2" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 8v6M22 11h-6" />
@@ -191,9 +192,10 @@
         @if (isAdmin) {
           <a
             routerLink="/admin"
+            aria-label="Dashboard"
             class="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors ml-1"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <rect x="3" y="3" width="7" height="7" rx="1" stroke-width="2" />
               <rect x="14" y="3" width="7" height="7" rx="1" stroke-width="2" />
               <rect x="3" y="14" width="7" height="7" rx="1" stroke-width="2" />
@@ -206,15 +208,16 @@
         <button
           type="button"
           (click)="onCartOpen()"
-          class="relative flex items-center gap-2 px-3 py-2 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-colors ml-1"
+          aria-label="Cart"
+          class="relative flex items-center gap-2 px-3 py-2 bg-amber-500 text-gray-900 rounded-xl hover:bg-amber-600 transition-colors ml-1"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
           <span class="text-sm font-semibold hidden sm:block">Cart</span>
           
           @if (cartCount > 0) {
-            <span class="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+            <span class="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
               {{ cartCount }}
             </span>
           }

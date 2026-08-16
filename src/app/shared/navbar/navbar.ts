@@ -32,6 +32,8 @@ export class Navbar {
 
   @Output() cartOpen = new EventEmitter<void>();
   @Output() searchChange = new EventEmitter<string>();
+  /** Émis quand l'utilisateur valide sa recherche (touche Entrée). */
+  @Output() searchSubmit = new EventEmitter<string>();
 
   scrolled = false;
   catOpen = false;
@@ -68,6 +70,11 @@ export class Navbar {
   onSearchInput(event: Event) {
     const input = event.target as HTMLInputElement;
     this.searchChange.emit(input.value);
+  }
+
+  onSearchEnter(event: Event) {
+    const input = event.target as HTMLInputElement;
+    this.searchSubmit.emit(input.value);
   }
 
   onCartOpen() {

@@ -21,7 +21,7 @@
 
         <h1 class="font-display text-5xl sm:text-6xl lg:text-7xl font-black text-gray-900 leading-tight">
           Next-Gen
-          <span class="block text-amber-500">Tech,</span>
+          <span class="block text-amber-600">Tech,</span>
           Best Prices.
         </h1>
 
@@ -33,7 +33,7 @@
         <div class="flex flex-wrap gap-4">
           <button
             (click)="shopNow.emit()"
-            class="px-8 py-4 bg-amber-500 text-white font-semibold rounded-xl
+            class="px-8 py-4 bg-amber-500 text-gray-900 font-semibold rounded-xl
                    hover:bg-amber-600 active:scale-95 transition-all duration-150
                    shadow-lg shadow-amber-200 text-base font-display"
           >Shop Now →</button>
@@ -90,8 +90,8 @@
 
         <!-- Price badge -->
         <div class="absolute z-20" style="right:4%; bottom:20%">
-          <div class="bg-amber-500 text-white rounded-2xl px-4 py-2.5 shadow-lg">
-            <div class="text-xs font-medium opacity-80">Flash Deal</div>
+          <div class="bg-amber-500 text-gray-900 rounded-2xl px-4 py-2.5 shadow-lg">
+            <div class="text-xs font-medium">Flash Deal</div>
             <div class="text-lg font-black font-display">-30% OFF</div>
           </div>
         </div>
@@ -100,7 +100,8 @@
         <div class="absolute z-20" style="left:4%; top:16%">
           <div class="bg-white rounded-2xl px-4 py-2.5 shadow-lg border border-gray-100">
             <div class="flex items-center gap-1">
-              <span class="text-amber-400 text-sm">★★★★★</span>
+              <span class="text-amber-700 text-sm" aria-hidden="true">★★★★★</span>
+              <span class="sr-only">5 out of 5 stars</span>
             </div>
             <div class="text-xs text-gray-600 mt-0.5 font-medium">50K+ reviews</div>
           </div>

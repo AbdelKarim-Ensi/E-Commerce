@@ -104,13 +104,6 @@
                 {{ saving() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
               </button>
             </div>
-
-            @if (saved()) {
-              <p class="text-right text-sm font-semibold text-amber-600">Profil mis à jour.</p>
-            }
-            @if (error()) {
-              <p class="text-right text-sm font-semibold text-red-500">{{ error() }}</p>
-            }
           </form>
         </div>
 
@@ -156,7 +149,7 @@
               </div>
             } @else {
               <div class="space-y-4">
-                @for (order of orders(); track order.id) {
+                @for (order of displayedOrders; track order.id) {
                   <div class="rounded-xl border border-gray-100 p-5 hover:shadow-md transition">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -178,6 +171,17 @@
                   </div>
                 }
               </div>
+
+              @if (hasMoreOrders) {
+                <div class="mt-6 flex justify-center">
+                  <a
+                    routerLink="/orders"
+                    class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-2.5 text-sm font-bold text-amber-600 hover:bg-amber-500 hover:text-white transition"
+                  >
+                    Voir toutes mes commandes
+                  </a>
+                </div>
+              }
             }
           </div>
         </div>
@@ -419,13 +423,6 @@
                 {{ passwordSaving() ? 'Enregistrement...' : 'Mettre à jour le mot de passe' }}
               </button>
             </div>
-
-            @if (passwordSaved()) {
-              <p class="text-right text-sm font-semibold text-amber-600">Mot de passe mis à jour.</p>
-            }
-            @if (passwordError()) {
-              <p class="text-right text-sm font-semibold text-red-500">{{ passwordError() }}</p>
-            }
           </form>
         </div>
       }

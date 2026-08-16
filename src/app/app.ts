@@ -38,11 +38,34 @@ export class App implements OnInit {
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
         this.isAdminRoute.set(event.urlAfterRedirects.startsWith('/admin'));
+
+        // La recherche de la navbar est globale (le champ vit dans App,
+        // pas dans une page précise) : sans ce reset, le texte tapé reste
+        // affiché même après avoir navigué vers une fiche produit, une
+        // catégorie ou l'admin, ce qui donne l'impression d'un champ
+        // "bloqué" en focus. On ne le vide pas si on est justement en
+        // train d'atterrir sur /products avec ce même terme de recherche
+        // (cas du submit ci-dessous), pour ne pas effacer ce que
+        // l'utilisateur vient de valider.
+        const isOnProductsSearch = event.urlAfterRedirects.startsWith('/products');
+        if (!isOnProductsSearch) {
+          this.searchQuery = '';
+        }
       });
   }
 
   protected onSearch(query: string) {
     this.searchQuery = query;
-    
+  }
+
+  /**
+   * Déclenché quand l'utilisateur valide sa recherche (touche Entrée dans
+   * la navbar). Jusqu'ici rien ne consommait la saisie : elle restait
+   * affichée sans jamais filtrer les produits.
+   */
+  protected onSearchSubmit(query: string) {
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    this.router.navigate(['/products'], { queryParams: { search: trimmed } });
   }
 }

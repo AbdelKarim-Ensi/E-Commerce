@@ -7,6 +7,7 @@ import { AuthService } from '@services/auth.service';
 import { UsersService } from '@services/users.service';
 import { OrdersService } from '@services/orders.service';
 import { AddressesService } from '@services/address.service';
+import { AlertService } from '@services/alert.service';
 import { User } from '@models/user.model';
 import { Order } from '@models/order.model';
 import { Address, CreateAddressPayload } from '@models/address.model';
@@ -61,6 +62,7 @@ export class Profile implements OnInit {
   private usersService = inject(UsersService);
   private ordersService = inject(OrdersService);
   private addressesService = inject(AddressesService);
+  private alertService = inject(AlertService);
   private router = inject(Router);
 
   protected readonly isLoggedIn = this.authService.isLoggedIn;
@@ -98,8 +100,6 @@ export class Profile implements OnInit {
   // Sécurité
   protected passwordForm: PasswordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
   protected passwordSaving = signal(false);
-  protected passwordSaved = signal(false);
-  protected passwordError = signal<string | null>(null);
 
   protected navigation: { key: NavKey; label: string; icon: any }[] = [
     { key: 'profil', label: 'Profil', icon: UserIcon },
@@ -204,6 +204,22 @@ export class Profile implements OnInit {
     return order.items.reduce((sum, i) => sum + i.quantity, 0);
   }
 
+  /**
+   * L'onglet "Commandes" du profil n'est qu'un aperçu — au-delà de 10
+   * commandes, on renvoie vers la page dédiée /orders (déjà existante,
+   * accessible via "My Orders" dans le menu utilisateur) plutôt que de
+   * dupliquer la pagination ici.
+   */
+  private readonly ordersPreviewLimit = 10;
+
+  protected get displayedOrders(): Order[] {
+    return this.orders().slice(0, this.ordersPreviewLimit);
+  }
+
+  protected get hasMoreOrders(): boolean {
+    return this.orders().length > this.ordersPreviewLimit;
+  }
+
   saveProfile() {
     this.saving.set(true);
     this.error.set(null);
@@ -212,12 +228,12 @@ export class Profile implements OnInit {
         this.user.set(u);
         this.originalForm = { ...this.form };
         this.saving.set(false);
-        this.saved.set(true);
-        setTimeout(() => this.saved.set(false), 3000);
+        this.alertService.success('Vos informations ont bien été mises à jour.', 'Profil mis à jour');
       },
       error: () => {
         this.saving.set(false);
         this.error.set("La mise à jour a échoué. Réessayez.");
+        this.alertService.error("La mise à jour de votre profil a échoué. Réessayez.");
       },
     });
   }
@@ -228,15 +244,20 @@ export class Profile implements OnInit {
     this.error.set(null);
   }
 
+  /**
+   * Toutes les erreurs (validation locale et erreurs serveur) sont
+   * affichées via alertService.error() (popup SweetAlert2). Le formulaire
+   * `passwordForm` n'est modifié qu'en cas de succès : les valeurs saisies
+   * par l'utilisateur restent donc intactes tant que l'action n'a pas
+   * réussi, même après la fermeture de la popup d'erreur.
+   */
   changePassword() {
-    this.passwordError.set(null);
-
     if (this.passwordForm.newPassword.length < 8) {
-      this.passwordError.set('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+      this.alertService.error('Le nouveau mot de passe doit contenir au moins 8 caractères.');
       return;
     }
     if (this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
-      this.passwordError.set('Les mots de passe ne correspondent pas.');
+      this.alertService.error('Les mots de passe ne correspondent pas.');
       return;
     }
 
@@ -247,16 +268,15 @@ export class Profile implements OnInit {
     }).subscribe({
       next: () => {
         this.passwordSaving.set(false);
-        this.passwordSaved.set(true);
         this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
-        setTimeout(() => this.passwordSaved.set(false), 3000);
+        this.alertService.success('Votre mot de passe a bien été mis à jour.', 'Mot de passe modifié');
       },
       error: (err) => {
         this.passwordSaving.set(false);
         if (err.status === 400) {
-          this.passwordError.set('Mot de passe actuel incorrect.');
+          this.alertService.error('Mot de passe actuel incorrect.');
         } else {
-          this.passwordError.set('Une erreur est survenue. Réessayez.');
+          this.alertService.error('Une erreur est survenue. Réessayez.');
         }
       },
     });
@@ -347,12 +367,16 @@ export class Profile implements OnInit {
             : updatedList;
         });
         this.cancelAddressForm();
+        this.alertService.success(
+          editingId ? "L'adresse a bien été modifiée." : "L'adresse a bien été ajoutée.",
+          editingId ? 'Adresse mise à jour' : 'Adresse ajoutée',
+        );
       },
       error: (err) => {
         this.addressSaving.set(false);
-        this.addressFormError.set(
-          err?.error?.message ?? "Impossible d'enregistrer cette adresse.",
-        );
+        const message = err?.error?.message ?? "Impossible d'enregistrer cette adresse.";
+        this.addressFormError.set(message);
+        this.alertService.error(message);
       },
     });
   }
@@ -375,8 +399,14 @@ export class Profile implements OnInit {
     });
   }
 
-  deleteAddress(address: Address) {
-    const confirmed = confirm(`Supprimer l'adresse "${address.label || address.fullName}" ?`);
+  async deleteAddress(address: Address) {
+    const confirmed = await this.alertService.confirm({
+      title: 'Supprimer cette adresse ?',
+      text: `"${address.label || address.fullName}" sera définitivement supprimée.`,
+      danger: true,
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+    });
     if (!confirmed) return;
 
     this.deletingAddressId.set(address.id);
@@ -387,10 +417,12 @@ export class Profile implements OnInit {
         // adresse par défaut, gérée côté backend.
         this.addressesLoaded = false;
         this.loadAddresses();
+        this.alertService.success('Adresse supprimée.');
       },
       error: () => {
         this.deletingAddressId.set(null);
         this.addressesError.set('Impossible de supprimer cette adresse.');
+        this.alertService.error('Impossible de supprimer cette adresse.');
       },
     });
   }

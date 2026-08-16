@@ -4,14 +4,19 @@ import { ActivatedRoute } from '@angular/router';
 import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 import { ShowcaseService } from '../../../core/services/showcase.service';
 import { ProductsService } from '../../../core/services/products.service';
+import { CartService } from '../../../core/services/cart.service';
 import { Product } from '../../../core/models/product.model';
 import { ProductReviews } from '../../../shared/product-reviews/product-reviews';
 type Side = 'left' | 'right';
 
-interface FeatureMetric {
+interface SpecCard {
   label: string;
-  value: number;
-  icon: string;
+  value: string;
+}
+
+interface ProductColor {
+  name: string;
+  hex: string;
 }
 
 interface SideData {
@@ -25,7 +30,7 @@ interface SideData {
   ring: string;
   connectionStatus: string;
   batteryLevel: number;
-  features: FeatureMetric[];
+  specs: SpecCard[];
 }
 
 const DEFAULT_COLORS = {
@@ -33,16 +38,23 @@ const DEFAULT_COLORS = {
   right: { gradient: 'from-emerald-600 to-teal-900', glow: 'bg-emerald-500', ring: 'border-r-emerald-500/50' },
 };
 
-const DEFAULT_FEATURES: Record<Side, FeatureMetric[]> = {
-  left: [
-    { label: 'Latency', value: 12, icon: 'zap' },
-    { label: 'Sync Rate', value: 98, icon: 'wifi' },
-  ],
-  right: [
-    { label: 'Bitrate', value: 94, icon: 'bluetooth' },
-    { label: 'Clarifier', value: 88, icon: 'music' },
-  ],
-};
+/** Specs affichées uniquement sur la page démo (aucun produit réel chargé). */
+const DEFAULT_SPECS: SpecCard[] = [
+  { label: 'Latency', value: '12 ms' },
+  { label: 'Sync Rate', value: '98%' },
+];
+
+/**
+ * Convertit les specDetails admin (Record<string,string>) en cartes
+ * affichables telles quelles — aucune tentative d'interprétation en
+ * pourcentage : on affiche exactement ce que l'admin a saisi.
+ */
+function buildSpecCards(specDetails: Record<string, string> | undefined | null): SpecCard[] {
+  if (!specDetails) return [];
+  return Object.entries(specDetails)
+    .filter(([key, value]) => key?.trim() && value?.trim())
+    .map(([key, value]) => ({ label: key, value }));
+}
 
 @Component({
   selector: 'app-earbud-showcase',
@@ -99,12 +111,22 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
   private route = inject(ActivatedRoute);
   private showcaseService = inject(ShowcaseService);
   private productsService = inject(ProductsService);
+  private cartService = inject(CartService);
   private platformId = inject(PLATFORM_ID);
 
   protected activeSide = signal<Side>('left');
   protected product = signal<Product | null>(null);
 
   protected skipAnimation = signal(true);
+
+  /** Feedback visuel bref sur le bouton après l'ajout au panier. */
+  protected justAdded = signal(false);
+
+  /** Couleurs telles que saisies par l'admin (form "Couleurs disponibles"). */
+  protected colors = computed<ProductColor[]>(() => {
+    const raw = (this.product() as any)?.colors as ProductColor[] | undefined;
+    return (raw ?? []).filter((c) => c?.name?.trim() && c?.hex?.trim());
+  });
 
   protected sides = computed<Record<Side, SideData>>(() => {
     const p = this.product();
@@ -117,7 +139,7 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
           image: 'https://ik.imagekit.io/kqmrslzuq/SOUND/left-earbud.png',
           ...DEFAULT_COLORS.left,
           connectionStatus: 'Connected', batteryLevel: 82,
-          features: DEFAULT_FEATURES.left,
+          specs: DEFAULT_SPECS,
         },
         right: {
           id: 'right', label: 'Right', title: 'Vocal Clarity',
@@ -125,7 +147,7 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
           image: 'https://ik.imagekit.io/kqmrslzuq/SOUND/right-earbud.png',
           ...DEFAULT_COLORS.right,
           connectionStatus: 'Connected', batteryLevel: 74,
-          features: DEFAULT_FEATURES.right,
+          specs: DEFAULT_SPECS,
         },
       };
     }
@@ -135,6 +157,10 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
     const img1 = images?.[1] ?? images?.[0] ?? p.imageUrl ?? '';
     const description = (p as any).description ?? `${p.brand ?? ''} ${p.name}`.trim();
 
+    // Les specs proviennent exclusivement du produit réel — jamais de
+    // valeurs par défaut inventées dès qu'un produit est chargé.
+    const specs = buildSpecCards((p as any).specDetails);
+
     return {
       left: {
         id: 'left', label: 'Front',
@@ -143,7 +169,7 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
         image: img0,
         ...DEFAULT_COLORS.left,
         connectionStatus: 'Connected', batteryLevel: 82,
-        features: DEFAULT_FEATURES.left,
+        specs,
       },
       right: {
         id: 'right', label: 'Details',
@@ -152,7 +178,7 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
         image: img1,
         ...DEFAULT_COLORS.right,
         connectionStatus: 'Connected', batteryLevel: 74,
-        features: DEFAULT_FEATURES.right,
+        specs,
       },
     };
   });
@@ -207,5 +233,13 @@ export class EarbudShowcase implements OnInit, AfterViewInit {
 
   setSide(id: Side) {
     this.activeSide.set(id);
+  }
+
+  addToCart() {
+    const p = this.product();
+    if (!p) return;
+    this.cartService.addItem(p)
+    this.justAdded.set(true);
+    setTimeout(() => this.justAdded.set(false), 1800);
   }
 }

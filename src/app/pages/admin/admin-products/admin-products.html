@@ -28,6 +28,7 @@
         <input
           type="text"
           placeholder="Rechercher un produit..."
+          aria-label="Rechercher un produit"
           [ngModel]="search()"
           (ngModelChange)="onSearchInput($event)"
           class="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
@@ -37,6 +38,7 @@
       <select
         [ngModel]="selectedCategoryId()"
         (ngModelChange)="onCategoryChange($event)"
+        aria-label="Filtrer par catégorie"
         class="rounded-lg border border-slate-200 py-2.5 px-3 text-sm text-slate-700 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
       >
         <option value="">Toutes les catégories</option>
