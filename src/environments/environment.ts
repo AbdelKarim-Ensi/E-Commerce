@@ -3,7 +3,7 @@ export const environment = {
   apiUrl: 'http://localhost:3000',
   stripePublishableKey: 'pk_test_51U3YMi3Li5UjJEvoNL0eLXCoyuHnzqKMdvC9qzRbzZIkwg0RiGJWMHap0tEo13qi8WMywpjr9NbhWxnchTwIwTob0034ZyNQcp',
   firebase: {
-    apiKey: process.env['FIREBASE_API_KEY'],
+    apiKey: "AIzaSyAd4Ae3B2b5eA6tkEz0bTO2mfi4Pko8a1M",
     authDomain: 'e-commerce-2f037.firebaseapp.com',
     projectId: 'e-commerce-2f037',
     storageBucket: 'e-commerce-2f037.firebasestorage.app',
