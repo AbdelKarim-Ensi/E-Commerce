@@ -129,6 +129,34 @@ export class Auth implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Utilisée par les deux formulaires (Sign in / Sign up) — Google renvoie
+   * toujours le même flux de compte, il n'y a pas de distinction "créer"
+   * vs "se connecter" côté Firebase, donc un seul handler suffit.
+   */
+  loginWithGoogle() {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    this.authService.loginWithGoogle().subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.router.navigate(['/']);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        // L'utilisateur ferme souvent la popup lui-même (auth/popup-closed-by-user) :
+        // ce n'est pas une vraie erreur, pas besoin d'afficher de message dans ce cas.
+        if (err?.code === 'auth/popup-closed-by-user') {
+          return;
+        }
+        this.errorMessage.set(
+          err?.error?.message ?? 'Could not sign in with Google. Please try again.'
+        );
+      },
+    });
+  }
+
   get siEmail() { return this.signInForm.controls.email; }
   get siPassword() { return this.signInForm.controls.password; }
   get suUsername() { return this.signUpForm.controls.username; }

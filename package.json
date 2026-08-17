@@ -37,6 +37,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "chart.js": "^4.5.1",
     "express": "^5.1.0",
+    "firebase": "^12.17.1",
     "lucide-angular": "^1.0.0",
     "postcss": "^8.5.25",
     "rxjs": "~7.8.0",
