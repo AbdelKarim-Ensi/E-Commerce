@@ -21,11 +21,18 @@ export class AlertService {
    * Confirmation avant une action destructive ou importante.
    * Retourne `true` si l'utilisateur confirme, `false` sinon (annulation
    * ou fermeture par overlay/Échap).
+   *
+   * Utilise le même habillage visuel que success()/error()/info()
+   * (titre stylé, icône stylée, sous-titre, animation d'entrée, backdrop)
+   * pour rester cohérent avec le design des alertes de profile.
    */
   async confirm(options: ConfirmOptions): Promise<boolean> {
     const result = await Swal.fire({
+      position: 'center',
       title: options.title,
-      text: options.text,
+      html: options.text
+        ? `<span class="swal-techgear-subtitle">${options.text}</span>`
+        : undefined,
       icon: options.danger ? 'warning' : 'question',
       showCancelButton: true,
       confirmButtonText: options.confirmButtonText ?? 'Confirmer',
@@ -34,7 +41,13 @@ export class AlertService {
       cancelButtonColor: '#64748b', // slate-500
       reverseButtons: true,
       focusCancel: options.danger, // évite un clic accidentel sur "Confirmer" pour le destructif
-      customClass: { popup: 'swal-techgear-popup' },
+      backdrop: 'rgba(0,0,0,0.45)',
+      showClass: { popup: 'swal-techgear-show' },
+      customClass: {
+        popup: 'swal-techgear-popup',
+        title: 'swal-techgear-title',
+        icon: 'swal-techgear-icon',
+      },
     });
     return result.isConfirmed;
   }
