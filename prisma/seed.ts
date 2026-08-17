@@ -1,10 +1,89 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 const IMG_BASE = '/assets/products';
 
-async function main() {
+// Même coût que AuthService (backend/src/modules/auth/auth.service.ts)
+// — garder les deux synchronisés si l'un change un jour.
+const SALT_ROUNDS = 12;
+
+async function seedAdmin() {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    throw new Error(
+      'ADMIN_EMAIL et ADMIN_PASSWORD doivent être définis dans backend/.env avant de lancer le seed.',
+    );
+  }
+
+  if (adminPassword.length < 8) {
+    throw new Error('ADMIN_PASSWORD doit contenir au moins 8 caractères.');
+  }
+
+  const passwordHash = await bcrypt.hash(adminPassword, SALT_ROUNDS);
+
+  // upsert : idempotent, on peut relancer le seed sans dupliquer ni planter
+  // si le compte admin existe déjà (ex. re-déploiement, reset partiel de DB).
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      passwordHash,
+      role: Role.ADMIN,
+      emailVerified: true,
+    },
+    create: {
+      email: adminEmail,
+      passwordHash,
+      firstName: 'Admin',
+      lastName: 'TechGear',
+      role: Role.ADMIN,
+      emailVerified: true,
+    },
+  });
+
+  console.log(`✅ Compte ADMIN prêt : ${admin.email} (id: ${admin.id})`);
+}
+
+/**
+ * Promeut des comptes EXISTANTS en ADMIN, à partir d'une liste d'emails
+ * (ADMIN_EMAILS, séparés par des virgules) — sans jamais toucher au
+ * passwordHash. Contrairement à seedAdmin() (qui crée/écrase un compte
+ * de service avec un mot de passe fixe), cette fonction sert à donner
+ * les droits ADMIN à des comptes déjà créés normalement (register ou
+ * Google), sans écraser leur vrai mot de passe.
+ * Ignore silencieusement les emails qui n'existent pas encore en base.
+ */
+async function promoteExistingAdmins() {
+  const raw = process.env.ADMIN_EMAILS;
+  if (!raw) return;
+
+  const emails = raw
+    .split(',')
+    .map((e) => e.trim())
+    .filter(Boolean);
+
+  for (const email of emails) {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      console.warn(`⚠️  ADMIN_EMAILS: aucun compte trouvé pour ${email}, ignoré.`);
+      continue;
+    }
+    if (user.role === Role.ADMIN) {
+      console.log(`ℹ️  ${email} est déjà ADMIN.`);
+      continue;
+    }
+    await prisma.user.update({
+      where: { email },
+      data: { role: Role.ADMIN },
+    });
+    console.log(`✅ ${email} promu ADMIN (mot de passe inchangé).`);
+  }
+}
+
+async function seedCatalog() {
   console.log('🧹 Nettoyage des données existantes...');
   await prisma.orderItem.deleteMany();
   await prisma.product.deleteMany();
@@ -20,7 +99,7 @@ async function main() {
     prisma.category.create({ data: { name: 'Wearables', slug: 'wearables', emoji: '⌚' } }),
   ]);
 
-  const catId = (name: string) => categories.find(c => c.name === name)!.id;
+  const catId = (name: string) => categories.find((c) => c.name === name)!.id;
 
   console.log('📦 Création des produits...');
 
@@ -275,6 +354,12 @@ async function main() {
   }
 
   console.log(`✅ ${categories.length} catégories et ${products.length} produits créés.`);
+}
+
+async function main() {
+  await seedAdmin();
+  await promoteExistingAdmins();
+  await seedCatalog();
 }
 
 main()

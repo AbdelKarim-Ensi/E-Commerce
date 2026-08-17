@@ -12,6 +12,7 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
 
 const SALT_ROUNDS = 12;
 const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60;
@@ -144,6 +145,17 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.emailVerified) {
+      // Vérifié APRÈS le mot de passe, jamais avant : si on le testait en
+      // premier, un attaquant qui ne connaît pas le mot de passe pourrait
+      // quand même déduire qu'un compte existe et n'est pas vérifié, juste
+      // en observant la différence de message. Ici, seul quelqu'un qui a
+      // déjà prouvé connaître le mot de passe apprend cet état.
+      throw new UnauthorizedException(
+        'Please verify your email address before signing in. Check your inbox for the verification link.',
+      );
+    }
+
     const accessToken = this.signAccessToken(user.id, user.email, user.role);
     const refreshToken = await this.issueRefreshToken(user.id, user.email, user.role);
     return { user: this.sanitizeUser(user), accessToken, refreshToken };
@@ -155,6 +167,9 @@ export class AuthService {
    * et on émet nos propres JWT + refresh token — exactement comme login().
    * Le reste de l'app (guards, RBAC, refresh rotation) ne voit aucune
    * différence entre une session issue d'un login classique ou de Google.
+   * Contrairement à login(), on ne bloque jamais ici sur emailVerified :
+   * Google a déjà vérifié l'email lui-même pour l'authentifier via sa popup,
+   * on fait confiance à ce statut (repris directement dans emailVerified).
    */
   async loginWithGoogle(idToken: string) {
     let decoded;
@@ -206,6 +221,28 @@ export class AuthService {
     const accessToken = this.signAccessToken(user.id, user.email, user.role);
     const refreshToken = await this.issueRefreshToken(user.id, user.email, user.role);
     return { user: this.sanitizeUser(user), accessToken, refreshToken };
+  }
+
+  /**
+   * Renvoie l'email de vérification. Même principe anti-énumération que
+   * forgotPassword() : réponse générique identique dans tous les cas
+   * (compte inconnu, déjà vérifié, ou Google-only) — un attaquant ne doit
+   * jamais pouvoir déduire l'état d'un compte à partir de la réponse.
+   */
+  async resendVerificationEmail(dto: ResendVerificationDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+
+    // Rien à faire si : compte inexistant, déjà vérifié, ou Google-only
+    // (googleId défini sans mot de passe local — déjà vérifié via Google
+    // au moment de la première connexion, voir loginWithGoogle()).
+    if (user && !user.emailVerified && user.passwordHash) {
+      await this.sendVerificationEmail(user.id, user.email);
+    }
+
+    return {
+      success: true,
+      message: "Si un compte existe avec cet email et n'est pas encore vérifié, un nouvel email vient d'être envoyé.",
+    };
   }
 
   async refresh(refreshToken: string) {
@@ -295,7 +332,14 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: { id: userId },
-      data: { passwordHash: newPasswordHash },
+      data: {
+        passwordHash: newPasswordHash,
+        // Recevoir et cliquer ce lien envoyé par email prouve la possession
+        // de la boîte mail, au même titre que le lien de vérification —
+        // sans ça, un compte jamais vérifié resterait bloqué au login même
+        // après avoir remis un mot de passe valide.
+        emailVerified: true,
+      },
     });
 
     // Le token à usage unique est consommé.
