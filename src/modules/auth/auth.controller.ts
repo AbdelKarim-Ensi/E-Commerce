@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
@@ -52,6 +53,18 @@ export class AuthController {
     return { user };
   }
 
+  // Même limite que register : cette route peut elle aussi créer un compte
+  // (premier login Google d'un nouvel utilisateur), donc même exposition
+  // au risque de création massive de comptes scriptée.
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  async loginWithGoogle(@Body() dto: GoogleLoginDto, @Res({ passthrough: true }) res: Response) {
+    const { user, accessToken, refreshToken } = await this.authService.loginWithGoogle(dto.idToken);
+    this.setAuthCookies(res, accessToken, refreshToken);
+    return { user };
+  }
+
   // A stolen/guessed refresh token being replayed rapidly is exactly the reuse-detection
   // scenario from Phase 5 — rate limiting here adds a second layer in front of it.
   @Throttle({ default: { limit: 10, ttl: 60000 } })
@@ -85,8 +98,7 @@ export class AuthController {
     return user;
   }
 
-  // Volontairement strict (3/min) : cette route déclenche un envoi d'email et
-  // interroge la base par email à chaque appel — cible facile pour du spam/enumeration.
+ 
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)

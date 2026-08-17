@@ -26,6 +26,7 @@ import { CouponsModule } from './modules/coupons/coupons.module';
 import { NewsletterModule } from './modules/newsletter/newsletter.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AddressesModule } from './modules/addresses/Addresses.module';
+import { FirebaseAdminModule } from './firebase/firebase-admin.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -60,6 +61,7 @@ import { AddressesModule } from './modules/addresses/Addresses.module';
     ReviewsModule,
     AddressesModule,
     AdminModule,
+    FirebaseAdminModule,
   
   ],
   controllers: [AppController],

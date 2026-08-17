@@ -59,6 +59,14 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
 
+    if (!user.passwordHash) {
+      // Compte créé via Google, jamais de mot de passe défini — rien à
+      // "changer" ici, même logique que le garde-fou dans AuthService.login().
+      throw new BadRequestException(
+        'This account uses Google sign-in and has no password to change.',
+      );
+    }
+
     const passwordMatches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
     if (!passwordMatches) {
       throw new BadRequestException('Current password is incorrect');

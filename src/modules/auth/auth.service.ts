@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../../redis/redis.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { FirebaseAdminService } from '../../firebase/firebase-admin.service';
 import { NotificationsQueue } from '../notifications/queues/notifications.queue';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -33,6 +34,7 @@ export class AuthService {
     private redis: RedisService,
     private config: ConfigService,
     private notificationsQueue: NotificationsQueue,
+    private firebaseAdmin: FirebaseAdminService,
   ) {}
 
   private sanitizeUser(user: {
@@ -130,9 +132,75 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (!user.passwordHash) {
+      // Compte créé via Google, jamais de mot de passe défini.
+      throw new UnauthorizedException(
+        'This account uses Google sign-in. Please continue with Google.',
+      );
+    }
+
     const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const accessToken = this.signAccessToken(user.id, user.email, user.role);
+    const refreshToken = await this.issueRefreshToken(user.id, user.email, user.role);
+    return { user: this.sanitizeUser(user), accessToken, refreshToken };
+  }
+
+  /**
+   * Auth Google : le frontend a déjà obtenu un idToken via Firebase (popup
+   * Google). On le vérifie côté serveur, puis on relie/crée le compte local
+   * et on émet nos propres JWT + refresh token — exactement comme login().
+   * Le reste de l'app (guards, RBAC, refresh rotation) ne voit aucune
+   * différence entre une session issue d'un login classique ou de Google.
+   */
+  async loginWithGoogle(idToken: string) {
+    let decoded;
+    try {
+      decoded = await this.firebaseAdmin.verifyIdToken(idToken);
+    } catch {
+      throw new UnauthorizedException('Invalid Google token');
+    }
+
+    const { uid: googleId, email, email_verified: emailVerified, name } = decoded;
+
+    if (!email) {
+      throw new UnauthorizedException('Google account has no email');
+    }
+
+    let user = await this.prisma.user.findUnique({ where: { googleId } });
+
+    if (!user) {
+      // Pas de compte encore lié à ce googleId : cherche par email pour
+      // rattacher un compte existant (créé au départ via email/password),
+      // sinon crée un tout nouveau compte.
+      const existingByEmail = await this.prisma.user.findUnique({ where: { email } });
+
+      if (existingByEmail) {
+        user = await this.prisma.user.update({
+          where: { id: existingByEmail.id },
+          data: {
+            googleId,
+            emailVerified: existingByEmail.emailVerified || Boolean(emailVerified),
+          },
+        });
+      } else {
+        const [firstName, ...rest] = (name ?? '').split(' ').filter(Boolean);
+        const lastName = rest.join(' ') || null;
+
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            googleId,
+            firstName: firstName || null,
+            lastName,
+            emailVerified: Boolean(emailVerified),
+            // passwordHash reste null — compte Google-only
+          },
+        });
+      }
     }
 
     const accessToken = this.signAccessToken(user.id, user.email, user.role);
