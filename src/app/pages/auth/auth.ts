@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { AuthService } from '@services/auth.service';
+import { AlertService } from '@services/alert.service';
 
 @Component({
   selector: 'app-auth',
@@ -15,6 +16,7 @@ import { AuthService } from '@services/auth.service';
 export class Auth implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private alertService = inject(AlertService);
   private router = inject(Router);
   private location = inject(Location);
   private routerSub?: Subscription;
@@ -24,7 +26,6 @@ export class Auth implements OnInit, OnDestroy {
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
-  successMessage = signal<string | null>(null);
 
   signInForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -40,7 +41,7 @@ export class Auth implements OnInit, OnDestroy {
   ngOnInit() {
     
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/profile']);
+      this.router.navigate(['/']);
       return;
     }
 
@@ -91,11 +92,47 @@ export class Auth implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(
-          err?.error?.message ?? 'Invalid email or password. Please try again.'
-        );
+        const message = err?.error?.message ?? 'Invalid email or password. Please try again.';
+
+        // Cas particulier : compte pas encore vérifié — propose de renvoyer
+        // l'email plutôt qu'une simple bannière/popup passive, puisque
+        // c'est le blocage exact qui empêche l'utilisateur d'avancer.
+        if (typeof message === 'string' && message.toLowerCase().includes('verify your email')) {
+          this.offerResendVerification(this.signInForm.getRawValue().email);
+          return;
+        }
+
+        this.errorMessage.set(message);
       },
     });
+  }
+
+  private offerResendVerification(email: string) {
+    this.alertService
+      .confirm({
+        title: 'Oups !',
+        text: "Votre email n'est pas encore vérifié. Voulez-vous qu'on vous renvoie le lien de vérification ?",
+        confirmButtonText: "Renvoyer l'email",
+        cancelButtonText: 'Fermer',
+      })
+      .then((shouldResend) => {
+        if (!shouldResend) return;
+
+        this.authService.resendVerification(email).subscribe({
+          next: () => {
+            this.alertService.success(
+              'Si ce compte existe et est encore non vérifié, un nouvel email vient de partir.',
+              'Email envoyé !',
+            );
+          },
+          error: () => {
+            this.alertService.error(
+              "Impossible d'envoyer l'email pour le moment. Réessayez plus tard.",
+              'Oups !',
+            );
+          },
+        });
+      });
   }
 
   submitSignUp() {
@@ -116,7 +153,10 @@ export class Auth implements OnInit, OnDestroy {
     this.authService.register({ email, password, firstName: username }).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.successMessage.set('Account created! Please sign in.');
+        this.alertService.success(
+          'Un email de vérification vient de vous être envoyé. Vérifiez votre boîte de réception avant de vous connecter.',
+          'Compte créé !',
+        );
         this.signInForm.patchValue({ email });
         this.showSignIn();
       },

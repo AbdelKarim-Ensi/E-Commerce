@@ -180,4 +180,11 @@ export class AuthService {
       token,
     });
   }
+
+  resendVerification(email: string) {
+    return this.http.post<{ success: boolean; message: string }>(
+      this.url + 'resend-verification',
+      { email },
+    );
+  }
 }

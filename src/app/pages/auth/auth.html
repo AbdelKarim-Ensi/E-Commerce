@@ -18,9 +18,6 @@
 
           <h2 class="title">Sign in</h2>
 
-          @if (successMessage()) {
-            <p class="form-success" role="status">{{ successMessage() }}</p>
-          }
           @if (errorMessage() && !isSignUp) {
             <p class="form-error" role="alert">{{ errorMessage() }}</p>
           }
