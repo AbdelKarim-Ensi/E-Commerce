@@ -49,7 +49,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-8 mb-12">
       <div class="col-span-2 sm:col-span-1">
         <div class="flex items-center gap-2 mb-4">
           <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center">
@@ -72,18 +72,45 @@
         </div>
       </div>
 
-      @for (col of columns; track col.title) {
+      @if (categories().length > 0) {
         <div>
-          <h4 class="font-bold text-gray-900 mb-4 text-sm font-display">{{ col.title }}</h4>
+          <h4 class="font-bold text-gray-900 mb-4 text-sm font-display">Categories</h4>
           <ul class="space-y-2.5">
-            @for (link of col.links; track link) {
+            @for (cat of categories(); track cat.id) {
               <li>
-                <a href="#" class="text-sm text-gray-500 hover:text-amber-700 transition-colors">{{ link }}</a>
+                <a
+                  [routerLink]="['/products']"
+                  [queryParams]="{ categoryId: cat.id }"
+                  class="text-sm text-gray-500 hover:text-amber-700 transition-colors"
+                >
+                  {{ cat.name }}
+                </a>
               </li>
             }
           </ul>
         </div>
       }
+
+      <div>
+        <h4 class="font-bold text-gray-900 mb-4 text-sm font-display">Contact</h4>
+        <ul class="space-y-2.5">
+          <li>
+            <a
+              [href]="gmailComposeUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-sm text-gray-500 hover:text-amber-700 transition-colors"
+            >
+              {{ contactEmail }}
+            </a>
+          </li>
+          <li>
+            <a [href]="'tel:' + contactPhone" class="text-sm text-gray-500 hover:text-amber-700 transition-colors">
+              {{ contactPhone }}
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <div class="pt-8 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
