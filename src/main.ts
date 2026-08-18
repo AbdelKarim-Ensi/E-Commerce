@@ -7,7 +7,8 @@ import { AppModule } from './app.module';
 import { PrismaExceptionFilter } from './prisma/prisma-exception.filter';
 
 async function bootstrap() {
-const app = await NestFactory.create(AppModule, { rawBody: true });  const config = app.get(ConfigService);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
+  const config = app.get(ConfigService);
 
   app.use(
     helmet({
@@ -18,7 +19,8 @@ const app = await NestFactory.create(AppModule, { rawBody: true });  const confi
           frameAncestors: ["'none'"], // extra clickjacking protection beyond X-Frame-Options
         },
       },
-      crossOriginResourcePolicy: { policy: 'same-site' },      hsts: {
+      crossOriginResourcePolicy: { policy: 'same-site' },
+      hsts: {
         maxAge: 31536000,
         includeSubDomains: true,
         preload: true,
@@ -28,9 +30,17 @@ const app = await NestFactory.create(AppModule, { rawBody: true });  const confi
 
   app.use(cookieParser());
 
-  // --- CORS: only the Angular dev/prod origin may call this API with credentials ---
+  // --- CORS: only the Angular dev/prod origins may call this API with credentials ---
+  // CORS_ORIGIN supports a comma-separated list, e.g.
+  // "http://localhost:4200,http://localhost:4000" (dev-server + SSR build)
+  const corsOrigins = config
+    .get<string>('CORS_ORIGIN', '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: config.get<string>('CORS_ORIGIN'), // e.g. http://localhost:4200
+    origin: corsOrigins,
     credentials: true, // required so the browser sends/receives the httpOnly cookies
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -49,6 +59,6 @@ const app = await NestFactory.create(AppModule, { rawBody: true });  const confi
 
   const port = config.get<number>('PORT') ?? 3000;
   await app.listen(port);
-console.log(`🚀 Server running on http://localhost:${port}`);
+  console.log(`🚀 Server running on http://localhost:${port}`);
 }
 bootstrap();
