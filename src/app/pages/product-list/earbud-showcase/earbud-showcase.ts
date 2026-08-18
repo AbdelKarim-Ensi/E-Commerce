@@ -7,6 +7,9 @@ import { ProductsService } from '../../../core/services/products.service';
 import { CartService } from '../../../core/services/cart.service';
 import { Product } from '../../../core/models/product.model';
 import { ProductReviews } from '../../../shared/product-reviews/product-reviews';
+
+import { SimilarProducts } from '../similar-products/similar-products'
+
 type Side = 'left' | 'right';
 
 interface SpecCard {
@@ -59,7 +62,7 @@ function buildSpecCards(specDetails: Record<string, string> | undefined | null):
 @Component({
   selector: 'app-earbud-showcase',
   standalone: true,
-  imports: [CommonModule, ProductReviews],
+  imports: [CommonModule, ProductReviews,SimilarProducts],
   templateUrl: './earbud-showcase.html',
   styleUrl: './earbud-showcase.css',
   animations: [

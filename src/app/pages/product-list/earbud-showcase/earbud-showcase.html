@@ -164,6 +164,7 @@
 
     </div>
 
+    
         @if (product()) {
       @defer (on viewport) {
         <app-product-reviews [productId]="product()!.id" />
@@ -173,6 +174,12 @@
         <div class="h-64 flex items-center justify-center text-gray-400">Chargement des avis...</div>
       } @error {
         <div class="h-64 flex items-center justify-center text-red-500">Impossible de charger les avis.</div>
+      }
+
+            @defer (on viewport) {
+        <app-similar-products [currentProduct]="product()!" />
+      } @placeholder (minimum 100ms) {
+        <div class="h-72 animate-pulse bg-gray-100 rounded-2xl mx-6 mb-8"></div>
       }
     }
   </div>
