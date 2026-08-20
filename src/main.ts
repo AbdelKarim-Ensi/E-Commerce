@@ -9,7 +9,8 @@ import { PrismaExceptionFilter } from './prisma/prisma-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   const config = app.get(ConfigService);
-
+  
+  app.setGlobalPrefix('api');
   app.use(
     helmet({
       contentSecurityPolicy: {
@@ -30,9 +31,7 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  // --- CORS: only the Angular dev/prod origins may call this API with credentials ---
-  // CORS_ORIGIN supports a comma-separated list, e.g.
-  // "http://localhost:4200,http://localhost:4000" (dev-server + SSR build)
+
   const corsOrigins = config
     .get<string>('CORS_ORIGIN', '')
     .split(',')

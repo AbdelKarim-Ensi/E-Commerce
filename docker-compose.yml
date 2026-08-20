@@ -39,8 +39,12 @@ services:
     restart: unless-stopped
     env_file:
       - .env.docker
-    ports:
-      - "3000:3000"
+    # ✅ plus de "ports:" ici — le backend n'est plus exposé directement à
+    # l'extérieur, uniquement joignable via le réseau Docker interne (Nginx
+    # ou un autre conteneur peuvent l'atteindre via http://backend:3000,
+    # mais rien depuis l'extérieur de la machine ne peut plus le faire).
+    expose:
+      - "3000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -54,11 +58,26 @@ services:
     container_name: ecommerce_frontend
     restart: unless-stopped
     environment:
-      API_URL_SSR: http://backend:3000
-    ports:
-      - "4001:4000"
+      API_URL_SSR: http://backend:3000/api
+    # ✅ même principe : plus de port public direct, uniquement interne.
+    expose:
+      - "4000"
     depends_on:
       - backend
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: ecommerce_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+      - frontend
 
 volumes:
   postgres_data:
