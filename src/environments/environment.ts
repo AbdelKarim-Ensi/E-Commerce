@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000',
+  apiUrl: 'http://localhost:3000/api',
   stripePublishableKey: 'pk_test_51U3YMi3Li5UjJEvoNL0eLXCoyuHnzqKMdvC9qzRbzZIkwg0RiGJWMHap0tEo13qi8WMywpjr9NbhWxnchTwIwTob0034ZyNQcp',
   firebase: {
     apiKey: "AIzaSyAd4Ae3B2b5eA6tkEz0bTO2mfi4Pko8a1M",
