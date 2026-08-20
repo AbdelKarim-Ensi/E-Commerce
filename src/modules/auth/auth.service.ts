@@ -70,7 +70,8 @@ export class AuthService {
     const jti = crypto.randomUUID();
     const refreshToken = this.jwtService.sign(
       { sub: userId, email, role, jti } as RefreshPayload,
-      { secret: process.env.JWT_REFRESH_SECRET, expiresIn: '7d' },
+     
+      { secret: this.config.get<string>('auth.refreshSecret'), expiresIn: '7d' },
     );
 
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
@@ -80,11 +81,7 @@ export class AuthService {
     return refreshToken;
   }
 
-  /**
-   * Génère un token de vérification, le stocke en Redis (hashé, TTL 24h) et
-   * enfile l'email de vérification. Extrait de register() pour être
-   * réutilisable par un futur endpoint "renvoyer l'email de vérification".
-   */
+ 
   private async sendVerificationEmail(userId: string, email: string) {
     const rawToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
@@ -118,8 +115,7 @@ export class AuthService {
       },
     });
 
-    // Envoi asynchrone, non bloquant pour l'inscription : si la queue échoue,
-    // l'utilisateur reste créé et pourra redemander l'email plus tard.
+    
     await this.sendVerificationEmail(user.id, user.email);
 
     const accessToken = this.signAccessToken(user.id, user.email, user.role);
@@ -134,7 +130,7 @@ export class AuthService {
     }
 
     if (!user.passwordHash) {
-      // Compte créé via Google, jamais de mot de passe défini.
+      
       throw new UnauthorizedException(
         'This account uses Google sign-in. Please continue with Google.',
       );
@@ -146,11 +142,7 @@ export class AuthService {
     }
 
     if (!user.emailVerified) {
-      // Vérifié APRÈS le mot de passe, jamais avant : si on le testait en
-      // premier, un attaquant qui ne connaît pas le mot de passe pourrait
-      // quand même déduire qu'un compte existe et n'est pas vérifié, juste
-      // en observant la différence de message. Ici, seul quelqu'un qui a
-      // déjà prouvé connaître le mot de passe apprend cet état.
+     
       throw new UnauthorizedException(
         'Please verify your email address before signing in. Check your inbox for the verification link.',
       );
@@ -161,16 +153,6 @@ export class AuthService {
     return { user: this.sanitizeUser(user), accessToken, refreshToken };
   }
 
-  /**
-   * Auth Google : le frontend a déjà obtenu un idToken via Firebase (popup
-   * Google). On le vérifie côté serveur, puis on relie/crée le compte local
-   * et on émet nos propres JWT + refresh token — exactement comme login().
-   * Le reste de l'app (guards, RBAC, refresh rotation) ne voit aucune
-   * différence entre une session issue d'un login classique ou de Google.
-   * Contrairement à login(), on ne bloque jamais ici sur emailVerified :
-   * Google a déjà vérifié l'email lui-même pour l'authentifier via sa popup,
-   * on fait confiance à ce statut (repris directement dans emailVerified).
-   */
   async loginWithGoogle(idToken: string) {
     let decoded;
     try {
@@ -188,9 +170,7 @@ export class AuthService {
     let user = await this.prisma.user.findUnique({ where: { googleId } });
 
     if (!user) {
-      // Pas de compte encore lié à ce googleId : cherche par email pour
-      // rattacher un compte existant (créé au départ via email/password),
-      // sinon crée un tout nouveau compte.
+     
       const existingByEmail = await this.prisma.user.findUnique({ where: { email } });
 
       if (existingByEmail) {
@@ -212,7 +192,7 @@ export class AuthService {
             firstName: firstName || null,
             lastName,
             emailVerified: Boolean(emailVerified),
-            // passwordHash reste null — compte Google-only
+            
           },
         });
       }
@@ -223,18 +203,10 @@ export class AuthService {
     return { user: this.sanitizeUser(user), accessToken, refreshToken };
   }
 
-  /**
-   * Renvoie l'email de vérification. Même principe anti-énumération que
-   * forgotPassword() : réponse générique identique dans tous les cas
-   * (compte inconnu, déjà vérifié, ou Google-only) — un attaquant ne doit
-   * jamais pouvoir déduire l'état d'un compte à partir de la réponse.
-   */
   async resendVerificationEmail(dto: ResendVerificationDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
 
-    // Rien à faire si : compte inexistant, déjà vérifié, ou Google-only
-    // (googleId défini sans mot de passe local — déjà vérifié via Google
-    // au moment de la première connexion, voir loginWithGoogle()).
+    
     if (user && !user.emailVerified && user.passwordHash) {
       await this.sendVerificationEmail(user.id, user.email);
     }
@@ -249,7 +221,8 @@ export class AuthService {
     let payload: RefreshPayload;
     try {
       payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET,
+        
+        secret: this.config.get<string>('auth.refreshSecret'),
       });
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
@@ -275,20 +248,17 @@ export class AuthService {
   async logout(refreshToken: string) {
     try {
       const payload: RefreshPayload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET,
+        
+        secret: this.config.get<string>('auth.refreshSecret'),
       });
       await this.redis.client.del(this.redisKey(payload.sub, payload.jti));
     } catch {
-      // token déjà invalide/expiré — rien à révoquer
+      
     }
     return { success: true };
   }
 
-  /**
-   * Toujours renvoyer un succès générique, que l'email existe ou non côté
-   * base — sinon un attaquant peut énumérer les comptes existants en testant
-   * des adresses et en observant la différence de réponse.
-   */
+  
   async forgotPassword(dto: ForgotPasswordDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
 
@@ -334,19 +304,15 @@ export class AuthService {
       where: { id: userId },
       data: {
         passwordHash: newPasswordHash,
-        // Recevoir et cliquer ce lien envoyé par email prouve la possession
-        // de la boîte mail, au même titre que le lien de vérification —
-        // sans ça, un compte jamais vérifié resterait bloqué au login même
-        // après avoir remis un mot de passe valide.
+        
         emailVerified: true,
       },
     });
 
-    // Le token à usage unique est consommé.
+    
     await this.redis.client.del(key);
 
-    // Sécurité : un mot de passe compromis justifie une déconnexion globale —
-    // toutes les sessions actives (refresh tokens) de cet utilisateur sont révoquées.
+    
     await this.revokeAllForUser(userId);
 
     return { success: true };
@@ -366,7 +332,7 @@ export class AuthService {
       data: { emailVerified: true },
     });
 
-    // Token à usage unique, consommé après vérification.
+    
     await this.redis.client.del(key);
 
     return { success: true };

@@ -1,4 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -19,12 +20,17 @@ const REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    
+    private readonly config: ConfigService,
+  ) {}
 
   private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
     const baseOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      
+      secure: this.config.get<boolean>('auth.cookieSecure'),
       sameSite: 'lax' as const,
       path: '/',
     };
@@ -32,9 +38,6 @@ export class AuthController {
     res.cookie(REFRESH_COOKIE, refreshToken, { ...baseOptions, maxAge: REFRESH_MAX_AGE });
   }
 
-  // A07: Auth Failures — brute-force protection. 5 attempts per minute per IP.
-  // Deliberately tighter than register/refresh: login is the highest-value target
-  // for credential stuffing (attacker already has a password list, just needs to try it).
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -44,8 +47,6 @@ export class AuthController {
     return { user };
   }
 
-  // Looser than login (legitimate signup bursts happen), but still far under the
-  // global 100/min — stops scripted mass account creation.
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('register')
   async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
@@ -54,9 +55,7 @@ export class AuthController {
     return { user };
   }
 
-  // Même limite que register : cette route peut elle aussi créer un compte
-  // (premier login Google d'un nouvel utilisateur), donc même exposition
-  // au risque de création massive de comptes scriptée.
+  
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('google')
   @HttpCode(HttpStatus.OK)
@@ -66,8 +65,7 @@ export class AuthController {
     return { user };
   }
 
-  // A stolen/guessed refresh token being replayed rapidly is exactly the reuse-detection
-  // scenario from Phase 5 — rate limiting here adds a second layer in front of it.
+ 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
@@ -99,8 +97,7 @@ export class AuthController {
     return user;
   }
 
-  // Volontairement strict (3/min) : cette route déclenche un envoi d'email et
-  // interroge la base par email à chaque appel — cible facile pour du spam/enumeration.
+  
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
@@ -122,8 +119,7 @@ export class AuthController {
     return this.authService.verifyEmail(dto);
   }
 
-  // Même limite stricte que forgot-password : déclenche un envoi d'email et
-  // une requête DB par email à chaque appel, cible facile pour du spam.
+ 
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
