@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.test
+.env.example
+cookies.txt
+*.log
+storage
+test
+.git
+.vscode
+prisma.zip

@@ -1,0 +1,25 @@
+# --- Environment / secrets ---
+# Never commit real env files. .env.example is the ONLY one that should be tracked.
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+.env.test
+!.env.example
+
+# --- Dependencies / build ---
+node_modules/
+dist/
+build/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+.env.docker

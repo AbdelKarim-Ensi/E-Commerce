@@ -1,0 +1,100 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+
+@Injectable()
+export class NotificationsQueue {
+  private readonly logger = new Logger(NotificationsQueue.name);
+
+  constructor(
+    @InjectQueue('invoices') private readonly invoicesQueue: Queue,
+    @InjectQueue('password-reset') private readonly passwordResetQueue: Queue,
+    @InjectQueue('email-verification') private readonly emailVerificationQueue: Queue,
+    @InjectQueue('order-cancelled') private readonly orderCancelledQueue: Queue,
+    @InjectQueue('newsletter') private readonly newsletterQueue: Queue,
+  ) {}
+
+  async enqueueOrderConfirmation(orderId: string) {
+    await this.invoicesQueue.add(
+      'generate-invoice',
+      { orderId },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+    this.logger.log(`Job 'generate-invoice' enfilé pour la commande ${orderId}`);
+  }
+
+  async enqueuePasswordReset(email: string, resetLink: string, expiresInMinutes: number) {
+    await this.passwordResetQueue.add(
+      'send-password-reset',
+      { email, resetLink, expiresInMinutes },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+    this.logger.log(`Job 'send-password-reset' enfilé pour ${email}`);
+  }
+
+  async enqueueEmailVerification(email: string, verifyLink: string) {
+    await this.emailVerificationQueue.add(
+      'send-email-verification',
+      { email, verifyLink },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+    this.logger.log(`Job 'send-email-verification' enfilé pour ${email}`);
+  }
+
+  async enqueueOrderCancelled(
+    email: string,
+    orderId: string,
+    totalAmount: number,
+    refunded: boolean,
+  ) {
+    await this.orderCancelledQueue.add(
+      'send-order-cancelled',
+      { email, orderId, totalAmount, refunded },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+    this.logger.log(`Job 'send-order-cancelled' enfilé pour la commande ${orderId}`);
+  }
+
+  /**
+   * Enfile UN job d'envoi par abonné. Permet retry individuel sans
+   * bloquer les autres si un envoi échoue (email invalide, etc.).
+   */
+  async enqueueNewsletterEmail(
+    email: string,
+    subject: string,
+    message: string,
+    ctaLink?: string,
+    ctaText?: string,
+  ) {
+    await this.newsletterQueue.add(
+      'send-newsletter',
+      { email, subject, message, ctaLink, ctaText },
+      {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
+  }
+}
