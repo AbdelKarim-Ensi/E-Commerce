@@ -1,0 +1,21 @@
+<footer class="border-t border-zinc-100 py-6 hidden lg:block">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+
+    <p class="text-xs text-zinc-400">© 2026 TechGear Inc. All rights reserved.</p>
+
+    <div class="flex items-center gap-5">
+      <a href="#" class="text-xs text-zinc-400 hover:text-amber-500 transition-colors">Privacy Policy</a>
+      <a href="#" class="text-xs text-zinc-400 hover:text-amber-500 transition-colors">Terms of Service</a>
+      <a href="#" class="text-xs text-zinc-400 hover:text-amber-500 transition-colors">
+        Need help? <span class="text-amber-500 font-medium">Contact Support</span>
+      </a>
+    </div>
+
+    <div class="flex items-center gap-2">
+      @for (p of ['VISA','MC','AMEX','PayPal']; track p) {
+        <div class="px-2 py-1 bg-zinc-100 rounded text-[10px] font-bold text-zinc-500">{{ p }}</div>
+      }
+    </div>
+
+  </div>
+</footer>

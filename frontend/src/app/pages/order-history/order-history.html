@@ -1,0 +1,191 @@
+<main class="min-h-screen bg-white px-4 py-8 sm:px-6 lg:px-8">
+  <section class="mx-auto w-full max-w-3xl">
+    <header class="mb-8">
+      <p class="mb-2 text-sm font-medium text-orange-600">TechGear / TechHub</p>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900">Mes commandes</h1>
+    </header>
+
+    <!-- ÉTAT DE CHARGEMENT -->
+    @if (loading()) {
+      <div class="space-y-4" aria-busy="true" aria-label="Chargement des commandes">
+        @for (item of [1, 2, 3]; track item) {
+          <div class="animate-pulse rounded-xl border border-gray-200 p-5 sm:p-6">
+            <div class="flex items-start justify-between gap-6">
+              <div class="flex-1 space-y-4">
+                <div class="h-5 w-48 rounded bg-gray-200"></div>
+                <div class="h-4 w-28 rounded bg-gray-200"></div>
+                <div class="flex gap-2">
+                  <div class="h-10 w-10 rounded-lg bg-gray-200"></div>
+                  <div class="h-10 w-10 rounded-lg bg-gray-200"></div>
+                  <div class="h-4 w-20 self-center rounded bg-gray-200"></div>
+                </div>
+              </div>
+              <div class="space-y-5">
+                <div class="h-5 w-24 rounded bg-gray-200"></div>
+                <div class="h-4 w-28 rounded bg-gray-200"></div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ÉTAT ERREUR -->
+    @else if (error()) {
+      <section class="py-20 text-center">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50">
+          <lucide-icon [img]="AlertTriangle" class="text-red-600" [size]="30" [strokeWidth]="1.8" />
+        </div>
+
+        <h2 class="mt-5 text-xl font-bold text-slate-900">
+          Impossible de charger vos commandes
+        </h2>
+
+        <p class="mt-2 text-sm leading-6 text-gray-500">{{ error() }}</p>
+
+        <button
+          type="button"
+          (click)="loadOrders()"
+          class="mt-6 inline-flex items-center gap-2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+        >
+          <lucide-icon [img]="RefreshCw" [size]="18" />
+          Réessayer
+        </button>
+      </section>
+    }
+
+    <!-- ÉTAT VIDE -->
+    @else if (orders().length === 0) {
+      <section class="py-20 text-center">
+        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-50">
+          <lucide-icon [img]="ShoppingBag" class="text-orange-600" [size]="30" [strokeWidth]="1.8" />
+        </div>
+
+        <h2 class="mt-5 text-xl font-bold text-slate-900">Vous n'avez aucune commande</h2>
+
+        <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+          Découvrez nos produits et trouvez les équipements parfaits pour votre setup.
+        </p>
+
+        <a
+          routerLink="/products"
+          class="mt-6 inline-flex items-center justify-center rounded-lg bg-orange-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+        >
+          Découvrez nos produits
+        </a>
+      </section>
+    }
+
+    <!-- ÉTAT CHARGÉ -->
+    @else {
+      <div class="space-y-4">
+        @for (order of orders(); track order.id) {
+          <article
+            [routerLink]="['/orders', order.id]"
+            class="group cursor-pointer rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-6"
+          >
+            <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-3">
+                  <h2 class="font-semibold text-slate-900">
+                    Commande #{{ order.id.slice(0, 8) }}
+                  </h2>
+
+                  <span
+                    class="rounded-full px-3 py-1 text-xs font-semibold"
+                    [ngClass]="{
+                      'bg-amber-100 text-amber-700': order.status === 'PENDING',
+                      'bg-blue-100 text-blue-700': order.status === 'PAID',
+                      'bg-purple-100 text-purple-700': order.status === 'SHIPPED',
+                      'bg-green-100 text-green-700': order.status === 'DELIVERED',
+                      'bg-red-100 text-red-700': order.status === 'CANCELLED'
+                    }"
+                  >
+                    {{ statusLabel(order.status) }}
+                  </span>
+                </div>
+
+                <p class="mt-2 text-sm text-gray-500">{{ order.createdAt | date: 'd MMMM y' : '' : 'fr' }}</p>
+
+                <div class="mt-4 flex items-center gap-4">
+                  <div class="flex -space-x-2">
+                    @for (item of order.items.slice(0, 4); track item.id) {
+                      @if (item.product?.imageUrl) {
+                        <img
+                          [src]="item.product?.imageUrl"
+                          [alt]="item.product?.name ?? 'Produit'"
+                          class="h-10 w-10 rounded-lg border-2 border-white object-cover"
+                        />
+                      } @else {
+                        <div
+                          class="h-10 w-10 rounded-lg border-2 border-white bg-gray-100"
+                        ></div>
+                      }
+                    }
+                  </div>
+
+                  <span class="text-sm text-gray-500">
+                    {{ itemCount(order) }} article{{ itemCount(order) > 1 ? 's' : '' }}
+                  </span>
+                </div>
+
+                @if (order.status === 'PAID') {
+                  <div class="mt-4">
+                    @if (cancelErrorId() === order.id) {
+                      <p class="mb-2 text-xs text-red-600">{{ cancelErrorMessage() }}</p>
+                    }
+
+                    @if (confirmingCancelId() !== order.id) {
+                      <button
+                        type="button"
+                        (click)="askCancelConfirmation(order.id, $event)"
+                        class="text-xs font-semibold text-red-600 hover:text-red-700"
+                      >
+                        Annuler ma commande
+                      </button>
+                    } @else {
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs text-gray-700">Confirmer l'annulation ?</span>
+                        <button
+                          type="button"
+                          (click)="confirmCancel(order.id, $event)"
+                          [disabled]="cancellingId() === order.id"
+                          class="rounded-md bg-red-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-700 disabled:opacity-50"
+                        >
+                          {{ cancellingId() === order.id ? 'Annulation...' : 'Confirmer' }}
+                        </button>
+                        <button
+                          type="button"
+                          (click)="dismissCancelConfirmation($event)"
+                          [disabled]="cancellingId() === order.id"
+                          class="rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          Retour
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="flex items-end justify-between gap-4 sm:flex-col sm:items-end">
+                <p class="text-lg font-bold text-slate-900">
+                  {{ parsePrice(order.totalAmount) | number: '1.2-2' }} DT
+                </p>
+
+                <a
+                  [routerLink]="['/orders', order.id]"
+                  (click)="$event.stopPropagation()"
+                  class="inline-flex items-center gap-1 text-sm font-semibold text-orange-600 transition hover:text-orange-700"
+                >
+                  Voir les détails
+                  <lucide-icon [img]="ChevronRight" [size]="18" [strokeWidth]="2" />
+                </a>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /profile
+Disallow: /orders
+
+Sitemap: https://techgear.tn/sitemap.xml

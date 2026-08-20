@@ -1,0 +1,146 @@
+<div class="bg-white rounded-2xl border border-zinc-200/70 p-6 space-y-5"
+     style="box-shadow: 0 2px 12px rgba(0,0,0,0.05)">
+
+  <!-- Title -->
+  <div class="flex items-center gap-2.5">
+    <div class="w-9 h-9 bg-amber-50 rounded-xl flex items-center justify-center">
+      <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+      </svg>
+    </div>
+    <div>
+      <h2 class="text-base font-bold text-zinc-900 font-display">Payment</h2>
+      <p class="text-xs text-zinc-400">Choose how you'd like to pay</p>
+    </div>
+  </div>
+
+  <!-- Tab switcher -->
+  <div class="inline-flex items-center gap-1 p-1.5 rounded-full bg-zinc-100">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        (click)="setTab(tab.id)"
+        class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
+        [class.bg-zinc-900]="activeTab === tab.id"
+        [class.text-white]="activeTab === tab.id"
+        [class.text-zinc-500]="activeTab !== tab.id"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Credit card form -->
+  @if (activeTab === 'card') {
+    <form [formGroup]="cardholderForm" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+
+      <!-- Stripe Card Element -->
+      <div>
+        <label class="block text-sm font-medium text-zinc-700 mb-1.5">Card Details *</label>
+          <div
+          id="stripe-card-element"
+          class="form-input"
+          [class.input-error]="stripeService.cardError()"
+        ></div>
+        @if (stripeService.cardError(); as cardErr) {
+          <p class="input-error-msg">{{ cardErr }}</p>
+        }
+        @if (mountError) {
+          <p class="input-error-msg">{{ mountError }}</p>
+        }
+      </div>
+
+      <!-- Name on card -->
+      <div>
+        <label class="block text-sm font-medium text-zinc-700 mb-1.5">Name on Card *</label>
+        <input
+          formControlName="nameOnCard"
+          type="text" placeholder="John Doe"
+          class="form-input"
+          [class.input-error]="isInvalid('nameOnCard')"
+        />
+        @if (isInvalid('nameOnCard')) {
+          <p class="input-error-msg">This field is required.</p>
+        }
+      </div>
+
+      <!-- Billing same as shipping -->
+      <label class="flex items-center gap-3 cursor-pointer group">
+        <input type="checkbox" formControlName="billingIsSame"
+               class="w-4 h-4 rounded accent-amber-500 cursor-pointer"/>
+        <span class="text-sm text-zinc-600 group-hover:text-zinc-900 transition-colors">
+          Billing address same as shipping
+        </span>
+      </label>
+
+      <!-- Security note -->
+      <div class="flex items-center gap-2 pt-1 text-zinc-400">
+        <svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        <p class="text-xs">Your payment info is encrypted and secure</p>
+      </div>
+
+      <!-- Nav buttons -->
+      <div class="flex gap-3 pt-2">
+        <button type="button" (click)="back.emit()"
+                class="px-6 py-3 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700
+                       hover:border-zinc-300 transition-colors">
+          ← Back
+        </button>
+        <button type="submit"
+                [disabled]="submitted && !canSubmitCard"
+                class="flex-1 sm:flex-none px-8 py-3 bg-amber-500 text-white font-bold rounded-xl
+                       hover:bg-amber-600 transition-colors text-sm font-display shadow-sm shadow-amber-200
+                       disabled:opacity-50 disabled:cursor-not-allowed">
+          Review Order →
+        </button>
+      </div>
+    </form>
+  }
+
+  <!-- PayPal placeholder -->
+  @if (activeTab === 'paypal') {
+    <div class="text-center py-12 space-y-4">
+      <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto">
+        <span class="text-2xl font-black text-blue-700">P</span>
+      </div>
+      <p class="text-sm text-zinc-600">You will be redirected to PayPal to complete your payment securely.</p>
+      <div class="flex gap-3 justify-center pt-2">
+        <button type="button" (click)="back.emit()"
+                class="px-6 py-3 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:border-zinc-300">
+          ← Back
+        </button>
+        <button type="button" (click)="onContinue()"
+                class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 text-sm font-display">
+          Continue with PayPal →
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Apple Pay placeholder -->
+  @if (activeTab === 'applepay') {
+    <div class="text-center py-12 space-y-4">
+      <div class="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mx-auto">
+        <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11"/>
+        </svg>
+      </div>
+      <p class="text-sm text-zinc-600">Complete your purchase using Face ID or Touch ID.</p>
+      <div class="flex gap-3 justify-center pt-2">
+        <button type="button" (click)="back.emit()"
+                class="px-6 py-3 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700 hover:border-zinc-300">
+          ← Back
+        </button>
+        <button type="button" (click)="onContinue()"
+                class="px-8 py-3 bg-zinc-900 text-white font-bold rounded-xl hover:bg-black text-sm font-display">
+          Pay with Apple Pay
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

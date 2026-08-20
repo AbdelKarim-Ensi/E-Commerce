@@ -1,0 +1,272 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import 'tailwindcss';
+@import 'sweetalert2/dist/sweetalert2.min.css';
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #1a1a1a;
+  background: #ffffff;
+}
+.font-display { font-family: 'Poppins', system-ui, sans-serif; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.amber-glow-bg {
+  background: radial-gradient(ellipse at 50% -5%, #ffffff 35%, #fde68a 70%, #f59e0b 100%);
+}
+.amber-glow-subtle {
+  background: radial-gradient(ellipse at 50% 100%, #fff7ed 0%, #ffffff 60%);
+}
+.category-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: #fbbf24;
+}
+
+.category-card .font-semibold {
+  transition: font-size 0.2s ease;
+}
+
+.category-card:hover .font-semibold {
+  font-size: 1rem; /* un peu plus grand que text-sm (0.875rem) */
+}
+
+.product-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+.product-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.product-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.10); }
+
+.category-card { transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+.category-card:hover { transform: translateY(-6px); box-shadow: 0 16px 32px rgba(245,158,11,.15); }
+
+.img-zoom { transition: transform 0.4s ease; }
+.img-zoom:hover { transform: scale(1.05); }
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+  50% { transform: translateY(-16px) rotate(-2deg); }
+}
+.float-animation { animation: float 4s ease-in-out infinite; }
+
+@keyframes float2 {
+  0%, 100% { transform: translateY(0px) rotate(3deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+.float-animation-2 { animation: float2 5s ease-in-out infinite 0.8s; }
+
+.cart-drawer { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+/* ============================================
+   SweetAlert2 — thème TechGear (orange/amber)
+   ============================================ */
+
+/* 1. Popup principale */
+.swal-techgear-popup {
+  background: #ffffff !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(245, 158, 11, 0.25) !important;
+  padding: 2.5rem !important;
+}
+
+/* 2. Icône de succès — orange TechGear, anneau extérieur animé */
+.swal-techgear-icon.swal2-icon.swal2-success {
+  border-color: transparent !important;
+  position: relative;
+}
+
+/* Coche + demi-cercles : orange au lieu du vert par défaut */
+.swal-techgear-icon.swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: #f59e0b !important;
+  z-index: 1; /* reste au-dessus de l'anneau animé */
+}
+.swal-techgear-icon.swal2-icon.swal2-success .swal2-success-ring {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  z-index: 1;
+}
+.swal-techgear-icon.swal2-icon.swal2-success .swal2-success-fix {
+  z-index: 1;
+}
+
+/* Anneau extérieur : conic-gradient qui tourne en continu.
+   mask découpe un anneau fin dans le disque plein pour ne garder que le
+   contour — le ✓ au centre (z-index: 1 ci-dessus) reste fixe. */
+.swal-techgear-icon.swal2-icon.swal2-success::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #f59e0b 0%,
+    #fde68a 25%,
+    #f59e0b 50%,
+    #fde68a 75%,
+    #f59e0b 100%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  z-index: 0;
+  animation: swal-techgear-spin 3s linear infinite;
+}
+
+@keyframes swal-techgear-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 2bis. Icône d'erreur — croix rouge classique + anneau orange tournant,
+   même structure que l'icône de succès pour un design strictement
+   identique entre les deux popups. */
+.swal-techgear-icon.swal2-icon.swal2-error {
+  border-color: transparent !important;
+  position: relative;
+}
+.swal-techgear-icon.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+  z-index: 1; /* reste au-dessus de l'anneau animé */
+}
+.swal-techgear-icon.swal2-icon.swal2-error::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #f59e0b 0%,
+    #fde68a 25%,
+    #f59e0b 50%,
+    #fde68a 75%,
+    #f59e0b 100%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  z-index: 0;
+  animation: swal-techgear-spin 3s linear infinite;
+}
+
+/* 2ter. Icône d'info — même traitement pour cohérence totale */
+.swal-techgear-icon.swal2-icon.swal2-info {
+  border-color: transparent !important;
+  position: relative;
+}
+.swal-techgear-icon.swal2-icon.swal2-info .swal2-icon-content {
+  z-index: 1;
+}
+.swal-techgear-icon.swal2-icon.swal2-info::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #f59e0b 0%,
+    #fde68a 25%,
+    #f59e0b 50%,
+    #fde68a 75%,
+    #f59e0b 100%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  z-index: 0;
+  animation: swal-techgear-spin 3s linear infinite;
+}
+
+/* 2quater. Icône de question (confirm()) — même traitement pour cohérence totale */
+.swal-techgear-icon.swal2-icon.swal2-question {
+  border-color: transparent !important;
+  color: #f59e0b !important;
+  position: relative;
+}
+.swal-techgear-icon.swal2-icon.swal2-question::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #f59e0b 0%,
+    #fde68a 25%,
+    #f59e0b 50%,
+    #fde68a 75%,
+    #f59e0b 100%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  z-index: 0;
+  animation: swal-techgear-spin 3s linear infinite;
+}
+
+/* 3. Titre */
+.swal-techgear-title {
+  color: #111827 !important;
+  font-weight: 700 !important;
+  font-size: 1.5rem !important;
+}
+
+/* 4. Sous-titre */
+.swal-techgear-subtitle {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* 5. Barre de progression du timer */
+.swal-techgear-progress {
+  background: #f59e0b !important;
+  height: 3px !important;
+  border-radius: 0 0 8px 8px !important;
+}
+
+/* 6. Backdrop flouté */
+.swal2-backdrop-show,
+.swal2-container.swal2-backdrop-show {
+  backdrop-filter: blur(4px);
+}
+
+/* 8. Bouton fermer (X) */
+.swal-techgear-close {
+  color: #9ca3af !important;
+}
+.swal-techgear-close:hover {
+  color: #f59e0b !important;
+}
+
+/* 9. Animation d'entrée : zoom + slide up avec effet rebond */
+@keyframes swal-techgear-bounce-in {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.swal-techgear-show {
+  animation: swal-techgear-bounce-in 350ms cubic-bezier(0.34, 1.56, 0.64, 1) both !important;
+}

@@ -1,0 +1,30 @@
+@if (!isAdminRoute()) {
+  <app-navbar
+    [cartItems]="cartService.items()"
+    [searchQuery]="searchQuery"
+    [categories]="categories()"
+    (cartOpen)="cartService.open()"
+    (searchChange)="onSearch($event)"
+    (searchSubmit)="onSearchSubmit($event)"
+  ></app-navbar>
+}
+
+<main id="main-content">
+<router-outlet></router-outlet>
+</main>
+
+@if (!isAdminRoute()) {
+  <app-footer></app-footer>
+}
+
+<app-cart-drawer
+  [isOpen]="cartService.isOpen()"
+  [items]="cartService.items()"
+  [subtotal]="cartService.subtotal()"
+  [savings]="cartService.savings()"
+  [shipping]="cartService.shipping()"
+  [total]="cartService.total()"
+  (close)="cartService.close()"
+  (updateQty)="cartService.updateQty($event.id, $event.qty)"
+  (remove)="cartService.remove($event)"
+></app-cart-drawer>

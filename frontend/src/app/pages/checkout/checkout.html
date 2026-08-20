@@ -1,0 +1,145 @@
+<div class="min-h-screen bg-white flex flex-col">
+
+  <app-checkout-header />
+
+  <!-- Progress stepper -->
+  <div class="border-b border-zinc-100 bg-white sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+      <app-checkout-stepper [currentStep]="checkout.step()" (goToStep)="checkout.goToStep($event)" />
+    </div>
+  </div>
+
+  <!-- Main -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-8">
+    <div class="flex flex-col lg:flex-row gap-8 items-start">
+
+      <!-- Left: Form column -->
+      <div class="flex-1 min-w-0 space-y-6">
+
+        <!--
+          [hidden] au lieu de @if : les 3 étapes restent montées dans le DOM
+          pendant toute la session de checkout. C'est nécessaire pour l'étape 2
+          (paiement) car l'élément carte Stripe est monté une seule fois dans
+          <app-payment-method> et doit rester en vie jusqu'à ce que l'étape 3
+          appelle stripeService.confirmCardPayment() — un @if aurait détruit
+          le composant (et l'élément Stripe avec) dès le passage à l'étape 3.
+        -->
+        <div [hidden]="checkout.step() !== 1">
+          <div class="space-y-6">
+            <app-shipping-address-form (next)="onShippingSubmit($event)" />
+            <app-shipping-method
+              [selected]="checkout.selectedShipping()"
+              (select)="checkout.selectedShipping.set($event)"
+            />
+          </div>
+        </div>
+
+        <div [hidden]="checkout.step() !== 2">
+          <app-payment-method
+            [activeTab]="checkout.paymentTab()"
+            (tabChange)="checkout.paymentTab.set($event)"
+            (back)="checkout.prevStep()"
+            (next)="checkout.onPaymentSubmit($event)"
+          />
+        </div>
+
+        <div [hidden]="checkout.step() !== 3">
+          <div class="bg-white rounded-2xl border border-zinc-200/70 p-6 space-y-4"
+               style="box-shadow: 0 2px 12px rgba(0,0,0,0.05)">
+            <h2 class="text-lg font-bold text-zinc-900 font-display">Review Your Order</h2>
+            <p class="text-sm text-zinc-500">
+              Please review your order details before placing it. Click "Place Order" when ready.
+            </p>
+            @if (checkout.shippingAddress(); as addr) {
+              <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="space-y-1">
+                  <p class="font-semibold text-zinc-700">Shipping to</p>
+                  <p class="text-zinc-500">{{ addr.fullName }}</p>
+                  <p class="text-zinc-500">{{ addr.street }}, {{ addr.city }}, {{ addr.state }} {{ addr.zip }}</p>
+                  <p class="text-zinc-500">{{ addr.country }}</p>
+                </div>
+                <div class="space-y-1">
+                  <p class="font-semibold text-zinc-700">Payment</p>
+                  <p class="text-zinc-500">{{ checkout.paymentTab() === 'card' ? 'Credit Card' : checkout.paymentTab() }}</p>
+                  <p class="text-zinc-500">Billing: Same as shipping</p>
+                </div>
+              </div>
+            }
+            @if (checkout.orderError(); as error) {
+              <p class="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-2">{{ error }}</p>
+            }
+            <div class="flex gap-3 pt-2">
+              <button
+                type="button"
+                (click)="checkout.prevStep()"
+                class="px-5 py-2.5 rounded-xl border border-zinc-200 text-sm font-medium text-zinc-700
+                       hover:border-zinc-300 transition-colors"
+              >← Edit Payment</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Order summary (sticky) -->
+      <div class="hidden lg:block w-96 flex-shrink-0">
+        <app-order-summary
+          [items]="checkout.items()"
+          [subtotal]="checkout.subtotal()"
+          [promoSavings]="checkout.promoSavings()"
+          [shippingCost]="checkout.shippingCost()"
+          [tax]="checkout.tax()"
+          [total]="checkout.total()"
+          [promoStatus]="checkout.promoStatus()"
+          [isPlacingOrder]="checkout.isPlacingOrder()"
+          [showPlaceOrder]="checkout.step() === 3"
+          (applyPromo)="checkout.applyPromo($event)"
+          (placeOrder)="checkout.placeOrder()"
+        />
+      </div>
+    </div>
+  </main>
+
+  <!-- Mobile sticky order summary accordion -->
+  <div class="lg:hidden sticky bottom-0 z-40 border-t border-zinc-200 bg-white shadow-lg">
+    <button
+      type="button"
+      (click)="checkout.mobileSummaryOpen.update(v => !v)"
+      class="w-full flex items-center justify-between px-4 py-3.5 text-sm font-semibold text-zinc-900"
+    >
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+        View order summary
+        <svg class="w-4 h-4 text-zinc-400 transition-transform"
+             [class.rotate-180]="checkout.mobileSummaryOpen()"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+      <span class="font-display font-black text-zinc-900">${{ checkout.total().toFixed(2) }}</span>
+    </button>
+
+    @if (checkout.mobileSummaryOpen()) {
+      <div class="px-4 pb-4 border-t border-zinc-100 max-h-[60vh] overflow-y-auto">
+        <app-order-summary
+          [items]="checkout.items()"
+          [subtotal]="checkout.subtotal()"
+          [promoSavings]="checkout.promoSavings()"
+          [shippingCost]="checkout.shippingCost()"
+          [tax]="checkout.tax()"
+          [total]="checkout.total()"
+          [promoStatus]="checkout.promoStatus()"
+          [isPlacingOrder]="checkout.isPlacingOrder()"
+          [showPlaceOrder]="checkout.step() === 3"
+          [isMobile]="true"
+          (applyPromo)="checkout.applyPromo($event)"
+          (placeOrder)="checkout.placeOrder()"
+        />
+      </div>
+    }
+  </div>
+
+  <app-checkout-footer />
+</div>

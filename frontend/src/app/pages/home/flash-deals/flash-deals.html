@@ -1,0 +1,128 @@
+<section class="py-16 relative overflow-hidden"
+         style="background: radial-gradient(ellipse at 50% 100%, #fff7ed 0%, #ffffff 55%)">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div class="flex items-center gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-2xl" aria-hidden="true">⚡</span>
+            <h2 class="text-3xl font-black text-gray-900 font-display">Flash Deals</h2>
+          </div>
+          <p class="text-sm text-gray-500">Limited time offers — grab them before they're gone</p>
+        </div>
+      </div>
+
+      <!-- Countdown -->
+      <div class="flex items-center gap-3">
+        <span class="text-sm font-medium text-gray-600">Deal ends in:</span>
+        <div class="flex items-center gap-1.5">
+          @for (unit of units; track unit.label; let i = $index) {
+            <div class="flex items-center gap-1.5">
+              <div class="flex flex-col items-center">
+                <div class="bg-gray-900 text-white text-xl font-black w-12 h-12 rounded-xl
+                            flex items-center justify-center font-display">
+                  {{ pad(unit.val) }}
+                </div>
+                <span class="text-[9px] text-gray-500 mt-1 uppercase tracking-wider">{{ unit.label }}</span>
+              </div>
+              @if (i < 2) {
+                <span class="text-gray-400 font-bold text-xl mb-3" aria-hidden="true">:</span>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Carousel -->
+    <div class="relative">
+      <button (click)="scroll('left')"
+              type="button"
+              aria-label="Previous deals"
+              class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10
+                     bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center
+                     hover:bg-amber-50 hover:border-amber-300 transition-colors hidden sm:flex">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <button (click)="scroll('right')"
+              type="button"
+              aria-label="Next deals"
+              class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10
+                     bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center
+                     hover:bg-amber-50 hover:border-amber-300 transition-colors hidden sm:flex">
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+
+      <div #carousel class="flex gap-4 overflow-x-auto no-scrollbar pb-2"
+           style="scroll-snap-type: x mandatory">
+        @for (product of products; track product.id) {
+          <div
+            class="product-card group flex-shrink-0 w-64 bg-white rounded-2xl border border-gray-100 overflow-hidden cursor-pointer"
+            style="scroll-snap-align: start; box-shadow: 0 2px 16px rgba(0,0,0,0.06)"
+            (click)="onCardClick(product)"
+          >
+            <div class="relative bg-gray-50 h-44 flex items-center justify-center overflow-hidden">
+              @if (product.discountPercent) {
+                <div class="absolute top-3 left-3 bg-red-500 text-white px-2 py-0.5 rounded-full text-[11px] font-bold">
+                  -{{ product.discountPercent }}%
+                </div>
+              }
+              <img [src]="product.imageUrl ?? '/assets/products/placeholder.jpg'" [alt]="product.name"
+                   class="w-full h-full object-cover img-zoom" loading="lazy"/>
+            </div>
+
+            <div class="p-4 space-y-2">
+              @if (product.brand) {
+                <p class="text-xs text-amber-700 font-medium">{{ product.brand }}</p>
+              }
+              <h3 class="font-semibold text-gray-900 text-sm leading-tight line-clamp-2 font-display">
+                {{ product.name }}
+              </h3>
+
+              <app-star-rating [rating]="product.rating ?? 0" [reviews]="product.reviewsCount ?? undefined"/>
+
+              <div class="flex items-center justify-between pt-1">
+                <div>
+                  <span class="text-lg font-black text-gray-900 font-display">${{ price(product) }}</span>
+                  @if (originalPrice(product)) {
+                    <span class="text-xs text-gray-500 line-through ml-2">${{ originalPrice(product) }}</span>
+                  }
+                </div>
+                <button
+                  (click)="onCartClick($event, product)"
+                  type="button"
+                  [attr.aria-label]="'Add ' + product.name + ' to cart'"
+                  class="w-8 h-8 bg-amber-500 text-gray-900 rounded-lg flex items-center justify-center hover:bg-amber-600 active:scale-95 transition-all"
+                  [class.animate-pop]="isCartAnimating[product.id]"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                </button>
+              </div>
+
+              @if (product.stock < 50) {
+                <div>
+                  <div class="flex justify-between text-[10px] text-gray-500 mb-1">
+                    <span>Stock</span><span>{{ product.stock }} left</span>
+                  </div>
+                  <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-amber-500 rounded-full"
+                         [style.width.%]="(product.stock / 100) * 100"></div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+</section>

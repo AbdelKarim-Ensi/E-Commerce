@@ -1,0 +1,126 @@
+<main class="min-h-screen bg-slate-100 p-4 text-slate-900 sm:p-6 lg:p-8">
+  <section
+    class="mx-auto flex min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-3xl bg-white shadow-xl sm:min-h-[calc(100vh-3rem)] lg:min-h-[calc(100vh-4rem)]"
+  >
+    <!-- Panneau branding -->
+    <aside
+      class="relative hidden w-5/12 overflow-hidden bg-gradient-to-br from-orange-500 via-orange-600 to-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between"
+    >
+      <div class="relative z-10">
+        <a class="text-2xl font-black tracking-tight" routerLink="/">
+          <span>Tech</span><span class="text-orange-200">Gear</span>
+        </a>
+
+        <div class="mt-24 max-w-sm">
+          <p class="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-orange-100">
+            Bienvenue
+          </p>
+          <h1 class="text-4xl font-black leading-tight tracking-tight">
+            Confirmez votre adresse email.
+          </h1>
+          <p class="mt-5 text-base leading-7 text-orange-50/90">
+            Une dernière étape pour activer pleinement votre compte.
+          </p>
+        </div>
+      </div>
+
+      <div class="relative z-10 flex items-center gap-3 text-sm text-orange-100">
+        <span class="flex size-9 items-center justify-center rounded-full bg-white/15">✓</span>
+        Vérification sécurisée et confidentielle
+      </div>
+    </aside>
+
+    <!-- Contenu -->
+    <div class="flex w-full items-center justify-center p-6 sm:p-10 lg:w-7/12 lg:p-16">
+      <div class="w-full max-w-md text-center">
+        <a
+          routerLink="/login"
+          class="mb-10 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 transition hover:text-orange-600"
+        >
+          <span aria-hidden="true">←</span>
+          Retour à la connexion
+        </a>
+
+        <!-- En cours de vérification -->
+        @if (state() === 'loading') {
+          <div>
+            <div
+              class="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-orange-100 text-2xl font-black text-orange-600"
+            >
+              ⏳
+            </div>
+            <h2 class="text-3xl font-black tracking-tight">Vérification en cours...</h2>
+            <p class="mt-4 leading-6 text-slate-500">
+              Merci de patienter pendant que nous confirmons votre adresse email.
+            </p>
+          </div>
+        }
+
+        <!-- Succès -->
+        @if (state() === 'success') {
+          <div>
+            <div
+              class="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-emerald-100 text-2xl font-black text-emerald-600"
+            >
+              ✓
+            </div>
+            <h2 class="text-3xl font-black tracking-tight">Email vérifié</h2>
+            <p class="mt-4 leading-6 text-slate-500">
+              Votre adresse email a été confirmée avec succès. Votre compte est maintenant
+              pleinement actif.
+            </p>
+            <a
+              routerLink="/login"
+              class="mt-8 inline-flex rounded-lg bg-orange-500 px-5 py-3 font-bold text-white hover:bg-orange-600"
+            >
+              Se connecter
+            </a>
+          </div>
+        }
+
+        <!-- Lien invalide/expiré -->
+        @if (state() === 'error') {
+          <div class="rounded-lg bg-red-50 p-5 ring-1 ring-inset ring-red-600/20">
+            <div
+              class="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-red-100 text-xl font-black text-red-600"
+            >
+              !
+            </div>
+            <h2 class="text-xl font-black text-red-700">Lien invalide ou expiré</h2>
+            <p class="mt-2 text-sm leading-6 text-red-600">
+              Ce lien de vérification n'est plus valide. Il a peut-être déjà été utilisé ou a
+              expiré après 24 heures.
+            </p>
+            <a
+              routerLink="/login"
+              class="mt-5 inline-flex rounded-lg bg-orange-500 px-5 py-2.5 font-bold text-white hover:bg-orange-600"
+            >
+              Retour à la connexion
+            </a>
+          </div>
+        }
+
+        <!-- Pas de token dans l'URL -->
+        @if (state() === 'missing-token') {
+          <div class="rounded-lg bg-red-50 p-5 ring-1 ring-inset ring-red-600/20">
+            <div
+              class="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-red-100 text-xl font-black text-red-600"
+            >
+              !
+            </div>
+            <h2 class="text-xl font-black text-red-700">Lien incomplet</h2>
+            <p class="mt-2 text-sm leading-6 text-red-600">
+              Ce lien de vérification est incomplet ou mal formé.
+            </p>
+            <a
+              routerLink="/login"
+              class="mt-5 inline-flex rounded-lg bg-orange-500 px-5 py-2.5 font-bold text-white hover:bg-orange-600"
+            >
+              Retour à la connexion
+            </a>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+</main>

@@ -1,0 +1,27 @@
+<section class="py-16 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div>
+        <p class="text-amber-500 font-semibold text-sm mb-1 tracking-wide uppercase">Handpicked</p>
+        <h2 class="text-3xl font-black text-gray-900 font-display">Featured Products</h2>
+      </div>
+      <span class="text-sm text-gray-400">{{ products.length }} products</span>
+    </div>
+
+    @if (products.length === 0) {
+      <div class="text-center py-24 text-gray-400">
+        <div class="text-5xl mb-4">🔍</div>
+        <p class="font-semibold text-lg text-gray-600">No featured products right now</p>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        @for (product of products; track product.id) {
+          <app-product-card
+  [product]="product"
+  (addToCart)="addToCart.emit($event)"
+/>
+        }
+      </div>
+    }
+  </div>
+</section>

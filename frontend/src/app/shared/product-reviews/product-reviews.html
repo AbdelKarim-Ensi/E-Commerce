@@ -1,0 +1,126 @@
+<section class="mt-16">
+  <h2 class="text-2xl font-bold text-zinc-900 mb-1">Avis clients</h2>
+  <p class="text-sm text-zinc-500 mb-8">
+    {{ total() }} avis{{ total() > 1 ? '' : '' }} au total
+  </p>
+
+  <!-- Formulaire -->
+  <div class="mb-10 rounded-2xl border border-black/5 bg-white/60 backdrop-blur-sm p-6">
+    @if (currentUser()) {
+      @if (submitSuccess()) {
+        <div class="flex items-center gap-2 text-emerald-600 font-medium text-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Merci, votre avis a été publié !
+        </div>
+      } @else {
+        <h3 class="text-sm font-bold text-zinc-900 mb-4">Laisser un avis</h3>
+
+        <div
+          class="flex items-center gap-1 mb-4"
+          (mouseleave)="onStarLeave()"
+        >
+          @for (star of [1, 2, 3, 4, 5]; track star) {
+            <button
+              type="button"
+              (click)="setFormRating(star)"
+              (mouseenter)="onStarHover(star)"
+              class="text-2xl transition-transform hover:scale-110"
+              [style.color]="star <= displayRating() ? '#f59e0b' : '#e4e4e7'"
+            >
+              ★
+            </button>
+          }
+        </div>
+
+        <textarea
+          [ngModel]="formComment()"
+          (ngModelChange)="formComment.set($event)"
+          name="reviewComment"
+          rows="3"
+          placeholder="Partagez votre expérience avec ce produit (optionnel)"
+          class="w-full px-4 py-3 bg-white text-zinc-900 placeholder-zinc-400
+                 border border-black/5 rounded-xl text-sm focus:outline-none
+                 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 mb-3"
+        ></textarea>
+
+        @if (submitError()) {
+          <p class="text-xs text-red-600 mb-3">{{ submitError() }}</p>
+        }
+
+        <button
+          type="button"
+          (click)="submitReview()"
+          [disabled]="formRating() < 1 || isSubmitting()"
+          class="px-5 py-2.5 bg-amber-500 text-white font-semibold rounded-xl hover:bg-amber-600
+                 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {{ isSubmitting() ? 'Envoi...' : 'Publier mon avis' }}
+        </button>
+      }
+    } @else {
+      <p class="text-sm text-zinc-500">
+        Connectez-vous pour laisser un avis sur ce produit.
+      </p>
+    }
+  </div>
+
+  <!-- Liste des avis -->
+  @if (isLoading()) {
+    <p class="text-sm text-zinc-400 py-8 text-center">Chargement des avis...</p>
+  } @else if (reviews().length === 0) {
+    <p class="text-sm text-zinc-400 py-8 text-center">
+      Aucun avis pour le moment. Soyez le premier à donner votre avis !
+    </p>
+  } @else {
+    <div class="space-y-6">
+      @for (review of reviews(); track review.id) {
+        <div class="border-b border-black/5 pb-6 last:border-0">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-zinc-900">{{ reviewerLabel(review) }}</span>
+              @if (review.verified) {
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                  Achat vérifié
+                </span>
+              }
+            </div>
+            <span class="text-xs text-zinc-400">{{ formatDate(review.createdAt) }}</span>
+          </div>
+
+          <app-star-rating [rating]="review.rating" size="sm" />
+
+          @if (review.comment) {
+            <p class="mt-2 text-sm text-zinc-600 leading-relaxed">{{ review.comment }}</p>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Pagination -->
+    @if (totalPages() > 1) {
+      <div class="flex items-center justify-center gap-2 mt-8">
+        <button
+          type="button"
+          [disabled]="currentPage() === 1"
+          (click)="goToPage(currentPage() - 1)"
+          class="rounded-md border border-black/5 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Précédent
+        </button>
+        <span class="text-sm font-semibold text-zinc-900">
+          {{ currentPage() }} / {{ totalPages() }}
+        </span>
+        <button
+          type="button"
+          [disabled]="currentPage() === totalPages()"
+          (click)="goToPage(currentPage() + 1)"
+          class="rounded-md border border-black/5 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  }
+</section>

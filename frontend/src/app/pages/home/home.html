@@ -1,0 +1,45 @@
+<app-hero (shopNow)="scrollToFeatured()" />
+
+@defer (on viewport) {
+  <app-trust-section />
+} @placeholder {
+  <div class="h-32"></div>
+}
+
+@defer (on viewport) {
+  <app-categories
+    [categories]="categories"
+    [activeCategory]="activeCategory"
+    (selectCategory)="onSelectCategory($event)"
+  />
+} @placeholder (minimum 100ms) {
+  <div class="h-48 animate-pulse bg-gray-100 rounded-lg mx-4"></div>
+}
+
+@defer (on viewport) {
+  <app-flash-deals
+    [products]="dealProducts"
+    (addToCart)="onAddToCart($event)"
+  />
+} @placeholder (minimum 100ms) {
+  <div class="h-64 animate-pulse bg-gray-100 rounded-lg mx-4"></div>
+} @loading (minimum 200ms; after 100ms) {
+  <div class="h-64 flex items-center justify-center text-gray-400">Chargement des offres...</div>
+} @error {
+  <div class="h-64 flex items-center justify-center text-red-500">Impossible de charger les offres.</div>
+}
+
+<div id="all-products" class="pb-16">
+  @defer (on viewport) {
+    <app-product-list
+      [products]="products"
+      (addToCart)="onAddToCart($event)"
+    />
+  } @placeholder (minimum 100ms) {
+    <div class="h-96 animate-pulse bg-gray-100 rounded-lg mx-4"></div>
+  } @loading (minimum 200ms; after 100ms) {
+    <div class="h-96 flex items-center justify-center text-gray-400">Chargement des produits...</div>
+  } @error {
+    <div class="h-96 flex items-center justify-center text-red-500">Impossible de charger les produits.</div>
+  }
+</div>

@@ -1,0 +1,330 @@
+<div>
+  <!-- Header -->
+  <header class="mb-8 flex items-start justify-between">
+    <div>
+      <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-orange-500">Administration</p>
+      <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
+      <p class="mt-1 text-sm text-slate-500">Vue d'ensemble de votre activité.</p>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <p class="text-sm text-slate-400">Chargement...</p>
+  } @else {
+    <!-- Stats -->
+    <section class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7 12 3 4 7m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </div>
+        <p class="text-sm text-slate-500">Produits</p>
+        <p class="text-2xl font-bold text-slate-900">{{ productsCount() }}</p>
+      </article>
+
+      <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-sky-50 text-sky-500">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13 5.4 5M7 13l-2.3 4.6A1 1 0 0 0 5.6 19H17M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm8 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+          </svg>
+        </div>
+        <p class="text-sm text-slate-500">Commandes</p>
+        <p class="text-2xl font-bold text-slate-900">{{ ordersCount() }}</p>
+      </article>
+
+      <article class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+        </div>
+        <p class="text-sm text-slate-500">Revenu total</p>
+        <p class="text-2xl font-bold text-slate-900">{{ revenue() | number: '1.2-2' }} €</p>
+      </article>
+    </section>
+
+       <!-- Graphique revenu (pleine largeur) -->
+    @defer (on viewport) {
+      <section class="mb-8 rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 class="text-base font-semibold text-slate-900">Revenu</h2>
+            <p class="text-sm text-slate-500">Évolution du chiffre d'affaires sur la période</p>
+          </div>
+
+          <div class="flex gap-1">
+            @for (period of periodOptions; track period) {
+              <button
+                type="button"
+                (click)="setPeriod(period)"
+                class="rounded-md px-3 py-1.5 text-sm font-medium transition"
+                [class.bg-slate-900]="selectedPeriod() === period"
+                [class.text-white]="selectedPeriod() === period"
+                [class.text-slate-600]="selectedPeriod() !== period"
+                [class.hover:bg-slate-100]="selectedPeriod() !== period"
+              >
+                {{ period }}j
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="p-5">
+          @if (isLoadingCharts()) {
+            <p class="py-12 text-center text-sm text-slate-400">Chargement du graphique...</p>
+          } @else {
+            <div class="h-72">
+              <app-chart-canvas
+                [type]="'line'"
+                [data]="revenueChartData()"
+                [options]="revenueChartOptions"
+              />
+            </div>
+          }
+        </div>
+      </section>
+    } @placeholder (minimum 100ms) {
+      <div class="mb-8 h-96 animate-pulse bg-slate-100 rounded-lg"></div>
+    }
+
+    <!-- Statuts + Top produits (2 colonnes) -->
+    @defer (on viewport) {
+      <section class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <!-- Doughnut statuts -->
+        <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 px-5 py-4">
+            <h2 class="text-base font-semibold text-slate-900">Commandes par statut</h2>
+            <p class="text-sm text-slate-500">Répartition actuelle, toutes commandes</p>
+          </div>
+          <div class="flex items-center justify-center gap-10 p-6">
+            <div class="flex h-[260px] w-[260px] flex-shrink-0 items-center justify-center">
+              <app-chart-canvas
+                [type]="'doughnut'"
+                [data]="statusChartData()"
+                [options]="statusChartOptions"
+              />
+            </div>
+
+            <div class="flex flex-col gap-3">
+              @for (item of statusLegendItems(); track item.status) {
+                <div class="flex items-center gap-3">
+                  <span
+                    class="h-3 w-3 flex-shrink-0 rounded-sm"
+                    [style.background-color]="item.color"
+                  ></span>
+                  <span class="text-sm text-slate-700">{{ item.label }}:</span>
+                  <span class="text-sm font-semibold text-slate-900">{{ item.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </article>
+
+        <!-- Bar chart top produits -->
+        <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 px-5 py-4">
+            <h2 class="text-base font-semibold text-slate-900">Top produits vendus</h2>
+            <p class="text-sm text-slate-500">Quantité vendue sur la période sélectionnée</p>
+          </div>
+          <div class="p-5">
+            @if (isLoadingCharts()) {
+              <p class="py-12 text-center text-sm text-slate-400">Chargement du graphique...</p>
+            } @else {
+              <div class="h-64">
+                <app-chart-canvas
+                  [type]="'bar'"
+                  [data]="topProductsChartData()"
+                  [options]="topProductsChartOptions"
+                />
+              </div>
+            }
+          </div>
+        </article>
+      </section>
+    } @placeholder (minimum 100ms) {
+      <div class="mb-8 h-80 animate-pulse bg-slate-100 rounded-lg"></div>
+    }
+
+    <!-- Statuts + Top produits (2 colonnes) -->
+    <section class="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Doughnut statuts -->
+      <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+          <h2 class="text-base font-semibold text-slate-900">Commandes par statut</h2>
+          <p class="text-sm text-slate-500">Répartition actuelle, toutes commandes</p>
+        </div>
+        <div class="flex items-center justify-center gap-10 p-6">
+          <!-- Chart : taille fixe, centré verticalement et horizontalement -->
+          <div class="flex h-[260px] w-[260px] flex-shrink-0 items-center justify-center">
+            <app-chart-canvas
+              [type]="'doughnut'"
+              [data]="statusChartData()"
+              [options]="statusChartOptions"
+            />
+          </div>
+
+          <!-- Légende HTML custom : contrôle total du spacing -->
+          <div class="flex flex-col gap-3">
+            @for (item of statusLegendItems(); track item.status) {
+              <div class="flex items-center gap-3">
+                <span
+                  class="h-3 w-3 flex-shrink-0 rounded-sm"
+                  [style.background-color]="item.color"
+                ></span>
+                <span class="text-sm text-slate-700">{{ item.label }}:</span>
+                <span class="text-sm font-semibold text-slate-900">{{ item.value }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </article>
+
+      <!-- Bar chart top produits -->
+      <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+          <h2 class="text-base font-semibold text-slate-900">Top produits vendus</h2>
+          <p class="text-sm text-slate-500">Quantité vendue sur la période sélectionnée</p>
+        </div>
+        <div class="p-5">
+          @if (isLoadingCharts()) {
+            <p class="py-12 text-center text-sm text-slate-400">Chargement du graphique...</p>
+          } @else {
+            <div class="h-64">
+              <app-chart-canvas
+                [type]="'bar'"
+                [data]="topProductsChartData()"
+                [options]="topProductsChartOptions"
+              />
+            </div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <!-- Recent orders -->
+    <section class="mb-8 rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div class="border-b border-slate-200 px-5 py-4">
+        <h2 class="text-base font-semibold text-slate-900">Commandes récentes</h2>
+        <p class="text-sm text-slate-500">Les dernières commandes passées sur la boutique</p>
+      </div>
+
+      @if (recentOrders().length === 0) {
+        <p class="px-5 py-8 text-center text-sm text-slate-400">Aucune commande pour le moment.</p>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
+                <th class="px-5 py-3 font-medium">ID commande</th>
+                <th class="px-5 py-3 font-medium">Client</th>
+                <th class="px-5 py-3 font-medium">Total</th>
+                <th class="px-5 py-3 font-medium">Statut</th>
+                <th class="px-5 py-3 font-medium">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of recentOrders(); track order.id) {
+                <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                  <td class="px-5 py-3 font-semibold text-slate-900">#{{ order.id.slice(0, 8) }}</td>
+                  <td class="px-5 py-3 text-slate-700">{{ customerLabel(order) }}</td>
+                  <td class="px-5 py-3 font-semibold text-slate-900">{{ order.totalAmount }} €</td>
+                  <td class="px-5 py-3">
+                    <span
+                      class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
+                      [class]="statusClasses(order.status)"
+                    >
+                      {{ statusLabel(order.status) }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-slate-500">{{ order.createdAt | date: 'dd/MM/yyyy' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <!-- Ratings: Top / Flop -->
+    <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Top rated -->
+      <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+          <h2 class="text-base font-semibold text-slate-900">Produits les mieux notés</h2>
+          <p class="text-sm text-slate-500">Basé sur les avis clients</p>
+        </div>
+
+        @if (isLoadingRatings()) {
+          <p class="px-5 py-8 text-center text-sm text-slate-400">Chargement...</p>
+        } @else if (topRatedProducts().length === 0) {
+          <p class="px-5 py-8 text-center text-sm text-slate-400">Aucun produit noté pour le moment.</p>
+        } @else {
+          <ul class="divide-y divide-slate-100">
+            @for (product of topRatedProducts(); track product.id) {
+              <li class="flex items-center gap-3 px-5 py-3">
+                <img
+                  [src]="productImage(product)"
+                  [alt]="product.name"
+                  class="h-12 w-12 flex-shrink-0 rounded-md object-cover ring-1 ring-slate-200"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-900">{{ product.name }}</p>
+                  <div class="mt-0.5 flex items-center gap-1">
+                    <span class="inline-flex items-center gap-0.5 text-amber-500 text-sm">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <span [style.opacity]="star <= (product.rating ?? 0) ? 1 : 0.25">★</span>
+                      }
+                    </span>
+                    <span class="text-xs text-slate-500">
+                      {{ product.rating?.toFixed(1) }} ({{ product.reviewsCount }})
+                    </span>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+
+      <!-- Low rated -->
+      <article class="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 px-5 py-4">
+          <h2 class="text-base font-semibold text-slate-900">Produits à surveiller</h2>
+          <p class="text-sm text-slate-500">Notes les plus basses — nécessitent peut-être une action</p>
+        </div>
+
+        @if (isLoadingRatings()) {
+          <p class="px-5 py-8 text-center text-sm text-slate-400">Chargement...</p>
+        } @else if (lowRatedProducts().length === 0) {
+          <p class="px-5 py-8 text-center text-sm text-slate-400">Aucun produit noté pour le moment.</p>
+        } @else {
+          <ul class="divide-y divide-slate-100">
+            @for (product of lowRatedProducts(); track product.id) {
+              <li class="flex items-center gap-3 px-5 py-3">
+                <img
+                  [src]="productImage(product)"
+                  [alt]="product.name"
+                  class="h-12 w-12 flex-shrink-0 rounded-md object-cover ring-1 ring-slate-200"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold text-slate-900">{{ product.name }}</p>
+                  <div class="mt-0.5 flex items-center gap-1">
+                    <span class="inline-flex items-center gap-0.5 text-amber-500 text-sm">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <span [style.opacity]="star <= (product.rating ?? 0) ? 1 : 0.25">★</span>
+                      }
+                    </span>
+                    <span class="text-xs text-slate-500">
+                      {{ product.rating?.toFixed(1) }} ({{ product.reviewsCount }})
+                    </span>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+    </section>
+  }
+</div>

@@ -1,0 +1,53 @@
+<nav class="flex items-center justify-center gap-0">
+  @for (step of steps; track step.number; let i = $index) {
+
+    <!-- Step -->
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="canGoTo(step.number) && goToStep.emit(step.number)"
+        [class.cursor-pointer]="canGoTo(step.number)"
+        [class.cursor-default]="!canGoTo(step.number)"
+        class="flex items-center gap-2.5 group"
+      >
+        <!-- Circle -->
+        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 border-2"
+             [class.bg-green-500]="isCompleted(step.number)"
+             [class.border-green-500]="isCompleted(step.number)"
+             [class.bg-amber-500]="isActive(step.number)"
+             [class.border-amber-500]="isActive(step.number)"
+             [class.bg-white]="!isCompleted(step.number) && !isActive(step.number)"
+             [class.border-zinc-300]="!isCompleted(step.number) && !isActive(step.number)">
+
+          @if (isCompleted(step.number)) {
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+          } @else {
+            <span class="text-xs font-bold"
+                  [class.text-white]="isActive(step.number)"
+                  [class.text-zinc-400]="!isActive(step.number)">
+              {{ step.number }}
+            </span>
+          }
+        </div>
+
+        <!-- Label -->
+        <span class="text-sm font-semibold transition-colors hidden sm:block"
+              [class.text-amber-600]="isActive(step.number)"
+              [class.text-green-600]="isCompleted(step.number)"
+              [class.text-zinc-400]="!isActive(step.number) && !isCompleted(step.number)">
+          {{ step.label }}
+        </span>
+      </button>
+    </div>
+
+    <!-- Connector line (not after last step) -->
+    @if (i < steps.length - 1) {
+      <div class="h-[2px] w-16 sm:w-24 mx-2 rounded-full transition-colors duration-300"
+           [class.bg-amber-400]="isCompleted(steps[i + 1 - 1].number)"
+           [class.bg-zinc-200]="!isCompleted(steps[i + 1 - 1].number)">
+      </div>
+    }
+  }
+</nav>

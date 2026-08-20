@@ -1,0 +1,2 @@
+.overflow-y-auto::-webkit-scrollbar { width: 4px; }
+.overflow-y-auto::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }

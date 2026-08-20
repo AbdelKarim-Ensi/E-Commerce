@@ -1,0 +1,174 @@
+<div>
+  <!-- Header -->
+  <header class="mb-8 flex items-start justify-between">
+    <div>
+      <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-orange-500">Administration</p>
+      <h1 class="text-2xl font-bold text-slate-900">Produits</h1>
+      <p class="mt-1 text-sm text-slate-500">Gérez votre catalogue et vos stocks.</p>
+    </div>
+    <button
+      type="button"
+      (click)="goToNewProduct()"
+      class="flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
+    >
+      <span class="text-base leading-none">＋</span>
+      Ajouter un produit
+    </button> 
+  </header>
+
+  <!-- Panel -->
+  <section class="rounded-lg border border-slate-200 bg-white shadow-sm">
+    <!-- Toolbar -->
+    <div class="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center">
+      <div class="relative flex-1">
+        <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" />
+          <path stroke-linecap="round" d="m21 21-4.3-4.3" />
+        </svg>
+        <input
+          type="text"
+          placeholder="Rechercher un produit..."
+          aria-label="Rechercher un produit"
+          [ngModel]="search()"
+          (ngModelChange)="onSearchInput($event)"
+          class="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+        />
+      </div>
+
+      <select
+        [ngModel]="selectedCategoryId()"
+        (ngModelChange)="onCategoryChange($event)"
+        aria-label="Filtrer par catégorie"
+        class="rounded-lg border border-slate-200 py-2.5 px-3 text-sm text-slate-700 focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+      >
+        <option value="">Toutes les catégories</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Table -->
+    @if (isLoading()) {
+      <p class="px-5 py-8 text-center text-sm text-slate-400">Chargement...</p>
+    } @else if (products().length === 0) {
+      <div class="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
+        <span class="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7 12 3 4 7m16 0-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        </span>
+        <p class="text-sm font-medium text-slate-900">Aucun produit trouvé</p>
+        <p class="text-sm text-slate-500">Essayez de modifier votre recherche ou vos filtres.</p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 text-xs uppercase tracking-wide text-slate-500">
+              <th class="px-5 py-3 font-medium">Produit</th>
+              <th class="px-5 py-3 font-medium">Catégorie</th>
+              <th class="px-5 py-3 font-medium">Prix</th>
+              <th class="px-5 py-3 font-medium">Stock</th>
+              <th class="px-5 py-3 font-medium">Statut</th>
+              <th class="px-5 py-3 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (product of products(); track product.id) {
+              <tr class="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                <td class="px-5 py-3">
+                  <div class="flex items-center gap-3">
+                    @if (product.thumbnailUrl) {
+                      <img [src]="product.thumbnailUrl" [alt]="product.name" class="h-10 w-10 rounded-lg object-cover" />
+                    } @else {
+                      <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-400">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                          <circle cx="8.5" cy="8.5" r="1.5" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="m21 15-5-5L5 21" />
+                        </svg>
+                      </span>
+                    }
+                    <span class="font-medium text-slate-900">{{ product.name }}</span>
+                  </div>
+                </td>
+                <td class="px-5 py-3 text-slate-600">{{ product.category?.name ?? '—' }}</td>
+                <td class="px-5 py-3 font-semibold text-slate-900">{{ product.price }} €</td>
+                <td class="px-5 py-3">
+                  <span
+                    class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
+                    [class]="stockClasses(product.stock)"
+                  >
+                    {{ product.stock }}
+                  </span>
+                </td>
+                <td class="px-5 py-3">
+                  @if (product.isActive) {
+                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                      Actif
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-400/20">
+                      Inactif
+                    </span>
+                  }
+                </td>
+                <td class="px-5 py-3">
+                  <div class="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      (click)="goToEditProduct(product)"
+                      aria-label="Modifier"
+                      class="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="deleteProduct(product)"
+                      aria-label="Supprimer"
+                      class="rounded-md p-1.5 text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16Z" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-between border-t border-slate-200 px-5 py-3">
+        <p class="text-sm text-slate-500">
+          Affichage {{ (page() - 1) * limit() + 1 }}-{{ displayRangeEnd() }} sur {{ total() }}
+        </p>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            (click)="goToPage(page() - 1)"
+            [disabled]="page() === 1"
+            class="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Précédent
+          </button>
+          <span class="text-sm text-slate-500">{{ page() }} / {{ totalPages() }}</span>
+          <button
+            type="button"
+            (click)="goToPage(page() + 1)"
+            [disabled]="page() === totalPages()"
+            class="rounded-md border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Suivant
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+</div>

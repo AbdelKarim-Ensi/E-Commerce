@@ -1,0 +1,16 @@
+<div class="flex items-center gap-1.5">
+  <div class="flex items-center gap-0.5" [class.text-xs]="size === 'sm'" [class.text-sm]="size === 'md'">
+    @for (fill of stars; track $index) {
+      <span class="relative">
+        <span class="text-gray-200">★</span>
+        <span class="absolute inset-0 overflow-hidden" [style.width.%]="fill">
+          <span style="color:#f59e0b">★</span>
+        </span>
+      </span>
+    }
+  </div>
+  <span class="text-xs text-gray-500 font-medium">{{ rating }}</span>
+  @if (reviews !== undefined) {
+    <span class="text-xs text-gray-400">({{ reviews | number }})</span>
+  }
+</div>
