@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Product } from '../models/product.model';
 import { environment } from '../../../environments/environment';
+import { API_BASE_URL } from '../api-base-url.token';
 
 export interface ProductQueryParams {
   categoryId?: string;
@@ -21,7 +22,7 @@ export interface PaginatedProducts {
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.apiUrl}/products`;
+  private baseUrl = `${inject(API_BASE_URL)}/products`;
 
   /** Route publique : ne renvoie que les produits actifs (boutique). */
   getAll(params?: ProductQueryParams): Observable<PaginatedProducts> {

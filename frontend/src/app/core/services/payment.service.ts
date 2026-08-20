@@ -1,10 +1,11 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { API_BASE_URL } from '../api-base-url.token';
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-  private url = environment.apiUrl + '/payments/';
+  private url = inject(API_BASE_URL) + '/payments/';
 
   constructor(private http: HttpClient) {}
 

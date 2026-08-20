@@ -2,13 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { API_BASE_URL } from '../api-base-url.token';
 import { PaginatedReviews, PaginatedAdminReviews, Review } from '@models/review.model';
 import { Product } from '@models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReviewsService {
   private http = inject(HttpClient);
-  private baseUrl = environment.apiUrl;
+  private baseUrl = inject(API_BASE_URL);
 
   getByProduct(productId: string, page = 1, limit = 10): Observable<PaginatedReviews> {
     return this.http.get<PaginatedReviews>(

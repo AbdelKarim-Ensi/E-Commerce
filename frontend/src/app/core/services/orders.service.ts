@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { API_BASE_URL } from '../api-base-url.token';
 import { Order, CreateOrderPayload, PaginatedOrders, OrderStatus } from '@models/order.model';
 
 export type OrderStatusCounts = Record<'ALL' | OrderStatus, number>;
@@ -9,7 +10,7 @@ export type OrderStatusCounts = Record<'ALL' | OrderStatus, number>;
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
   private http = inject(HttpClient);
-  private url = environment.apiUrl + '/orders/';
+  private url = inject(API_BASE_URL) + '/orders/';
 
   create(order: CreateOrderPayload): Observable<Order> {
     return this.http.post<Order>(this.url, order, { withCredentials: true });

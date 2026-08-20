@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformServer } from '@angular/common';
 import { environment } from '../../../environments/environment';
+import { API_BASE_URL } from '../api-base-url.token';
 import { catchError, tap, throwError, of, switchMap, from } from 'rxjs';
 import { UsersService } from './users.service';
 import { CartService } from './cart.service';
@@ -23,7 +24,7 @@ export class AuthService {
   private cartService = inject(CartService);
   private platformId = inject(PLATFORM_ID);
 
-  private url = environment.apiUrl + '/auth/';
+  private url = inject(API_BASE_URL) + '/auth/';
   isLoggedIn = signal(false);
   sessionChecked = signal(false);
   currentUser = signal<User | null>(null);

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User, Role, PaginatedUsers } from '@models/user.model';
 import { environment } from '../../../environments/environment';
+import { API_BASE_URL } from '../api-base-url.token';
 
 export interface UpdateUserPayload {
   firstName?: string;
@@ -20,7 +21,7 @@ export interface ChangePasswordPayload {
 @Injectable({ providedIn: 'root' })
 export class UsersService {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.apiUrl}/users`;
+  private baseUrl = `${inject(API_BASE_URL)}/users`;
 
   getMe(): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/me`);

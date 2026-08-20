@@ -3,11 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Category, CreateCategoryPayload, UpdateCategoryPayload } from '@models/category.model';
 import { environment } from '@env/environment';
+import { API_BASE_URL } from '../api-base-url.token';
 
 @Injectable({ providedIn: 'root' })
 export class CategoriesService {
   private http = inject(HttpClient);
-  private baseUrl = `${environment.apiUrl}/categories`;
+  private baseUrl = `${inject(API_BASE_URL)}/categories`;
 
   getCategories(): Observable<Category[]> {
     return this.http.get<Category[]>(this.baseUrl);
