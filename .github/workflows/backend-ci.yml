@@ -1,0 +1,93 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+defaults:
+  run:
+    working-directory: ./backend
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ecommerce_user
+          POSTGRES_PASSWORD: postgres_test
+          POSTGRES_DB: ecommerce_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ecommerce_user -d ecommerce_test_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://ecommerce_user:postgres_test@localhost:5432/ecommerce_test_db
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET_TEST }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm run test:cov
+
+      - name: Run e2e tests
+        run: npm run test:e2e
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage
+          retention-days: 7

@@ -1,0 +1,66 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+  schedule:
+    - cron: '0 6 * * 1' # chaque lundi à 6h UTC
+  workflow_dispatch: {}
+
+jobs:
+  npm-audit-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Audit backend dependencies
+        working-directory: ./backend
+        run: npm audit --production --audit-level=high
+
+  npm-audit-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Audit frontend dependencies
+        working-directory: ./frontend
+        run: npm audit --production --audit-level=high
+
+  trivy-backend-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t ecommerce-backend:scan ./backend
+
+      - name: Run Trivy scan (backend)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'ecommerce-backend:scan'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+  trivy-frontend-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build frontend image
+        run: docker build -t ecommerce-frontend:scan ./frontend
+
+      - name: Run Trivy scan (frontend)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'ecommerce-frontend:scan'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
