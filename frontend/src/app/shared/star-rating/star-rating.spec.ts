@@ -6,19 +6,36 @@ describe('StarRating', () => {
   let fixture: ComponentFixture<StarRating>;
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({ imports: [StarRating] }).compileComponents();
+    await TestBed.configureTestingModule({
+      imports: [StarRating],
+    }).compileComponents();
+
     fixture = TestBed.createComponent(StarRating);
     component = fixture.componentInstance;
-    component.rating = 4.5;
-    fixture.detectChanges();
   });
 
   it('should create', () => {
+    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
-  it('should compute fill percent per star', () => {
-    expect(component.fillPercent(1)).toBe(100);
-    expect(component.fillPercent(5)).toBe(50);
+  it('should return all stars fully filled when rating is 5', () => {
+    component.rating = 5;
+    expect(component.stars).toEqual([100, 100, 100, 100, 100]);
+  });
+
+  it('should return no stars filled when rating is 0', () => {
+    component.rating = 0;
+    expect(component.stars).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it('should partially fill the star matching a fractional rating', () => {
+    component.rating = 3.5;
+    expect(component.stars).toEqual([100, 100, 100, 50, 0]);
+  });
+
+  it('should clamp fill percent between 0 and 100 for a rating like 1', () => {
+    component.rating = 1;
+    expect(component.stars).toEqual([100, 0, 0, 0, 0]);
   });
 });

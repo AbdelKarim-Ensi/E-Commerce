@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { AdminOrders } from './admin-orders';
+import { testProviders } from '../../../../test/test-providers';
 
 describe('AdminOrders', () => {
   let component: AdminOrders;
@@ -8,7 +9,8 @@ describe('AdminOrders', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AdminOrders, HttpClientTestingModule],
+      imports: [AdminOrders],
+      providers: [...testProviders, provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminOrders);

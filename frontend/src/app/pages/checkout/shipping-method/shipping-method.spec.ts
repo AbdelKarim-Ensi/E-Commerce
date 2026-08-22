@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ShippingMethod } from './shipping-method';
+import { SHIPPING_OPTIONS } from '../../../core/services/checkout.service';
 
 describe('ShippingMethod', () => {
   let component: ShippingMethod;
@@ -14,6 +14,8 @@ describe('ShippingMethod', () => {
 
     fixture = TestBed.createComponent(ShippingMethod);
     component = fixture.componentInstance;
+    component.selected = SHIPPING_OPTIONS[0];
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

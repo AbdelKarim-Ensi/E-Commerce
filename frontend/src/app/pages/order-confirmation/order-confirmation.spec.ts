@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { OrderConfirmation } from './order-confirmation';
+import { testProviders } from '../../../test/test-providers';
 
 describe('OrderConfirmation', () => {
   let component: OrderConfirmation;
@@ -9,7 +10,7 @@ describe('OrderConfirmation', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [OrderConfirmation],
-      providers: [provideRouter([])],
+      providers: [...testProviders, provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(OrderConfirmation);

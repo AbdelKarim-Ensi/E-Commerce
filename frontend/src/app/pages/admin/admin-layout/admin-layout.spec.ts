@@ -40,11 +40,18 @@ describe('AdminLayout', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should display the current user full name', () => {
-    expect(component.currentUserName).toBe('Abdel Karim');
+  it('should expose the current user first and last name', () => {
+    expect(component.currentUser()?.firstName).toBe('Abdel');
+    expect(component.currentUser()?.lastName).toBe('Karim');
   });
 
-  it('should display the current user role', () => {
-    expect(component.currentUserRole).toBe('ADMIN');
+  it('should expose the current user role', () => {
+    expect(component.currentUser()?.role).toBe('ADMIN');
+  });
+
+  it('should toggle the sidebar visibility', () => {
+    expect(component.sidebarOpen()).toBe(true);
+    component.toggleSidebar();
+    expect(component.sidebarOpen()).toBe(false);
   });
 });
