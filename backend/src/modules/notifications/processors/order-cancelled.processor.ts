@@ -20,7 +20,8 @@ export class OrderCancelledProcessor extends WorkerHost {
 
   constructor(private readonly config: ConfigService) {
     super();
-    this.fromAddress = this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
+    this.fromAddress =
+      this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>('SMTP_HOST'),
       port: this.config.get<number>('SMTP_PORT'),
@@ -35,7 +36,11 @@ export class OrderCancelledProcessor extends WorkerHost {
   async process(job: Job<OrderCancelledJobData>): Promise<void> {
     const { email, orderId, totalAmount, refunded } = job.data;
 
-    const { subject, html } = renderOrderCancelledEmail({ orderId, totalAmount, refunded });
+    const { subject, html } = renderOrderCancelledEmail({
+      orderId,
+      totalAmount,
+      refunded,
+    });
 
     await this.transporter.sendMail({
       from: this.fromAddress,
@@ -44,6 +49,8 @@ export class OrderCancelledProcessor extends WorkerHost {
       html,
     });
 
-    this.logger.log(`Email d'annulation envoyé à ${email} pour la commande ${orderId}`);
+    this.logger.log(
+      `Email d'annulation envoyé à ${email} pour la commande ${orderId}`,
+    );
   }
 }

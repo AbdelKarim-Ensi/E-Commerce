@@ -10,8 +10,15 @@ export interface JwtPayload {
   role: string;
 }
 
+export interface ValidatedUser {
+  userId: string;
+  email: string;
+  role: string;
+}
+
 function cookieExtractor(req: Request): string | null {
-  return req?.cookies?.access_token ?? null;
+  const cookies = req?.cookies as Record<string, string> | undefined;
+  return cookies?.access_token ?? null;
 }
 
 @Injectable()
@@ -24,8 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
-   
+  validate(payload: JwtPayload): ValidatedUser {
     return { userId: payload.sub, email: payload.email, role: payload.role };
   }
 }

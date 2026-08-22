@@ -8,7 +8,10 @@ import {
 import { OrderStatus, Prisma, Role } from '@prisma/client';
 import { OrdersService } from './orders.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { createMockPrismaService, MockPrismaService } from '../../prisma/prisma.mock';
+import {
+  createMockPrismaService,
+  MockPrismaService,
+} from '../../prisma/prisma.mock';
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -47,7 +50,9 @@ describe('OrdersService', () => {
     const userId = 'user-1';
 
     beforeEach(() => {
-      (prisma.$transaction as jest.Mock).mockImplementation((cb: any) => cb(prisma));
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: any) =>
+        cb(prisma),
+      );
     });
 
     it('creates an order and decrements stock atomically', async () => {
@@ -77,7 +82,9 @@ describe('OrdersService', () => {
       prisma.product.findMany.mockResolvedValue([]);
 
       await expect(
-        service.create(userId, { items: [{ productId: 'missing', quantity: 1 }] }),
+        service.create(userId, {
+          items: [{ productId: 'missing', quantity: 1 }],
+        }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -86,7 +93,9 @@ describe('OrdersService', () => {
       prisma.product.findMany.mockResolvedValue([product] as any);
 
       await expect(
-        service.create(userId, { items: [{ productId: product.id, quantity: 1 }] }),
+        service.create(userId, {
+          items: [{ productId: product.id, quantity: 1 }],
+        }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -96,7 +105,9 @@ describe('OrdersService', () => {
       prisma.product.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
-        service.create(userId, { items: [{ productId: product.id, quantity: 5 }] }),
+        service.create(userId, {
+          items: [{ productId: product.id, quantity: 5 }],
+        }),
       ).rejects.toThrow(ConflictException);
     });
   });
@@ -127,9 +138,9 @@ describe('OrdersService', () => {
     it('throws NotFoundException when the order does not exist', async () => {
       prisma.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.findOne('missing', 'user-1', Role.CLIENT)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.findOne('missing', 'user-1', Role.CLIENT),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it("throws ForbiddenException when a CLIENT requests another user's order", async () => {
@@ -138,9 +149,9 @@ describe('OrdersService', () => {
         userId: 'someone-else',
       } as any);
 
-      await expect(service.findOne('order-1', 'user-1', Role.CLIENT)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.findOne('order-1', 'user-1', Role.CLIENT),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('lets an ADMIN access any order regardless of ownership', async () => {
@@ -155,7 +166,9 @@ describe('OrdersService', () => {
 
   describe('updateStatus', () => {
     beforeEach(() => {
-      (prisma.$transaction as jest.Mock).mockImplementation((cb: any) => cb(prisma));
+      (prisma.$transaction as jest.Mock).mockImplementation((cb: any) =>
+        cb(prisma),
+      );
     });
 
     it('throws NotFoundException when the order does not exist', async () => {
@@ -190,7 +203,7 @@ describe('OrdersService', () => {
           quantity: 3,
           unitPrice: new Prisma.Decimal(20),
         },
-      ] as any);
+      ]);
       prisma.order.update.mockResolvedValue({
         id: 'order-1',
         status: OrderStatus.CANCELLED,
@@ -214,7 +227,9 @@ describe('OrdersService', () => {
         status: OrderStatus.PAID,
       } as any);
 
-      const result = await service.updateStatus('order-1', { status: OrderStatus.PAID });
+      const result = await service.updateStatus('order-1', {
+        status: OrderStatus.PAID,
+      });
 
       expect(prisma.order.update).toHaveBeenCalledWith({
         where: { id: 'order-1' },

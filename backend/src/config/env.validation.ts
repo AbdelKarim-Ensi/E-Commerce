@@ -39,14 +39,19 @@ export const envValidationSchema = Joi.object({
   SUPABASE_URL: Joi.string().uri().required(),
   SUPABASE_SECRET_KEY: Joi.string().required(),
 })
-  .custom((value, helpers) => {
-    if (value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET) {
-      return helpers.error('any.invalid', {
-        message: 'JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different',
-      });
-    }
-    return value;
-  })
+  .custom(
+    (
+      value: { JWT_ACCESS_SECRET: string; JWT_REFRESH_SECRET: string },
+      helpers,
+    ) => {
+      if (value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET) {
+        return helpers.error('any.invalid', {
+          message: 'JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be different',
+        });
+      }
+      return value;
+    },
+  )
   .unknown(true);
 
 export const appConfig = registerAs('app', () => ({

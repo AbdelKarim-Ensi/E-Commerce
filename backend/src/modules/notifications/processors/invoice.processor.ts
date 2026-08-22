@@ -57,8 +57,16 @@ export class InvoiceProcessor extends WorkerHost {
       id: string;
       totalAmount: { toNumber: () => number };
       createdAt: Date;
-      user: { firstName: string | null; lastName: string | null; email: string };
-      items: { quantity: number; unitPrice: { toNumber: () => number }; product: { name: string } }[];
+      user: {
+        firstName: string | null;
+        lastName: string | null;
+        email: string;
+      };
+      items: {
+        quantity: number;
+        unitPrice: { toNumber: () => number };
+        product: { name: string };
+      }[];
     },
     outputPath: string,
   ): Promise<void> {
@@ -91,7 +99,9 @@ export class InvoiceProcessor extends WorkerHost {
       doc.moveDown();
       doc
         .fontSize(12)
-        .text(`Total : ${order.totalAmount.toNumber().toFixed(2)} €`, { align: 'right' });
+        .text(`Total : ${order.totalAmount.toNumber().toFixed(2)} €`, {
+          align: 'right',
+        });
 
       doc.end();
       stream.on('finish', () => resolve());

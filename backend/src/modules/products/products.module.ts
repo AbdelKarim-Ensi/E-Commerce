@@ -4,7 +4,7 @@ import { ProductsController } from './products.controller';
 import { UploadsModule } from '../uploads/uploads.module';
 
 @Module({
-  imports:[UploadsModule],
+  imports: [UploadsModule],
   controllers: [ProductsController],
   providers: [ProductsService],
 })

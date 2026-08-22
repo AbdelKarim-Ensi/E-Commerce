@@ -92,7 +92,6 @@ export class OrdersService {
           });
         }
 
-       
         let couponId: string | undefined;
         let discountAmount = 0;
 
@@ -123,7 +122,6 @@ export class OrdersService {
           discountAmount = Math.min(rawDiscount, totalAmount);
           couponId = coupon.id;
 
-          
           await tx.coupon.update({
             where: { id: coupon.id },
             data: { usedCount: { increment: 1 } },
@@ -182,7 +180,9 @@ export class OrdersService {
             OR: [
               { id: { contains: search, mode: 'insensitive' } },
               { user: { email: { contains: search, mode: 'insensitive' } } },
-              { user: { firstName: { contains: search, mode: 'insensitive' } } },
+              {
+                user: { firstName: { contains: search, mode: 'insensitive' } },
+              },
               { user: { lastName: { contains: search, mode: 'insensitive' } } },
             ],
           }
@@ -300,12 +300,14 @@ export class OrdersService {
     return updatedOrder;
   }
 
-  
   async refundOrder(id: string, currentUser: AuthenticatedUser) {
     const order = await this.prisma.order.findUnique({ where: { id } });
     if (!order) throw new NotFoundException('Commande introuvable');
 
-    if (currentUser.role === Role.CLIENT && order.userId !== currentUser.userId) {
+    if (
+      currentUser.role === Role.CLIENT &&
+      order.userId !== currentUser.userId
+    ) {
       throw new ForbiddenException('Accès refusé à cette commande');
     }
 

@@ -2,7 +2,15 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import sharp from 'sharp';
 import { Role, Category, Product } from '@prisma/client';
-import { afterAll, afterEach, beforeAll, describe, expect, it, jest } from '@jest/globals';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals';
 import { buildSupabaseMock } from './utils/supabase.mock';
 
 const supabaseMock = buildSupabaseMock();
@@ -35,7 +43,12 @@ describe('POST /products/:id/image (e2e)', () => {
 
   const validImageBuffer = async () =>
     sharp({
-      create: { width: 20, height: 20, channels: 3, background: { r: 200, g: 30, b: 30 } },
+      create: {
+        width: 20,
+        height: 20,
+        channels: 3,
+        background: { r: 200, g: 30, b: 30 },
+      },
     })
       .jpeg()
       .toBuffer();
@@ -101,7 +114,9 @@ describe('POST /products/:id/image (e2e)', () => {
     expect(supabaseMock.mocks.listMock).toHaveBeenCalledWith(product.id);
     expect(supabaseMock.mocks.uploadMock).toHaveBeenCalledTimes(2);
 
-    const updated = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
+    const updated = await prisma.product.findUniqueOrThrow({
+      where: { id: product.id },
+    });
     expect(updated.imageUrl).toBe(res.body.imageUrl);
     expect(updated.thumbnailUrl).toBe(res.body.thumbnailUrl);
   });

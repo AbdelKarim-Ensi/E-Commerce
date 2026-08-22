@@ -3,7 +3,11 @@ import request from 'supertest';
 import { randomUUID } from 'crypto';
 import { Role, OrderStatus } from '@prisma/client';
 import { createTestApp } from './utils/test-app.setup';
-import { createTestUser, createTestCategory, cleanupTestData } from './utils/seed.helper';
+import {
+  createTestUser,
+  createTestCategory,
+  cleanupTestData,
+} from './utils/seed.helper';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 describe('Orders lifecycle (e2e)', () => {
@@ -56,13 +60,22 @@ describe('Orders lifecycle (e2e)', () => {
       await prisma.order.deleteMany({ where: { id: { in: orderIdsToClean } } });
     }
     if (productIdsToClean.length > 0) {
-      await prisma.product.deleteMany({ where: { id: { in: productIdsToClean } } });
+      await prisma.product.deleteMany({
+        where: { id: { in: productIdsToClean } },
+      });
     }
-    await cleanupTestData(prisma, { userIds: userIdsToClean, categoryIds: categoryIdsToClean });
+    await cleanupTestData(prisma, {
+      userIds: userIdsToClean,
+      categoryIds: categoryIdsToClean,
+    });
     await app.close();
   });
 
-  async function makeProduct(opts: { stock: number; isActive?: boolean; price?: number }) {
+  async function makeProduct(opts: {
+    stock: number;
+    isActive?: boolean;
+    price?: number;
+  }) {
     const category = await createTestCategory(prisma);
     categoryIdsToClean.push(category.id);
 
@@ -94,7 +107,9 @@ describe('Orders lifecycle (e2e)', () => {
     expect(res.body.status).toBe(OrderStatus.PENDING);
     expect(Number(res.body.totalAmount)).toBe(60);
 
-    const updatedProduct = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
+    const updatedProduct = await prisma.product.findUniqueOrThrow({
+      where: { id: product.id },
+    });
     expect(updatedProduct.stock).toBe(7);
   });
 
@@ -109,16 +124,21 @@ describe('Orders lifecycle (e2e)', () => {
 
     // La transaction Prisma doit avoir tout annulé (rollback) : le stock
     // n'a pas dû être décrémenté malgré l'échec en cours de route.
-    const untouched = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
+    const untouched = await prisma.product.findUniqueOrThrow({
+      where: { id: product.id },
+    });
     expect(untouched.stock).toBe(1);
   });
 
   it('rejects order creation for a non-existent product', async () => {
-
     await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: '00000000-0000-0000-0000-000000000000', quantity: 1 }] })
+      .send({
+        items: [
+          { productId: '00000000-0000-0000-0000-000000000000', quantity: 1 },
+        ],
+      })
       .expect(404);
   });
 
@@ -204,7 +224,9 @@ describe('Orders lifecycle (e2e)', () => {
       .expect(201);
     orderIdsToClean.push(createRes.body.id);
 
-    const afterCreate = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
+    const afterCreate = await prisma.product.findUniqueOrThrow({
+      where: { id: product.id },
+    });
     expect(afterCreate.stock).toBe(6);
 
     await request(app.getHttpServer())
@@ -213,7 +235,9 @@ describe('Orders lifecycle (e2e)', () => {
       .send({ status: OrderStatus.CANCELLED })
       .expect(200);
 
-    const afterCancel = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
+    const afterCancel = await prisma.product.findUniqueOrThrow({
+      where: { id: product.id },
+    });
     expect(afterCancel.stock).toBe(10);
   });
 
@@ -236,7 +260,9 @@ describe('Orders lifecycle (e2e)', () => {
       .expect(400);
 
     // La commande n'a pas dû être modifiée malgré l'erreur.
-    const untouched = await prisma.order.findUniqueOrThrow({ where: { id: createRes.body.id } });
+    const untouched = await prisma.order.findUniqueOrThrow({
+      where: { id: createRes.body.id },
+    });
     expect(untouched.status).toBe(OrderStatus.PENDING);
   });
 });

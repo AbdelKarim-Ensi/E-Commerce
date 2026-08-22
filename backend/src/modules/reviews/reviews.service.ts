@@ -47,7 +47,9 @@ export class ReviewsService {
       where: { productId_userId: { productId, userId } },
     });
     if (existing) {
-      throw new ConflictException('Vous avez déjà laissé un avis pour ce produit');
+      throw new ConflictException(
+        'Vous avez déjà laissé un avis pour ce produit',
+      );
     }
 
     // Achat vérifié : l'utilisateur a-t-il une commande PAID/SHIPPED/DELIVERED
@@ -86,7 +88,9 @@ export class ReviewsService {
     }
 
     if (review.userId !== userId && userRole !== 'ADMIN') {
-      throw new ForbiddenException("Vous ne pouvez pas supprimer l'avis d'un autre utilisateur");
+      throw new ForbiddenException(
+        "Vous ne pouvez pas supprimer l'avis d'un autre utilisateur",
+      );
     }
 
     await this.prisma.review.delete({ where: { id: reviewId } });
@@ -108,7 +112,12 @@ export class ReviewsService {
         include: {
           user: { select: { firstName: true, lastName: true, email: true } },
           product: {
-            select: { name: true, slug: true, thumbnailUrl: true, imageUrl: true },
+            select: {
+              name: true,
+              slug: true,
+              thumbnailUrl: true,
+              imageUrl: true,
+            },
           },
         },
         orderBy: { createdAt: 'desc' },

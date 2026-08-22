@@ -171,5 +171,3 @@ describe('Auth flow (e2e)', () => {
       .expect(401);
   });
 });
-
-

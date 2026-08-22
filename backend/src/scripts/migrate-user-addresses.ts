@@ -1,4 +1,3 @@
-
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -8,22 +7,34 @@ async function main() {
     where: {
       address: { not: null },
     },
-    select: { id: true, address: true, firstName: true, lastName: true, phone: true },
+    select: {
+      id: true,
+      address: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+    },
   });
 
-  console.log(`${usersWithLegacyAddress.length} utilisateur(s) avec une adresse legacy trouvés.`);
+  console.log(
+    `${usersWithLegacyAddress.length} utilisateur(s) avec une adresse legacy trouvés.`,
+  );
 
   let migrated = 0;
   let skipped = 0;
 
   for (const user of usersWithLegacyAddress) {
-    const existingCount = await prisma.address.count({ where: { userId: user.id } });
+    const existingCount = await prisma.address.count({
+      where: { userId: user.id },
+    });
     if (existingCount > 0) {
       skipped++;
       continue;
     }
 
-    const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || 'Adresse principale';
+    const fullName =
+      [user.firstName, user.lastName].filter(Boolean).join(' ').trim() ||
+      'Adresse principale';
 
     await prisma.address.create({
       data: {
@@ -39,7 +50,9 @@ async function main() {
     migrated++;
   }
 
-  console.log(`Migration terminée : ${migrated} adresse(s) créée(s), ${skipped} utilisateur(s) déjà migré(s) ignoré(s).`);
+  console.log(
+    `Migration terminée : ${migrated} adresse(s) créée(s), ${skipped} utilisateur(s) déjà migré(s) ignoré(s).`,
+  );
 }
 
 main()

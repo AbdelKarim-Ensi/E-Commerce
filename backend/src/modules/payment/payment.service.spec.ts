@@ -20,7 +20,10 @@ jest.mock('stripe', () => {
 import { PaymentService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationsQueue } from '../notifications/queues/notifications.queue';
-import { createMockPrismaService, MockPrismaService } from '../../prisma/prisma.mock';
+import {
+  createMockPrismaService,
+  MockPrismaService,
+} from '../../prisma/prisma.mock';
 
 describe('PaymentService', () => {
   let service: PaymentService;
@@ -59,12 +62,12 @@ describe('PaymentService', () => {
     it('throws NotFoundException when the order does not exist', async () => {
       prisma.order.findUnique.mockResolvedValue(null);
 
-      await expect(service.createPaymentIntent('order-1', 'user-1')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.createPaymentIntent('order-1', 'user-1'),
+      ).rejects.toThrow(NotFoundException);
     });
 
-    it("throws BadRequestException when the order belongs to another user", async () => {
+    it('throws BadRequestException when the order belongs to another user', async () => {
       prisma.order.findUnique.mockResolvedValue({
         id: 'order-1',
         userId: 'someone-else',
@@ -72,9 +75,9 @@ describe('PaymentService', () => {
         totalAmount: new Prisma.Decimal(50),
       } as any);
 
-      await expect(service.createPaymentIntent('order-1', 'user-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.createPaymentIntent('order-1', 'user-1'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when the order is not PENDING', async () => {
@@ -85,9 +88,9 @@ describe('PaymentService', () => {
         totalAmount: new Prisma.Decimal(50),
       } as any);
 
-      await expect(service.createPaymentIntent('order-1', 'user-1')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.createPaymentIntent('order-1', 'user-1'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('creates a Stripe PaymentIntent and stores its id on the order', async () => {
@@ -112,7 +115,10 @@ describe('PaymentService', () => {
         where: { id: 'order-1' },
         data: { stripePaymentIntentId: 'pi_123' },
       });
-      expect(result).toEqual({ clientSecret: 'secret_abc', paymentIntentId: 'pi_123' });
+      expect(result).toEqual({
+        clientSecret: 'secret_abc',
+        paymentIntentId: 'pi_123',
+      });
     });
   });
 
@@ -124,9 +130,9 @@ describe('PaymentService', () => {
         throw new Error('invalid signature');
       });
 
-      await expect(service.handleWebhookEvent(rawBody, 'bad-sig')).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.handleWebhookEvent(rawBody, 'bad-sig'),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('skips processing when the event was already handled (idempotence)', async () => {
@@ -166,7 +172,9 @@ describe('PaymentService', () => {
         where: { id: 'order-1' },
         data: { status: OrderStatus.PAID },
       });
-      expect(notificationsQueue.enqueueOrderConfirmation).toHaveBeenCalledWith('order-1');
+      expect(notificationsQueue.enqueueOrderConfirmation).toHaveBeenCalledWith(
+        'order-1',
+      );
       expect(prisma.processedWebhookEvent.create).toHaveBeenCalledWith({
         data: { id: 'evt_1', eventType: 'payment_intent.succeeded' },
       });
@@ -188,7 +196,9 @@ describe('PaymentService', () => {
       await service.handleWebhookEvent(rawBody, 'sig');
 
       expect(prisma.order.update).not.toHaveBeenCalled();
-      expect(notificationsQueue.enqueueOrderConfirmation).not.toHaveBeenCalled();
+      expect(
+        notificationsQueue.enqueueOrderConfirmation,
+      ).not.toHaveBeenCalled();
     });
 
     it('does nothing harmful on payment_intent.payment_failed', async () => {

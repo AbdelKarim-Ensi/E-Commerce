@@ -5,7 +5,7 @@ import { StripeWebhookController } from './webhooks/stripe-webhook.controller';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 @Module({
-  imports: [PrismaModule,NotificationsModule],
+  imports: [PrismaModule, NotificationsModule],
   controllers: [PaymentController, StripeWebhookController],
   providers: [PaymentService],
   exports: [PaymentService],

@@ -13,7 +13,7 @@ describe('CategoriesController', () => {
       findOne: jest.fn(),
       update: jest.fn(),
       remove: jest.fn(),
-    } as any;
+    };
 
     const moduleRef = await Test.createTestingModule({
       controllers: [CategoriesController],
@@ -41,7 +41,7 @@ describe('CategoriesController', () => {
     const dto = { name: 'Electronics', slug: 'electronics' };
     service.create.mockResolvedValue({ id: 'cat-1', ...dto });
 
-    const result = await controller.create(dto as any);
+    const result = await controller.create(dto);
 
     expect(service.create).toHaveBeenCalledWith(dto);
     expect(result).toEqual({ id: 'cat-1', ...dto });
@@ -51,7 +51,7 @@ describe('CategoriesController', () => {
     const dto = { name: 'New name' };
     service.update.mockResolvedValue({ id: 'cat-1', name: 'New name' });
 
-    const result = await controller.update('cat-1', dto as any);
+    const result = await controller.update('cat-1', dto);
 
     expect(service.update).toHaveBeenCalledWith('cat-1', dto);
     expect(result.name).toBe('New name');

@@ -8,7 +8,9 @@ import { jest } from '@jest/globals';
  */
 export function buildSupabaseMock() {
   const uploadMock = jest.fn().mockResolvedValue({ error: null } as any);
-  const listMock = jest.fn().mockResolvedValue({ data: [], error: null } as any);
+  const listMock = jest
+    .fn()
+    .mockResolvedValue({ data: [], error: null } as any);
   const removeMock = jest.fn().mockResolvedValue({ error: null } as any);
   const getPublicUrlMock = jest.fn((path: string) => ({
     data: {

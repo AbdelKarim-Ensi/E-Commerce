@@ -46,7 +46,7 @@ import { FirebaseAdminModule } from './firebase/firebase-admin.module';
       load: [appConfig, databaseConfig, redisConfig, authConfig, corsConfig],
     }),
     PrismaModule,
-     RateLimitModule,
+    RateLimitModule,
     RedisModule,
     AuthModule,
     CategoriesModule,
@@ -62,7 +62,6 @@ import { FirebaseAdminModule } from './firebase/firebase-admin.module';
     AddressesModule,
     AdminModule,
     FirebaseAdminModule,
-  
   ],
   controllers: [AppController],
   providers: [AppService],

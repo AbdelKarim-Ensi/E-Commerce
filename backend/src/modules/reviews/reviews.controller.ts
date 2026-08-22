@@ -59,7 +59,10 @@ export class ReviewsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'STOCK_MANAGER')
   @Get('admin/reviews')
-  findAllForAdmin(@Query('page') page?: string, @Query('limit') limit?: string) {
+  findAllForAdmin(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
     return this.reviewsService.findAllForAdmin(
       page ? parseInt(page, 10) : 1,
       limit ? parseInt(limit, 10) : 10,
@@ -71,7 +74,9 @@ export class ReviewsController {
   @Roles('ADMIN', 'STOCK_MANAGER')
   @Get('admin/products/top-rated')
   getTopRatedProducts(@Query('limit') limit?: string) {
-    return this.reviewsService.getTopRatedProducts(limit ? parseInt(limit, 10) : 5);
+    return this.reviewsService.getTopRatedProducts(
+      limit ? parseInt(limit, 10) : 5,
+    );
   }
 
   // Admin — produits les moins bien notés (dashboard)
@@ -79,6 +84,8 @@ export class ReviewsController {
   @Roles('ADMIN', 'STOCK_MANAGER')
   @Get('admin/products/low-rated')
   getLowRatedProducts(@Query('limit') limit?: string) {
-    return this.reviewsService.getLowRatedProducts(limit ? parseInt(limit, 10) : 5);
+    return this.reviewsService.getLowRatedProducts(
+      limit ? parseInt(limit, 10) : 5,
+    );
   }
 }

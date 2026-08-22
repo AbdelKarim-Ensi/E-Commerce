@@ -1,11 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  initializeApp,
-  cert,
-  getApps,
-  type App,
-} from 'firebase-admin/app';
+import { initializeApp, cert, getApps, type App } from 'firebase-admin/app';
 import { getAuth, type DecodedIdToken } from 'firebase-admin/auth';
 
 @Injectable()
@@ -18,7 +13,9 @@ export class FirebaseAdminService implements OnModuleInit {
   onModuleInit() {
     const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
-    const rawPrivateKey = this.configService.get<string>('FIREBASE_PRIVATE_KEY');
+    const rawPrivateKey = this.configService.get<string>(
+      'FIREBASE_PRIVATE_KEY',
+    );
 
     if (!projectId || !clientEmail || !rawPrivateKey) {
       throw new Error(

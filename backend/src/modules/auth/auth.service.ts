@@ -1,6 +1,11 @@
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../../redis/redis.service';
@@ -25,6 +30,12 @@ interface RefreshPayload {
   email: string;
   role: string;
   jti: string;
+}
+interface GoogleDecodedToken {
+  uid: string;
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
 }
 
 @Injectable()
@@ -63,28 +74,44 @@ export class AuthService {
   }
 
   private signAccessToken(userId: string, email: string, role: string) {
-    return this.jwtService.sign({ sub: userId, email, role }, { expiresIn: '15m' });
+    return this.jwtService.sign(
+      { sub: userId, email, role },
+      { expiresIn: '15m' },
+    );
   }
 
   private async issueRefreshToken(userId: string, email: string, role: string) {
     const jti = crypto.randomUUID();
     const refreshToken = this.jwtService.sign(
       { sub: userId, email, role, jti } as RefreshPayload,
-     
-      { secret: this.config.get<string>('auth.refreshSecret'), expiresIn: '7d' },
+
+      {
+        secret: this.config.get<string>('auth.refreshSecret'),
+        expiresIn: '7d',
+      },
     );
 
-    const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
 
-    await this.redis.client.set(this.redisKey(userId, jti), tokenHash, 'EX', REFRESH_TTL_SECONDS);
+    await this.redis.client.set(
+      this.redisKey(userId, jti),
+      tokenHash,
+      'EX',
+      REFRESH_TTL_SECONDS,
+    );
 
     return refreshToken;
   }
 
- 
   private async sendVerificationEmail(userId: string, email: string) {
     const rawToken = crypto.randomBytes(32).toString('hex');
-    const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(rawToken)
+      .digest('hex');
 
     await this.redis.client.set(
       this.emailVerificationKey(tokenHash),
@@ -93,14 +120,17 @@ export class AuthService {
       EMAIL_VERIFICATION_TTL_SECONDS,
     );
 
-    const frontendUrl = this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
+    const frontendUrl =
+      this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
     const verifyLink = `${frontendUrl}/verify-email?token=${rawToken}`;
 
     await this.notificationsQueue.enqueueEmailVerification(email, verifyLink);
   }
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) {
       throw new ConflictException('Email already in use');
     }
@@ -115,53 +145,68 @@ export class AuthService {
       },
     });
 
-    
     await this.sendVerificationEmail(user.id, user.email);
 
     const accessToken = this.signAccessToken(user.id, user.email, user.role);
-    const refreshToken = await this.issueRefreshToken(user.id, user.email, user.role);
+    const refreshToken = await this.issueRefreshToken(
+      user.id,
+      user.email,
+      user.role,
+    );
     return { user: this.sanitizeUser(user), accessToken, refreshToken };
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (!user.passwordHash) {
-      
       throw new UnauthorizedException(
         'This account uses Google sign-in. Please continue with Google.',
       );
     }
 
-    const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
+    const passwordMatches = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
     if (!passwordMatches) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     if (!user.emailVerified) {
-     
       throw new UnauthorizedException(
         'Please verify your email address before signing in. Check your inbox for the verification link.',
       );
     }
 
     const accessToken = this.signAccessToken(user.id, user.email, user.role);
-    const refreshToken = await this.issueRefreshToken(user.id, user.email, user.role);
+    const refreshToken = await this.issueRefreshToken(
+      user.id,
+      user.email,
+      user.role,
+    );
     return { user: this.sanitizeUser(user), accessToken, refreshToken };
   }
 
   async loginWithGoogle(idToken: string) {
-    let decoded;
+    let decoded: GoogleDecodedToken;
     try {
       decoded = await this.firebaseAdmin.verifyIdToken(idToken);
     } catch {
       throw new UnauthorizedException('Invalid Google token');
     }
 
-    const { uid: googleId, email, email_verified: emailVerified, name } = decoded;
+    const {
+      uid: googleId,
+      email,
+      email_verified: emailVerified,
+      name,
+    } = decoded;
 
     if (!email) {
       throw new UnauthorizedException('Google account has no email');
@@ -170,15 +215,17 @@ export class AuthService {
     let user = await this.prisma.user.findUnique({ where: { googleId } });
 
     if (!user) {
-     
-      const existingByEmail = await this.prisma.user.findUnique({ where: { email } });
+      const existingByEmail = await this.prisma.user.findUnique({
+        where: { email },
+      });
 
       if (existingByEmail) {
         user = await this.prisma.user.update({
           where: { id: existingByEmail.id },
           data: {
             googleId,
-            emailVerified: existingByEmail.emailVerified || Boolean(emailVerified),
+            emailVerified:
+              existingByEmail.emailVerified || Boolean(emailVerified),
           },
         });
       } else {
@@ -192,28 +239,33 @@ export class AuthService {
             firstName: firstName || null,
             lastName,
             emailVerified: Boolean(emailVerified),
-            
           },
         });
       }
     }
 
     const accessToken = this.signAccessToken(user.id, user.email, user.role);
-    const refreshToken = await this.issueRefreshToken(user.id, user.email, user.role);
+    const refreshToken = await this.issueRefreshToken(
+      user.id,
+      user.email,
+      user.role,
+    );
     return { user: this.sanitizeUser(user), accessToken, refreshToken };
   }
 
   async resendVerificationEmail(dto: ResendVerificationDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
 
-    
     if (user && !user.emailVerified && user.passwordHash) {
       await this.sendVerificationEmail(user.id, user.email);
     }
 
     return {
       success: true,
-      message: "Si un compte existe avec cet email et n'est pas encore vérifié, un nouvel email vient d'être envoyé.",
+      message:
+        "Si un compte existe avec cet email et n'est pas encore vérifié, un nouvel email vient d'être envoyé.",
     };
   }
 
@@ -221,7 +273,6 @@ export class AuthService {
     let payload: RefreshPayload;
     try {
       payload = this.jwtService.verify(refreshToken, {
-        
         secret: this.config.get<string>('auth.refreshSecret'),
       });
     } catch {
@@ -230,17 +281,30 @@ export class AuthService {
 
     const key = this.redisKey(payload.sub, payload.jti);
     const storedHash = await this.redis.client.get(key);
-    const incomingHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+    const incomingHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
 
     if (!storedHash || storedHash !== incomingHash) {
       await this.revokeAllForUser(payload.sub);
-      throw new UnauthorizedException('Refresh token reuse detected — all sessions revoked');
+      throw new UnauthorizedException(
+        'Refresh token reuse detected — all sessions revoked',
+      );
     }
 
     await this.redis.client.del(key);
 
-    const accessToken = this.signAccessToken(payload.sub, payload.email, payload.role);
-    const newRefreshToken = await this.issueRefreshToken(payload.sub, payload.email, payload.role);
+    const accessToken = this.signAccessToken(
+      payload.sub,
+      payload.email,
+      payload.role,
+    );
+    const newRefreshToken = await this.issueRefreshToken(
+      payload.sub,
+      payload.email,
+      payload.role,
+    );
 
     return { accessToken, refreshToken: newRefreshToken };
   }
@@ -248,23 +312,27 @@ export class AuthService {
   async logout(refreshToken: string) {
     try {
       const payload: RefreshPayload = this.jwtService.verify(refreshToken, {
-        
         secret: this.config.get<string>('auth.refreshSecret'),
       });
       await this.redis.client.del(this.redisKey(payload.sub, payload.jti));
     } catch {
-      
+      // Token déjà invalide/expiré — rien à révoquer, on traite comme
+      // une déconnexion déjà effective plutôt que de faire échouer la requête.
     }
     return { success: true };
   }
 
-  
   async forgotPassword(dto: ForgotPasswordDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
 
     if (user) {
       const rawToken = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+      const tokenHash = crypto
+        .createHash('sha256')
+        .update(rawToken)
+        .digest('hex');
 
       await this.redis.client.set(
         this.resetPasswordKey(tokenHash),
@@ -273,7 +341,8 @@ export class AuthService {
         RESET_PASSWORD_TTL_SECONDS,
       );
 
-      const frontendUrl = this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
+      const frontendUrl =
+        this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
       const resetLink = `${frontendUrl}/reset-password?token=${rawToken}`;
 
       await this.notificationsQueue.enqueuePasswordReset(
@@ -285,17 +354,23 @@ export class AuthService {
 
     return {
       success: true,
-      message: "Si un compte existe avec cet email, un lien de réinitialisation vient d'être envoyé.",
+      message:
+        "Si un compte existe avec cet email, un lien de réinitialisation vient d'être envoyé.",
     };
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    const tokenHash = crypto.createHash('sha256').update(dto.token).digest('hex');
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(dto.token)
+      .digest('hex');
     const key = this.resetPasswordKey(tokenHash);
 
     const userId = await this.redis.client.get(key);
     if (!userId) {
-      throw new BadRequestException('Lien de réinitialisation invalide ou expiré');
+      throw new BadRequestException(
+        'Lien de réinitialisation invalide ou expiré',
+      );
     }
 
     const newPasswordHash = await bcrypt.hash(dto.newPassword, SALT_ROUNDS);
@@ -304,22 +379,23 @@ export class AuthService {
       where: { id: userId },
       data: {
         passwordHash: newPasswordHash,
-        
+
         emailVerified: true,
       },
     });
 
-    
     await this.redis.client.del(key);
 
-    
     await this.revokeAllForUser(userId);
 
     return { success: true };
   }
 
   async verifyEmail(dto: VerifyEmailDto) {
-    const tokenHash = crypto.createHash('sha256').update(dto.token).digest('hex');
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(dto.token)
+      .digest('hex');
     const key = this.emailVerificationKey(tokenHash);
 
     const userId = await this.redis.client.get(key);
@@ -332,7 +408,6 @@ export class AuthService {
       data: { emailVerified: true },
     });
 
-    
     await this.redis.client.del(key);
 
     return { success: true };

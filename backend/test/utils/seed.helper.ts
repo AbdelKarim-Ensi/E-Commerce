@@ -31,7 +31,10 @@ export async function createTestCategory(prisma: PrismaService) {
   });
 }
 
-export async function createTestProduct(prisma: PrismaService, categoryId: string) {
+export async function createTestProduct(
+  prisma: PrismaService,
+  categoryId: string,
+) {
   const suffix = randomUUID().slice(0, 8);
   return prisma.product.create({
     data: {
@@ -77,7 +80,9 @@ export async function cleanupTestData(prisma: PrismaService, ids: TestDataIds) {
       ...(userIds.length ? [{ order: { userId: { in: userIds } } }] : []),
     ];
     if (orderItemConditions.length) {
-      await prismaAny.orderItem.deleteMany({ where: { OR: orderItemConditions } });
+      await prismaAny.orderItem.deleteMany({
+        where: { OR: orderItemConditions },
+      });
     }
   }
 
@@ -107,4 +112,3 @@ export async function cleanupTestData(prisma: PrismaService, ids: TestDataIds) {
     await prismaAny.user.deleteMany({ where: { id: { in: userIds } } });
   }
 }
-

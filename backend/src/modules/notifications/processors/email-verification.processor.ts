@@ -18,7 +18,8 @@ export class EmailVerificationProcessor extends WorkerHost {
 
   constructor(private readonly config: ConfigService) {
     super();
-    this.fromAddress = this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
+    this.fromAddress =
+      this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>('SMTP_HOST'),
       port: this.config.get<number>('SMTP_PORT'),

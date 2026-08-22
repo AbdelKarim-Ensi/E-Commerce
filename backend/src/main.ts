@@ -9,7 +9,7 @@ import { PrismaExceptionFilter } from './prisma/prisma-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
   const config = app.get(ConfigService);
-  
+
   app.setGlobalPrefix('api');
   app.use(
     helmet({
@@ -30,7 +30,6 @@ async function bootstrap() {
   );
 
   app.use(cookieParser());
-
 
   const corsOrigins = config
     .get<string>('CORS_ORIGIN', '')
@@ -60,4 +59,4 @@ async function bootstrap() {
   await app.listen(port);
   console.log(`🚀 Server running on http://localhost:${port}`);
 }
-bootstrap();
+void bootstrap();

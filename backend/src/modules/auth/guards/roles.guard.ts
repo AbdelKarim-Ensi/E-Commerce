@@ -3,6 +3,10 @@ import { Reflector } from '@nestjs/core';
 import { Role } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
+interface RequestWithUser {
+  user?: { role?: Role };
+}
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
@@ -14,10 +18,10 @@ export class RolesGuard implements CanActivate {
     ]);
 
     if (!requiredRoles || requiredRoles.length === 0) {
-      return true; // no @Roles() decorator = route open to any authenticated user
+      return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.includes(user?.role);
+    const { user } = context.switchToHttp().getRequest<RequestWithUser>();
+    return !!user?.role && requiredRoles.includes(user.role);
   }
 }

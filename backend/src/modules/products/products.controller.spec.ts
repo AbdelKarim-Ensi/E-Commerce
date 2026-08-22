@@ -16,12 +16,12 @@ describe('ProductsController', () => {
       update: jest.fn(),
       remove: jest.fn(),
       updateImages: jest.fn(),
-    } as any;
+    };
 
     storageService = {
       deleteProductImages: jest.fn(),
       uploadProductImage: jest.fn(),
-    } as any;
+    };
 
     const moduleRef = await Test.createTestingModule({
       controllers: [ProductsController],
@@ -58,8 +58,11 @@ describe('ProductsController', () => {
 
   it('delegates update with id and dto', async () => {
     const dto = { name: 'New name' };
-    productsService.update.mockResolvedValue({ id: 'prod-1', name: 'New name' });
-    await controller.update('prod-1', dto as any);
+    productsService.update.mockResolvedValue({
+      id: 'prod-1',
+      name: 'New name',
+    });
+    await controller.update('prod-1', dto);
     expect(productsService.update).toHaveBeenCalledWith('prod-1', dto);
   });
 
@@ -71,7 +74,10 @@ describe('ProductsController', () => {
 
   describe('uploadImage', () => {
     it('orchestrates existence check, cleanup, upload and persistence in order', async () => {
-      const file = { buffer: Buffer.from('fake'), mimetype: 'image/jpeg' } as Express.Multer.File;
+      const file = {
+        buffer: Buffer.from('fake'),
+        mimetype: 'image/jpeg',
+      } as Express.Multer.File;
       productsService.findOne.mockResolvedValue({ id: 'prod-1' });
       storageService.deleteProductImages.mockResolvedValue(undefined);
       storageService.uploadProductImage.mockResolvedValue({
@@ -88,7 +94,10 @@ describe('ProductsController', () => {
 
       expect(productsService.findOne).toHaveBeenCalledWith('prod-1');
       expect(storageService.deleteProductImages).toHaveBeenCalledWith('prod-1');
-      expect(storageService.uploadProductImage).toHaveBeenCalledWith(file, 'prod-1');
+      expect(storageService.uploadProductImage).toHaveBeenCalledWith(
+        file,
+        'prod-1',
+      );
       expect(productsService.updateImages).toHaveBeenCalledWith(
         'prod-1',
         'https://x/img.webp',
@@ -101,7 +110,9 @@ describe('ProductsController', () => {
       productsService.findOne.mockRejectedValue(new Error('not found'));
       const file = { buffer: Buffer.from('fake') } as Express.Multer.File;
 
-      await expect(controller.uploadImage('missing', file)).rejects.toThrow('not found');
+      await expect(controller.uploadImage('missing', file)).rejects.toThrow(
+        'not found',
+      );
       expect(storageService.deleteProductImages).not.toHaveBeenCalled();
       expect(storageService.uploadProductImage).not.toHaveBeenCalled();
     });

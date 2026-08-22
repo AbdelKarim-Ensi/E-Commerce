@@ -9,7 +9,8 @@ export class NotificationsQueue {
   constructor(
     @InjectQueue('invoices') private readonly invoicesQueue: Queue,
     @InjectQueue('password-reset') private readonly passwordResetQueue: Queue,
-    @InjectQueue('email-verification') private readonly emailVerificationQueue: Queue,
+    @InjectQueue('email-verification')
+    private readonly emailVerificationQueue: Queue,
     @InjectQueue('order-cancelled') private readonly orderCancelledQueue: Queue,
     @InjectQueue('newsletter') private readonly newsletterQueue: Queue,
   ) {}
@@ -25,10 +26,16 @@ export class NotificationsQueue {
         removeOnFail: false,
       },
     );
-    this.logger.log(`Job 'generate-invoice' enfilé pour la commande ${orderId}`);
+    this.logger.log(
+      `Job 'generate-invoice' enfilé pour la commande ${orderId}`,
+    );
   }
 
-  async enqueuePasswordReset(email: string, resetLink: string, expiresInMinutes: number) {
+  async enqueuePasswordReset(
+    email: string,
+    resetLink: string,
+    expiresInMinutes: number,
+  ) {
     await this.passwordResetQueue.add(
       'send-password-reset',
       { email, resetLink, expiresInMinutes },
@@ -72,7 +79,9 @@ export class NotificationsQueue {
         removeOnFail: false,
       },
     );
-    this.logger.log(`Job 'send-order-cancelled' enfilé pour la commande ${orderId}`);
+    this.logger.log(
+      `Job 'send-order-cancelled' enfilé pour la commande ${orderId}`,
+    );
   }
 
   /**

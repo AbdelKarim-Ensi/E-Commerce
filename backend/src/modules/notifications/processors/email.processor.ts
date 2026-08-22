@@ -18,7 +18,8 @@ export class EmailProcessor extends WorkerHost {
     private readonly config: ConfigService,
   ) {
     super();
-    this.fromAddress = this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
+    this.fromAddress =
+      this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>('SMTP_HOST'),
       port: this.config.get<number>('SMTP_PORT'),
@@ -30,7 +31,9 @@ export class EmailProcessor extends WorkerHost {
     });
   }
 
-  async process(job: Job<{ orderId: string; invoicePath: string }>): Promise<void> {
+  async process(
+    job: Job<{ orderId: string; invoicePath: string }>,
+  ): Promise<void> {
     const { orderId, invoicePath } = job.data;
 
     const order = await this.prisma.order.findUnique({
@@ -45,7 +48,8 @@ export class EmailProcessor extends WorkerHost {
 
     const { subject, html } = renderOrderConfirmationEmail({
       customerName:
-        [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') || order.user.email,
+        [order.user.firstName, order.user.lastName].filter(Boolean).join(' ') ||
+        order.user.email,
       orderId: order.id,
       items: order.items.map((item) => ({
         name: item.product.name,
@@ -67,6 +71,8 @@ export class EmailProcessor extends WorkerHost {
       attachments,
     });
 
-    this.logger.log(`Email envoyé à ${order.user.email} pour la commande ${orderId}`);
+    this.logger.log(
+      `Email envoyé à ${order.user.email} pour la commande ${orderId}`,
+    );
   }
 }

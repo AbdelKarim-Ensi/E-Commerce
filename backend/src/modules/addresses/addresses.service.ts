@@ -25,7 +25,9 @@ export class AddressesService {
   }
 
   async create(userId: string, dto: CreateAddressDto) {
-    const existingCount = await this.prisma.address.count({ where: { userId } });
+    const existingCount = await this.prisma.address.count({
+      where: { userId },
+    });
     // La toute première adresse d'un utilisateur devient automatiquement
     // celle par défaut, même si le front n'a pas coché la case.
     const shouldBeDefault = dto.isDefault === true || existingCount === 0;
@@ -52,7 +54,10 @@ export class AddressesService {
   async setDefault(userId: string, id: string) {
     await this.findOneForUser(userId, id);
     await this.unsetCurrentDefault(userId);
-    return this.prisma.address.update({ where: { id }, data: { isDefault: true } });
+    return this.prisma.address.update({
+      where: { id },
+      data: { isDefault: true },
+    });
   }
 
   async remove(userId: string, id: string) {

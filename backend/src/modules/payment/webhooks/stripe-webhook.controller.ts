@@ -16,7 +16,7 @@ export class StripeWebhookController {
 
   @Post()
   @HttpCode(200)
-  async handleWebhook(
+  handleWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('stripe-signature') signature: string,
   ) {
@@ -30,6 +30,6 @@ export class StripeWebhookController {
       throw new BadRequestException('Signature Stripe manquante');
     }
 
-    return (this.paymentService as any).handleWebhookEvent(req.rawBody, signature);
+    return this.paymentService.handleWebhookEvent(req.rawBody, signature);
   }
 }

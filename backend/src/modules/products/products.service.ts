@@ -38,7 +38,10 @@ export class ProductsService {
   }
 
   create(dto: CreateProductDto) {
-    const discountPercent = this.computeDiscountPercent(dto.price, dto.originalPrice);
+    const discountPercent = this.computeDiscountPercent(
+      dto.price,
+      dto.originalPrice,
+    );
     return this.prisma.product.create({
       data: { ...dto, discountPercent },
     });
@@ -51,7 +54,9 @@ export class ProductsService {
     const where: Prisma.ProductWhereInput = {
       ...(params.includeInactive ? {} : { isActive: true }),
       ...(params.categoryId ? { categoryId: params.categoryId } : {}),
-      ...(params.isFeatured !== undefined ? { isFeatured: params.isFeatured } : {}),
+      ...(params.isFeatured !== undefined
+        ? { isFeatured: params.isFeatured }
+        : {}),
       ...(params.search
         ? {
             OR: [
@@ -95,7 +100,8 @@ export class ProductsService {
 
     // On fusionne avec l'existant pour recalculer la remise même si seul
     // l'un des deux champs (price / originalPrice) est modifié dans ce patch.
-    const nextPrice = dto.price !== undefined ? dto.price : Number(existing.price);
+    const nextPrice =
+      dto.price !== undefined ? dto.price : Number(existing.price);
     const nextOriginalPrice =
       dto.originalPrice !== undefined
         ? dto.originalPrice
@@ -103,7 +109,10 @@ export class ProductsService {
           ? Number(existing.originalPrice)
           : null;
 
-    const discountPercent = this.computeDiscountPercent(nextPrice, nextOriginalPrice);
+    const discountPercent = this.computeDiscountPercent(
+      nextPrice,
+      nextOriginalPrice,
+    );
 
     return this.prisma.product.update({
       where: { id },

@@ -102,7 +102,9 @@ describe('POST /payments/webhooks (e2e)', () => {
 
     expect(res.body.received).toBe(true);
 
-    const updated = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    const updated = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
     expect(updated.status).toBe(OrderStatus.PAID);
   });
 
@@ -118,7 +120,9 @@ describe('POST /payments/webhooks (e2e)', () => {
       .send(payload)
       .expect(400);
 
-    const untouched = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    const untouched = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
     expect(untouched.status).toBe(OrderStatus.PENDING);
   });
 
@@ -154,7 +158,9 @@ describe('POST /payments/webhooks (e2e)', () => {
       .expect(200);
     expect(second.body.duplicate).toBe(true);
 
-    const updated = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    const updated = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
     expect(updated.status).toBe(OrderStatus.PAID);
   });
 
@@ -170,7 +176,9 @@ describe('POST /payments/webhooks (e2e)', () => {
       .send(payload)
       .expect(200);
 
-    const untouched = await prisma.order.findUniqueOrThrow({ where: { id: order.id } });
+    const untouched = await prisma.order.findUniqueOrThrow({
+      where: { id: order.id },
+    });
     expect(untouched.status).toBe(OrderStatus.SHIPPED);
   });
 });

@@ -29,10 +29,7 @@ export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
-  create(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateOrderDto,
-  ) {
+  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateOrderDto) {
     return this.ordersService.create(user.userId, dto);
   }
 
@@ -77,7 +74,6 @@ export class OrdersController {
     return this.ordersService.updateStatus(id, dto);
   }
 
-  
   @Post(':id/refund')
   refund(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.ordersService.refundOrder(id, user);

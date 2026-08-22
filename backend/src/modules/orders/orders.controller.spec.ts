@@ -29,7 +29,7 @@ describe('OrdersController', () => {
     const dto = { items: [{ productId: 'p1', quantity: 2 }] };
     service.create.mockResolvedValue({ id: 'order-1' });
 
-    const result = await controller.create(user as any, dto as any);
+    const result = await controller.create(user, dto as any);
 
     expect(service.create).toHaveBeenCalledWith('user-1', dto);
     expect(result).toEqual({ id: 'order-1' });
@@ -38,7 +38,7 @@ describe('OrdersController', () => {
   it('delegates findAll with the current user id and role', async () => {
     service.findAll.mockResolvedValue([]);
 
-    await controller.findAll(user as any);
+    await controller.findAll(user);
 
     expect(service.findAll).toHaveBeenCalledWith('user-1', Role.CLIENT);
   });
@@ -46,9 +46,13 @@ describe('OrdersController', () => {
   it('delegates findOne with id, user id and role', async () => {
     service.findOne.mockResolvedValue({ id: 'order-1' });
 
-    await controller.findOne('order-1', user as any);
+    await controller.findOne('order-1', user);
 
-    expect(service.findOne).toHaveBeenCalledWith('order-1', 'user-1', Role.CLIENT);
+    expect(service.findOne).toHaveBeenCalledWith(
+      'order-1',
+      'user-1',
+      Role.CLIENT,
+    );
   });
 
   it('delegates updateStatus with id and dto', async () => {

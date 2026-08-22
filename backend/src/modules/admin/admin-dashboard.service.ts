@@ -5,7 +5,12 @@ import { OrderStatus } from '@prisma/client';
 const RECENT_ORDERS_LIMIT = 5;
 const TOP_PRODUCTS_LIMIT = 5;
 const ALLOWED_DAYS = [7, 30, 90] as const;
+type AllowedDays = (typeof ALLOWED_DAYS)[number];
 const DEFAULT_DAYS = 30;
+
+function isAllowedDays(value: number): value is AllowedDays {
+  return (ALLOWED_DAYS as readonly number[]).includes(value);
+}
 
 const USER_SELECT = {
   id: true,
@@ -28,9 +33,7 @@ export class AdminDashboardService {
       await this.prisma.$transaction([
         this.prisma.product.count(),
         this.prisma.order.count(),
-        // Somme calculée côté DB sur TOUTES les commandes non annulées —
-        // contrairement à l'ancien calcul frontend limité aux 100
-        // premières commandes chargées, ce total est toujours exact.
+
         this.prisma.order.aggregate({
           where: { status: { not: OrderStatus.CANCELLED } },
           _sum: { totalAmount: true },
@@ -50,19 +53,8 @@ export class AdminDashboardService {
     };
   }
 
-  /**
-   * Données pour les graphiques Chart.js du dashboard :
-   * - revenueByDay : somme du totalAmount groupée par jour, sur les N
-   *   derniers jours (commandes non annulées uniquement)
-   * - topProducts : les produits les plus vendus en quantité sur la
-   *   même période, avec leur revenu associé
-   *
-   * @param days Fenêtre temporelle en jours. Restreint à 7/30/90 pour
-   *             éviter qu'un paramètre arbitraire ne déclenche un scan
-   *             coûteux sur toute la table.
-   */
   async getChartsData(days: number) {
-    const safeDays = ALLOWED_DAYS.includes(days as any) ? days : DEFAULT_DAYS;
+    const safeDays = isAllowedDays(days) ? days : DEFAULT_DAYS;
     const since = new Date();
     since.setDate(since.getDate() - safeDays);
     since.setHours(0, 0, 0, 0);
@@ -79,15 +71,6 @@ export class AdminDashboardService {
     };
   }
 
-  // Prisma groupBy ne sait pas tronquer une date au jour près, d'où le
-  // recours à $queryRaw avec DATE_TRUNC (PostgreSQL).
-  //
-  // Le SQL ne renvoie une ligne QUE pour les jours ayant au moins une
-  // commande. On comble ensuite les jours manquants avec revenue: 0,
-  // pour que le frontend reçoive toujours un tableau complet et continu
-  // (indispensable pour un line chart propre — sinon Chart.js relierait
-  // directement deux jours non consécutifs, donnant une fausse impression
-  // de continuité là où il y a en réalité un ou plusieurs jours à zéro).
   private async getRevenueByDay(since: Date) {
     const rows = await this.prisma.$queryRaw<RevenueByDayRow[]>`
       SELECT
@@ -106,8 +89,6 @@ export class AdminDashboardService {
       revenueByDate.set(key, row.revenue ? parseFloat(row.revenue) : 0);
     }
 
-    // Génère la plage complète de dates entre `since` et aujourd'hui inclus,
-    // en comblant avec 0 les jours absents de revenueByDate.
     const result: { date: string; revenue: number }[] = [];
     const cursor = new Date(since);
     const today = new Date();

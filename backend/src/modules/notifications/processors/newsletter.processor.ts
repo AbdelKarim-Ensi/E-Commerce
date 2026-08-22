@@ -22,7 +22,8 @@ export class NewsletterProcessor extends WorkerHost {
 
   constructor(private readonly config: ConfigService) {
     super();
-    this.fromAddress = this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
+    this.fromAddress =
+      this.config.get<string>('SMTP_FROM') ?? 'no-reply@ecommerce.local';
     this.apiUrl = this.config.get<string>('API_URL') ?? 'http://localhost:3000';
     this.transporter = nodemailer.createTransport({
       host: this.config.get<string>('SMTP_HOST'),

@@ -9,6 +9,20 @@ import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrderStatus } from '@prisma/client';
 import { NotificationsQueue } from '../notifications/queues/notifications.queue';
+
+interface ProcessedWebhookEventDelegate {
+  findUnique(args: {
+    where: { id: string };
+  }): Promise<{ id: string; eventType: string } | null>;
+  create(args: {
+    data: { id: string; eventType: string };
+  }): Promise<{ id: string; eventType: string }>;
+}
+
+interface PrismaWithWebhookEvents {
+  processedWebhookEvent?: ProcessedWebhookEventDelegate;
+}
+
 @Injectable()
 export class PaymentService {
   private readonly stripe: Stripe;
@@ -24,19 +38,22 @@ export class PaymentService {
       this.configService.get<string>('STRIPE_SECRET_KEY')!,
       { apiVersion: '2026-06-24.dahlia' },
     );
-    this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET')!;
+    this.webhookSecret = this.configService.get<string>(
+      'STRIPE_WEBHOOK_SECRET',
+    )!;
   }
-  
 
   async createPaymentIntent(orderId: string, userId: string) {
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
 
     if (!order) {
       throw new NotFoundException('Commande introuvable');
     }
 
     if (order.userId !== userId) {
-      throw new BadRequestException("Cette commande ne vous appartient pas");
+      throw new BadRequestException('Cette commande ne vous appartient pas');
     }
 
     if (order.status !== OrderStatus.PENDING) {
@@ -110,28 +127,35 @@ export class PaymentService {
     // (retries réseau, etc.). On ne traite chaque event.id qu'une seule fois.
     // Some projects may not have a Prisma model for processed webhook events.
     // Guard access to prisma.processedWebhookEvent to avoid runtime TS/JS errors.
-    const prismaAny = this.prisma as any;
-    if (prismaAny.processedWebhookEvent && typeof prismaAny.processedWebhookEvent.findUnique === 'function') {
-      const alreadyProcessed = await prismaAny.processedWebhookEvent.findUnique({
-        where: { id: event.id },
-      });
+    const prismaExt = this.prisma as unknown as PrismaWithWebhookEvents;
+
+    if (prismaExt.processedWebhookEvent) {
+      const alreadyProcessed = await prismaExt.processedWebhookEvent.findUnique(
+        {
+          where: { id: event.id },
+        },
+      );
 
       if (alreadyProcessed) {
-        this.logger.log(`Événement ${event.id} déjà traité, ignoré (idempotence)`);
+        this.logger.log(
+          `Événement ${event.id} déjà traité, ignoré (idempotence)`,
+        );
         return { received: true, duplicate: true };
       }
     } else {
-      this.logger.warn('No Prisma model processedWebhookEvent found — skipping persistent idempotence check');
+      this.logger.warn(
+        'No Prisma model processedWebhookEvent found — skipping persistent idempotence check',
+      );
     }
 
     // 3. Traitement selon le type d'événement
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await this.handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent);
+        await this.handlePaymentSucceeded(event.data.object);
         break;
 
       case 'payment_intent.payment_failed':
-        await this.handlePaymentFailed(event.data.object as Stripe.PaymentIntent);
+        this.handlePaymentFailed(event.data.object);
         break;
 
       default:
@@ -139,12 +163,14 @@ export class PaymentService {
     }
 
     // 4. On enregistre l'event comme traité SEULEMENT après succès du traitement
-    if (prismaAny.processedWebhookEvent && typeof prismaAny.processedWebhookEvent.create === 'function') {
-      await prismaAny.processedWebhookEvent.create({
+    if (prismaExt.processedWebhookEvent) {
+      await prismaExt.processedWebhookEvent.create({
         data: { id: event.id, eventType: event.type },
       });
     } else {
-      this.logger.warn('No Prisma model processedWebhookEvent found — skipping persistent event recording');
+      this.logger.warn(
+        'No Prisma model processedWebhookEvent found — skipping persistent event recording',
+      );
     }
 
     return { received: true };
@@ -160,7 +186,9 @@ export class PaymentService {
       return;
     }
 
-    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+    });
 
     if (!order) {
       this.logger.error(`Commande ${orderId} introuvable pour webhook`);
@@ -182,17 +210,13 @@ export class PaymentService {
     });
     this.logger.log(`Commande ${orderId} marquée PAID`);
     await this.notificationsQueue.enqueueOrderConfirmation(orderId);
-
-    
   }
 
-  private async handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
+  private handlePaymentFailed(paymentIntent: Stripe.PaymentIntent): void {
     const orderId = paymentIntent.metadata?.orderId;
 
     if (!orderId) return;
 
     this.logger.warn(`Paiement échoué pour la commande ${orderId}`);
-    // Optionnel : notifier l'utilisateur, ou laisser la commande en PENDING
-    // pour permettre une nouvelle tentative de paiement.
   }
 }

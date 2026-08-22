@@ -1,10 +1,14 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
-import { Role } from '@prisma/client';
 
 const SALT_ROUNDS = 12;
 
@@ -67,7 +71,10 @@ export class UsersService {
       );
     }
 
-    const passwordMatches = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    const passwordMatches = await bcrypt.compare(
+      dto.currentPassword,
+      user.passwordHash,
+    );
     if (!passwordMatches) {
       throw new BadRequestException('Current password is incorrect');
     }
@@ -115,12 +122,20 @@ export class UsersService {
    * erreur et se retrouve bloqué hors de l'admin sans personne d'autre
    * pour l'y remettre.
    */
-  async updateRole(targetUserId: string, currentUserId: string, dto: UpdateUserRoleDto) {
+  async updateRole(
+    targetUserId: string,
+    currentUserId: string,
+    dto: UpdateUserRoleDto,
+  ) {
     if (targetUserId === currentUserId) {
-      throw new ForbiddenException('Vous ne pouvez pas modifier votre propre rôle');
+      throw new ForbiddenException(
+        'Vous ne pouvez pas modifier votre propre rôle',
+      );
     }
 
-    const user = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
     if (!user) throw new NotFoundException('Utilisateur introuvable');
 
     return this.prisma.user.update({

@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
@@ -22,55 +33,80 @@ const REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    
+
     private readonly config: ConfigService,
   ) {}
 
-  private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+  private setAuthCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ) {
     const baseOptions = {
       httpOnly: true,
-      
+
       secure: this.config.get<boolean>('auth.cookieSecure'),
       sameSite: 'lax' as const,
       path: '/',
     };
-    res.cookie(ACCESS_COOKIE, accessToken, { ...baseOptions, maxAge: ACCESS_MAX_AGE });
-    res.cookie(REFRESH_COOKIE, refreshToken, { ...baseOptions, maxAge: REFRESH_MAX_AGE });
+    res.cookie(ACCESS_COOKIE, accessToken, {
+      ...baseOptions,
+      maxAge: ACCESS_MAX_AGE,
+    });
+    res.cookie(REFRESH_COOKIE, refreshToken, {
+      ...baseOptions,
+      maxAge: REFRESH_MAX_AGE,
+    });
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const { user, accessToken, refreshToken } = await this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { user, accessToken, refreshToken } =
+      await this.authService.login(dto);
     this.setAuthCookies(res, accessToken, refreshToken);
     return { user };
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('register')
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    const { user, accessToken, refreshToken } = await this.authService.register(dto);
+  async register(
+    @Body() dto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { user, accessToken, refreshToken } =
+      await this.authService.register(dto);
     this.setAuthCookies(res, accessToken, refreshToken);
     return { user };
   }
 
-  
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('google')
   @HttpCode(HttpStatus.OK)
-  async loginWithGoogle(@Body() dto: GoogleLoginDto, @Res({ passthrough: true }) res: Response) {
-    const { user, accessToken, refreshToken } = await this.authService.loginWithGoogle(dto.idToken);
+  async loginWithGoogle(
+    @Body() dto: GoogleLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { user, accessToken, refreshToken } =
+      await this.authService.loginWithGoogle(dto.idToken);
     this.setAuthCookies(res, accessToken, refreshToken);
     return { user };
   }
 
- 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const token = req.cookies?.[REFRESH_COOKIE];
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const token = (req.cookies as Record<string, string> | undefined)?.[
+      REFRESH_COOKIE
+    ];
     if (!token) {
       throw new UnauthorizedException('No refresh token provided');
     }
@@ -78,11 +114,12 @@ export class AuthController {
     this.setAuthCookies(res, accessToken, refreshToken);
     return { success: true };
   }
-
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const token = req.cookies?.[REFRESH_COOKIE];
+    const token = (req.cookies as Record<string, string> | undefined)?.[
+      REFRESH_COOKIE
+    ];
     if (token) {
       await this.authService.logout(token);
     }
@@ -90,14 +127,12 @@ export class AuthController {
     res.clearCookie(REFRESH_COOKIE, { path: '/' });
     return { success: true };
   }
-
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: unknown) {
     return user;
   }
 
-  
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
@@ -119,7 +154,6 @@ export class AuthController {
     return this.authService.verifyEmail(dto);
   }
 
- 
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)

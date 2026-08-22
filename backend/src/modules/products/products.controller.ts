@@ -1,7 +1,17 @@
 import {
-  Controller, Get, Post, Body, Param, Patch, Delete, Query,
-  UseGuards, UseInterceptors, UploadedFile, ParseFilePipeBuilder,
-  HttpStatus, Optional,
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  Query,
+  UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipeBuilder,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
@@ -87,10 +97,8 @@ export class ProductsController {
     await this.productsService.findOne(id);
 
     await this.storageService.deleteProductImages(id);
-    const { imageUrl, thumbnailUrl } = await this.storageService.uploadProductImage(
-      file,
-      id,
-    );
+    const { imageUrl, thumbnailUrl } =
+      await this.storageService.uploadProductImage(file, id);
 
     return this.productsService.updateImages(id, imageUrl, thumbnailUrl);
   }

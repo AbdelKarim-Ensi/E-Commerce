@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
 import { randomUUID } from 'crypto';
 
@@ -16,7 +16,7 @@ export interface UploadedImageUrls {
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
-  private readonly supabase: SupabaseClient;
+  private readonly supabase: ReturnType<typeof createClient>;
   private readonly supabaseUrl: string;
 
   constructor(private readonly config: ConfigService) {
@@ -76,7 +76,7 @@ export class StorageService {
 
     if (!detected) {
       throw new BadRequestException(
-        "Impossible de déterminer le type réel du fichier — fichier corrompu ou non supporté",
+        'Impossible de déterminer le type réel du fichier — fichier corrompu ou non supporté',
       );
     }
 
@@ -117,9 +117,7 @@ export class StorageService {
   }
 
   private getPublicUrl(path: string): string {
-    const { data } = this.supabase.storage
-      .from(BUCKET_NAME)
-      .getPublicUrl(path);
+    const { data } = this.supabase.storage.from(BUCKET_NAME).getPublicUrl(path);
     return data.publicUrl;
   }
 

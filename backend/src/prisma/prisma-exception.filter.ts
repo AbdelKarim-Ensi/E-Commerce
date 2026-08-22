@@ -1,4 +1,11 @@
-import { ArgumentsHost, Catch, ConflictException, ExceptionFilter, HttpException, NotFoundException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ConflictException,
+  ExceptionFilter,
+  HttpException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
 
@@ -13,17 +20,26 @@ export class PrismaExceptionFilter implements ExceptionFilter {
 
     const mapped = this.mapPrismaError(exception);
     const status = mapped instanceof HttpException ? mapped.getStatus() : 500;
-    const body = mapped instanceof HttpException ? mapped.getResponse() : { message: 'Internal server error' };
+    const body =
+      mapped instanceof HttpException
+        ? mapped.getResponse()
+        : { message: 'Internal server error' };
 
     response.status(status).json(body);
   }
 
-  private mapPrismaError(exception: Prisma.PrismaClientKnownRequestError): HttpException | null {
+  private mapPrismaError(
+    exception: Prisma.PrismaClientKnownRequestError,
+  ): HttpException | null {
     switch (exception.code) {
       case 'P2002': {
         // Unique constraint violation — e.g. duplicate slug, email, etc.
-        const target = (exception.meta?.target as string[] | undefined)?.join(', ') ?? 'field';
-        return new ConflictException(`A record with this ${target} already exists`);
+        const target =
+          (exception.meta?.target as string[] | undefined)?.join(', ') ??
+          'field';
+        return new ConflictException(
+          `A record with this ${target} already exists`,
+        );
       }
       case 'P2025':
         // Record to update/delete was not found
