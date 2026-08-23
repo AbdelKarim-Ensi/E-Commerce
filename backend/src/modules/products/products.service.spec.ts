@@ -35,7 +35,9 @@ describe('ProductsService', () => {
 
       const result = await service.create(dto);
 
-      expect(prisma.product.create).toHaveBeenCalledWith({ data: dto });
+      expect(prisma.product.create).toHaveBeenCalledWith({
+        data: { ...dto, discountPercent: null },
+      });
       expect(result.id).toBe('prod-1');
     });
   });
@@ -43,12 +45,16 @@ describe('ProductsService', () => {
   describe('findAll', () => {
     it('returns only active products with their category', async () => {
       prisma.product.findMany.mockResolvedValue([]);
+      prisma.product.count.mockResolvedValue(0);
 
       await service.findAll();
 
       expect(prisma.product.findMany).toHaveBeenCalledWith({
         where: { isActive: true },
         include: { category: true },
+        skip: 0,
+        take: 20,
+        orderBy: { createdAt: 'desc' },
       });
     });
   });
@@ -94,7 +100,7 @@ describe('ProductsService', () => {
 
       expect(prisma.product.update).toHaveBeenCalledWith({
         where: { id: 'prod-1' },
-        data: { name: 'New name' },
+        data: { name: 'New name', discountPercent: null },
       });
       expect(result.name).toBe('New name');
     });

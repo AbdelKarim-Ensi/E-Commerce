@@ -46,7 +46,7 @@ describe('ProductsController', () => {
 
   it('delegates findAll to the service', async () => {
     productsService.findAll.mockResolvedValue([]);
-    await controller.findAll();
+    await controller.findAll({} as any);
     expect(productsService.findAll).toHaveBeenCalled();
   });
 

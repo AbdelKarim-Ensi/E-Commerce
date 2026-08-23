@@ -8,6 +8,8 @@ import {
 import { OrderStatus, Prisma, Role } from '@prisma/client';
 import { OrdersService } from './orders.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PaymentService } from '../payment/payment.service';
+import { NotificationsQueue } from '../notifications/queues/notifications.queue';
 import {
   createMockPrismaService,
   MockPrismaService,
@@ -20,8 +22,25 @@ describe('OrdersService', () => {
   beforeEach(async () => {
     prisma = createMockPrismaService();
 
+    const mockPaymentService = {
+      refundPayment: jest.fn(),
+      createPaymentIntent: jest.fn(),
+    };
+
+    const mockNotificationsQueue = {
+      enqueueOrderConfirmation: jest.fn(),
+      enqueueEmailVerification: jest.fn(),
+      enqueuePasswordReset: jest.fn(),
+      enqueueOrderCancelled: jest.fn(),
+    };
+
     const moduleRef = await Test.createTestingModule({
-      providers: [OrdersService, { provide: PrismaService, useValue: prisma }],
+      providers: [
+        OrdersService,
+        { provide: PrismaService, useValue: prisma },
+        { provide: PaymentService, useValue: mockPaymentService },
+        { provide: NotificationsQueue, useValue: mockNotificationsQueue },
+      ],
     }).compile();
 
     service = moduleRef.get(OrdersService);
@@ -113,8 +132,15 @@ describe('OrdersService', () => {
   });
 
   describe('findAll', () => {
+    beforeEach(() => {
+      (prisma.$transaction as jest.Mock).mockImplementation((arg: any) =>
+        Array.isArray(arg) ? Promise.all(arg) : arg(prisma),
+      );
+    });
+
     it('filters by userId for a CLIENT', async () => {
       prisma.order.findMany.mockResolvedValue([]);
+      prisma.order.count.mockResolvedValue(0);
 
       await service.findAll('user-1', Role.CLIENT);
 
@@ -125,6 +151,7 @@ describe('OrdersService', () => {
 
     it('returns all orders for an ADMIN (no filter)', async () => {
       prisma.order.findMany.mockResolvedValue([]);
+      prisma.order.count.mockResolvedValue(0);
 
       await service.findAll('admin-1', Role.ADMIN);
 
@@ -207,6 +234,8 @@ describe('OrdersService', () => {
       prisma.order.update.mockResolvedValue({
         id: 'order-1',
         status: OrderStatus.CANCELLED,
+        totalAmount: new Prisma.Decimal(60),
+        user: { id: 'user-1', email: 'client@test.local' },
       } as any);
 
       await service.updateStatus('order-1', { status: OrderStatus.CANCELLED });
@@ -234,7 +263,7 @@ describe('OrdersService', () => {
       expect(prisma.order.update).toHaveBeenCalledWith({
         where: { id: 'order-1' },
         data: { status: OrderStatus.PAID },
-        include: { items: true },
+        include: { items: true, user: { select: expect.any(Object) } },
       });
       expect(result.status).toBe(OrderStatus.PAID);
     });

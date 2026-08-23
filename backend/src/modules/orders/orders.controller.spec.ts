@@ -40,7 +40,14 @@ describe('OrdersController', () => {
 
     await controller.findAll(user);
 
-    expect(service.findAll).toHaveBeenCalledWith('user-1', Role.CLIENT);
+    expect(service.findAll).toHaveBeenCalledWith(
+      'user-1',
+      Role.CLIENT,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+    );
   });
 
   it('delegates findOne with id, user id and role', async () => {
