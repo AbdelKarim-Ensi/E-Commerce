@@ -3,7 +3,12 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
+  "setupFiles": ["<rootDir>/utils/load-test-env.ts"],
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^firebase-admin/app$": "<rootDir>/mocks/firebase-admin-app.mock.ts",
+    "^firebase-admin/auth$": "<rootDir>/mocks/firebase-admin-auth.mock.ts"
   }
 }

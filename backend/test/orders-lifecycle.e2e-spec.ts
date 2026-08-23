@@ -10,6 +10,8 @@ import {
 } from './utils/seed.helper';
 import { PrismaService } from '../src/prisma/prisma.service';
 
+const TEST_SHIPPING_ADDRESS = '1 Rue de Test, 1000 Tunis, TN';
+
 describe('Orders lifecycle (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -100,7 +102,10 @@ describe('Orders lifecycle (e2e)', () => {
     const res = await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: product.id, quantity: 3 }] })
+      .send({
+        items: [{ productId: product.id, quantity: 3 }],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
+      })
       .expect(201);
 
     orderIdsToClean.push(res.body.id);
@@ -119,7 +124,10 @@ describe('Orders lifecycle (e2e)', () => {
     await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: product.id, quantity: 5 }] })
+      .send({
+        items: [{ productId: product.id, quantity: 5 }],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
+      })
       .expect(409);
 
     // La transaction Prisma doit avoir tout annulé (rollback) : le stock
@@ -138,6 +146,7 @@ describe('Orders lifecycle (e2e)', () => {
         items: [
           { productId: '00000000-0000-0000-0000-000000000000', quantity: 1 },
         ],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
       })
       .expect(404);
   });
@@ -148,7 +157,10 @@ describe('Orders lifecycle (e2e)', () => {
     await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: product.id, quantity: 1 }] })
+      .send({
+        items: [{ productId: product.id, quantity: 1 }],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
+      })
       .expect(400);
   });
 
@@ -158,7 +170,10 @@ describe('Orders lifecycle (e2e)', () => {
     const createRes = await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: product.id, quantity: 1 }] })
+      .send({
+        items: [{ productId: product.id, quantity: 1 }],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
+      })
       .expect(201);
     orderIdsToClean.push(createRes.body.id);
 
@@ -184,7 +199,10 @@ describe('Orders lifecycle (e2e)', () => {
     const createRes = await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: product.id, quantity: 1 }] })
+      .send({
+        items: [{ productId: product.id, quantity: 1 }],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
+      })
       .expect(201);
     orderIdsToClean.push(createRes.body.id);
 
@@ -201,7 +219,10 @@ describe('Orders lifecycle (e2e)', () => {
     const createRes = await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: product.id, quantity: 1 }] })
+      .send({
+        items: [{ productId: product.id, quantity: 1 }],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
+      })
       .expect(201);
     orderIdsToClean.push(createRes.body.id);
 
@@ -220,7 +241,10 @@ describe('Orders lifecycle (e2e)', () => {
     const createRes = await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: product.id, quantity: 4 }] })
+      .send({
+        items: [{ productId: product.id, quantity: 4 }],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
+      })
       .expect(201);
     orderIdsToClean.push(createRes.body.id);
 
@@ -247,7 +271,10 @@ describe('Orders lifecycle (e2e)', () => {
     const createRes = await request(app.getHttpServer())
       .post('/orders')
       .set('Cookie', clientCookie)
-      .send({ items: [{ productId: product.id, quantity: 1 }] })
+      .send({
+        items: [{ productId: product.id, quantity: 1 }],
+        shippingAddress: TEST_SHIPPING_ADDRESS,
+      })
       .expect(201);
     orderIdsToClean.push(createRes.body.id);
 

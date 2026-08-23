@@ -18,7 +18,7 @@ export async function createTestUser(prisma: PrismaService, role: Role) {
   const email = `e2e-${role.toLowerCase()}-${randomUUID()}@test.local`;
 
   const user = await prisma.user.create({
-    data: { email, passwordHash, role },
+    data: { email, passwordHash, role, emailVerified: true },
   });
 
   return { user, email, password: TEST_PASSWORD };

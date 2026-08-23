@@ -26,6 +26,15 @@ describe('Auth flow (e2e)', () => {
     return found.split(';')[0];
   }
 
+  // Contourne la vérification d'email pour les tests : simule la confirmation
+  // que ferait normalement l'utilisateur en cliquant sur le lien reçu par mail.
+  async function verifyEmail(email: string) {
+    await prisma.user.update({
+      where: { email },
+      data: { emailVerified: true },
+    });
+  }
+
   beforeAll(async () => {
     app = await createTestApp();
     prisma = app.get(PrismaService);
@@ -87,6 +96,8 @@ describe('Auth flow (e2e)', () => {
       .send({ email, password: TEST_PASSWORD })
       .expect(201);
 
+    await verifyEmail(email);
+
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email, password: TEST_PASSWORD })
@@ -113,6 +124,8 @@ describe('Auth flow (e2e)', () => {
       .post('/auth/register')
       .send({ email, password: TEST_PASSWORD })
       .expect(201);
+
+    await verifyEmail(email);
 
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')
@@ -151,6 +164,8 @@ describe('Auth flow (e2e)', () => {
       .post('/auth/register')
       .send({ email, password: TEST_PASSWORD })
       .expect(201);
+
+    await verifyEmail(email);
 
     const loginRes = await request(app.getHttpServer())
       .post('/auth/login')

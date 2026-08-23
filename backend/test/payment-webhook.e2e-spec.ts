@@ -49,12 +49,17 @@ describe('POST /payments/webhooks (e2e)', () => {
   });
 
   async function createPendingOrder(status: OrderStatus = OrderStatus.PENDING) {
-    const order = await prisma.order.create({
-      data: { userId, totalAmount: 49.99, status },
-    });
-    orderIdsToClean.push(order.id);
-    return order;
-  }
+  const order = await prisma.order.create({
+    data: {
+      userId,
+      totalAmount: 49.99,
+      status,
+      shippingAddress: '1 Rue de Test, 1000 Tunis, TN',
+    },
+  });
+  orderIdsToClean.push(order.id);
+  return order;
+}
 
   function buildPaymentSucceededEvent(orderId: string) {
     const eventId = `evt_test_${randomUUID()}`;
