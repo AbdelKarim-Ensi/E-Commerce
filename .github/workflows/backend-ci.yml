@@ -49,8 +49,30 @@ jobs:
       DATABASE_URL: postgresql://ecommerce_user:postgres_test@localhost:5432/ecommerce_test_db
       REDIS_HOST: localhost
       REDIS_PORT: 6379
-      JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
+      REDIS_PASSWORD: ''
+      JWT_ACCESS_SECRET: ${{ secrets.JWT_SECRET_TEST }}
       JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET_TEST }}
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      COOKIE_SECURE: 'false'
+      CORS_ORIGIN: http://localhost:4200
+      FRONTEND_URL: http://localhost:4200
+      API_URL: http://localhost:3001
+      STRIPE_SECRET_KEY: sk_test_fake_key_for_ci
+      STRIPE_WEBHOOK_SECRET: whsec_fake_secret_for_ci
+      SUPABASE_URL: https://test.supabase.co
+      SUPABASE_SECRET_KEY: test_supabase_secret_key
+      SMTP_HOST: smtp.test.local
+      SMTP_PORT: 587
+      SMTP_USER: test@test.local
+      SMTP_PASS: test_password
+      SMTP_FROM: no-reply@ecommerce.com
+      FIREBASE_PROJECT_ID: test-project-id
+      FIREBASE_CLIENT_EMAIL: firebase-adminsdk-test@test-project-id.iam.gserviceaccount.com
+      FIREBASE_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----\n"
+      ADMIN_EMAIL: admin-ci@test.local
+      ADMIN_PASSWORD: TestAdminPassword123!
+      ADMIN_EMAILS: admin-ci@test.local
 
     steps:
       - name: Checkout code
