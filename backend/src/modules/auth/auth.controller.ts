@@ -42,11 +42,12 @@ export class AuthController {
     accessToken: string,
     refreshToken: string,
   ) {
+   
     const baseOptions = {
       httpOnly: true,
 
       secure: this.config.get<boolean>('auth.cookieSecure'),
-      sameSite: 'lax' as const,
+      sameSite: 'none' as const,
       path: '/',
     };
     res.cookie(ACCESS_COOKIE, accessToken, {
