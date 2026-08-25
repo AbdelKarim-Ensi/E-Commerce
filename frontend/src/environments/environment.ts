@@ -1,6 +1,6 @@
 export const environment = {
-  production: true,
-  apiUrl: 'api',
+   production: true,
+  apiUrl: 'https://techgear-backend-ekrc.onrender.com/api',
   stripePublishableKey: 'pk_test_51U3YMi3Li5UjJEvoNL0eLXCoyuHnzqKMdvC9qzRbzZIkwg0RiGJWMHap0tEo13qi8WMywpjr9NbhWxnchTwIwTob0034ZyNQcp',
   firebase: {
     apiKey: "AIzaSyAd4Ae3B2b5eA6tkEz0bTO2mfi4Pko8a1M",
