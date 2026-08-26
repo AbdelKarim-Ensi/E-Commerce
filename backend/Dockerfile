@@ -2,6 +2,8 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+RUN apk update && apk upgrade --no-cache
+
 RUN npm install -g npm@latest
 COPY package*.json ./
 COPY prisma ./prisma/
@@ -21,6 +23,8 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+RUN apk update && apk upgrade --no-cache
 
 RUN npm install -g npm@latest
 COPY package*.json ./
