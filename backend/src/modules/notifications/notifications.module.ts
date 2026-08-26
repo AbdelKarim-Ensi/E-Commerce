@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { UploadsModule } from '../uploads/uploads.module';
 import { NotificationsQueue } from './queues/notifications.queue';
 import { EmailProcessor } from './processors/email.processor';
 import { InvoiceProcessor } from './processors/invoice.processor';
@@ -13,6 +14,7 @@ import { NewsletterProcessor } from './processors/newsletter.processor';
 @Module({
   imports: [
     PrismaModule,
+    UploadsModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
