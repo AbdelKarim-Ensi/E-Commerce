@@ -2,11 +2,8 @@ import { Processor, WorkerHost, InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { StorageService } from '../../uploads/storage.service';
 import PDFDocument from 'pdfkit';
-import * as fs from 'fs';
-import * as path from 'path';
-
-const INVOICES_DIR = path.join(process.cwd(), 'storage', 'invoices');
 
 @Processor('invoices')
 export class InvoiceProcessor extends WorkerHost {
@@ -14,6 +11,7 @@ export class InvoiceProcessor extends WorkerHost {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
     @InjectQueue('emails') private readonly emailsQueue: Queue,
   ) {
     super();
@@ -32,17 +30,20 @@ export class InvoiceProcessor extends WorkerHost {
       return;
     }
 
-    if (!fs.existsSync(INVOICES_DIR)) {
-      fs.mkdirSync(INVOICES_DIR, { recursive: true });
-    }
+    // Génération du PDF entièrement en mémoire (Buffer) — plus d'écriture
+    // sur le filesystem local, qui ne persiste pas sur Render free tier.
+    const pdfBuffer = await this.generatePdfBuffer(order);
 
-    const invoicePath = path.join(INVOICES_DIR, `${orderId}.pdf`);
-    await this.generatePdf(order, invoicePath);
-    this.logger.log(`Facture générée: ${invoicePath}`);
+    // Upload vers Supabase Storage (bucket privé) pour la persistance et
+    // permettre un futur téléchargement depuis l'admin ou le compte client.
+    await this.storage.uploadInvoice(orderId, pdfBuffer);
+    this.logger.log(`Facture uploadée sur Supabase pour la commande ${orderId}`);
 
+    // On passe directement le buffer en base64 au job email : pas besoin de
+    // re-télécharger depuis Supabase, on l'a déjà ici.
     await this.emailsQueue.add(
       'send-order-confirmation',
-      { orderId, invoicePath },
+      { orderId, invoiceBase64: pdfBuffer.toString('base64') },
       {
         attempts: 3,
         backoff: { type: 'exponential', delay: 5000 },
@@ -52,28 +53,28 @@ export class InvoiceProcessor extends WorkerHost {
     );
   }
 
-  private generatePdf(
-    order: {
-      id: string;
-      totalAmount: { toNumber: () => number };
-      createdAt: Date;
-      user: {
-        firstName: string | null;
-        lastName: string | null;
-        email: string;
-      };
-      items: {
-        quantity: number;
-        unitPrice: { toNumber: () => number };
-        product: { name: string };
-      }[];
-    },
-    outputPath: string,
-  ): Promise<void> {
+  private generatePdfBuffer(order: {
+    id: string;
+    totalAmount: { toNumber: () => number };
+    createdAt: Date;
+    user: {
+      firstName: string | null;
+      lastName: string | null;
+      email: string;
+    };
+    items: {
+      quantity: number;
+      unitPrice: { toNumber: () => number };
+      product: { name: string };
+    }[];
+  }): Promise<Buffer> {
     return new Promise((resolve, reject) => {
       const doc = new PDFDocument({ margin: 50 });
-      const stream = fs.createWriteStream(outputPath);
-      doc.pipe(stream);
+      const chunks: Buffer[] = [];
+
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
 
       doc.fontSize(20).text('Facture', { align: 'center' });
       doc.moveDown();
@@ -104,8 +105,6 @@ export class InvoiceProcessor extends WorkerHost {
         });
 
       doc.end();
-      stream.on('finish', () => resolve());
-      stream.on('error', reject);
     });
   }
 }

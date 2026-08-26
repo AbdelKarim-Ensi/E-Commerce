@@ -2,7 +2,6 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as fs from 'fs';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { renderOrderConfirmationEmail } from '../templates/order-confirmation.template';
 
@@ -33,9 +32,9 @@ export class EmailProcessor extends WorkerHost {
   }
 
   async process(
-    job: Job<{ orderId: string; invoicePath: string }>,
+    job: Job<{ orderId: string; invoiceBase64?: string }>,
   ): Promise<void> {
-    const { orderId, invoicePath } = job.data;
+    const { orderId, invoiceBase64 } = job.data;
 
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -60,12 +59,13 @@ export class EmailProcessor extends WorkerHost {
       totalAmount: order.totalAmount.toNumber(),
     });
 
-    // Brevo API attend les pièces jointes encodées en base64 (pas un chemin fichier)
-    const attachment = fs.existsSync(invoicePath)
+    // Le buffer base64 arrive directement depuis InvoiceProcessor — plus de
+    // lecture disque, plus de dépendance à un fichier local éphémère.
+    const attachment = invoiceBase64
       ? [
           {
             name: `facture-${orderId}.pdf`,
-            content: fs.readFileSync(invoicePath).toString('base64'),
+            content: invoiceBase64,
           },
         ]
       : undefined;
@@ -107,14 +107,14 @@ export class EmailProcessor extends WorkerHost {
   }
 
   @OnWorkerEvent('failed')
-  onFailed(job: Job<{ orderId: string; invoicePath: string }>, error: Error) {
+  onFailed(job: Job<{ orderId: string; invoiceBase64?: string }>, error: Error) {
     this.logger.error(
       `Job 'send-email' échoué pour la commande ${job.data?.orderId}: ${error.message}`,
     );
   }
 
   @OnWorkerEvent('completed')
-  onCompleted(job: Job<{ orderId: string; invoicePath: string }>) {
+  onCompleted(job: Job<{ orderId: string; invoiceBase64?: string }>) {
     this.logger.log(
       `Job 'send-email' complété pour la commande ${job.data?.orderId}`,
     );

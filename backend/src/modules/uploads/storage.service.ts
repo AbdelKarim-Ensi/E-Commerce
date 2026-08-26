@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 const BUCKET_NAME = 'product-images';
+const INVOICES_BUCKET_NAME = 'invoices';
 
 export interface UploadedImageUrls {
   imageUrl: string;
@@ -27,10 +28,7 @@ export class StorageService {
     );
   }
 
-  /**
-   * Valide, optimise et uploade une image produit.
-   * Retourne les URLs publiques de l'image optimisée et de sa miniature.
-   */
+ 
   async uploadProductImage(
     file: Express.Multer.File,
     productId: string,
@@ -65,11 +63,7 @@ export class StorageService {
     }
   }
 
-  /**
-   * Vérifie le VRAI type du fichier en lisant ses magic bytes (les premiers
-   * octets qui identifient le format réel), plutôt que de se fier à l'extension
-   * ou au Content-Type déclaré par le client — tous deux falsifiables.
-   */
+ 
   private async validateMagicBytes(buffer: Buffer): Promise<void> {
     const { fileTypeFromBuffer } = await import('file-type');
     const detected = await fileTypeFromBuffer(buffer);
@@ -87,11 +81,7 @@ export class StorageService {
     }
   }
 
-  /**
-   * Redimensionne et compresse l'image en WEBP — format moderne, bonne
-   * compression, largement supporté. withoutEnlargement évite d'agrandir
-   * une image déjà plus petite que la cible.
-   */
+ 
   private async optimizeImage(
     buffer: Buffer,
     maxWidth: number,
@@ -121,10 +111,7 @@ export class StorageService {
     return data.publicUrl;
   }
 
-  /**
-   * Supprime les fichiers existants d'un produit (utile lors du remplacement
-   * d'image, pour ne pas accumuler des fichiers orphelins dans le bucket).
-   */
+
   async deleteProductImages(productId: string): Promise<void> {
     const { data: files, error: listError } = await this.supabase.storage
       .from(BUCKET_NAME)
@@ -142,5 +129,48 @@ export class StorageService {
         `Échec suppression anciennes images: ${deleteError.message}`,
       );
     }
+  }
+
+
+  async uploadInvoice(orderId: string, pdfBuffer: Buffer): Promise<string> {
+    const path = `${orderId}.pdf`;
+
+    const { error } = await this.supabase.storage
+      .from(INVOICES_BUCKET_NAME)
+      .upload(path, pdfBuffer, {
+        contentType: 'application/pdf',
+        upsert: true,
+      });
+
+    if (error) {
+      this.logger.error(
+        `Échec upload facture vers Supabase Storage: ${error.message}`,
+      );
+      throw new BadRequestException("Échec de l'upload de la facture");
+    }
+
+    return path;
+  }
+
+
+  async getInvoiceSignedUrl(
+    orderId: string,
+    expiresInSeconds = 3600,
+  ): Promise<string> {
+    const path = `${orderId}.pdf`;
+    const { data, error } = await this.supabase.storage
+      .from(INVOICES_BUCKET_NAME)
+      .createSignedUrl(path, expiresInSeconds);
+
+    if (error || !data) {
+      this.logger.error(
+        `Échec génération URL signée pour la facture ${orderId}: ${error?.message}`,
+      );
+      throw new BadRequestException(
+        'Impossible de générer le lien de téléchargement de la facture',
+      );
+    }
+
+    return data.signedUrl;
   }
 }
