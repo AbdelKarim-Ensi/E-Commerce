@@ -25,10 +25,10 @@ export const envValidationSchema = Joi.object({
 
   CORS_ORIGIN: Joi.string().default('http://localhost:4200'),
 
-  // --- Frontend (used to build links embedded in transactional emails, e.g. password reset) ---
+ 
   FRONTEND_URL: Joi.string().uri().default('http://localhost:4200'),
 
-  // --- API (used to build backend-facing links embedded in emails, e.g. newsletter unsubscribe) ---
+  
   API_URL: Joi.string().uri().default('http://localhost:3000'),
 
   SMTP_HOST: Joi.string().required(),
@@ -38,6 +38,9 @@ export const envValidationSchema = Joi.object({
   SMTP_FROM: Joi.string().email().default('no-reply@ecommerce.local'),
   SUPABASE_URL: Joi.string().uri().required(),
   SUPABASE_SECRET_KEY: Joi.string().required(),
+
+  
+  SENTRY_DSN: Joi.string().uri().allow('').optional(),
 })
   .custom(
     (

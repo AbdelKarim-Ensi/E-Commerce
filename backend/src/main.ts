@@ -1,3 +1,12 @@
+// ⚠️ DOIT être le tout premier import du fichier — avant tout le reste
+import * as Sentry from '@sentry/nestjs';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV || 'development',
+});
+
+// --- Imports habituels, après l'init Sentry ---
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
@@ -53,6 +62,7 @@ async function bootstrap() {
     }),
   );
 
+ 
   app.useGlobalFilters(new PrismaExceptionFilter());
 
   const port = config.get<number>('PORT') ?? 3000;

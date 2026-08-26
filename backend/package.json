@@ -34,6 +34,8 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^6.19.3",
+    "@sentry/nestjs": "^10.71.0",
+    "@sentry/node": "^10.71.0",
     "@supabase/supabase-js": "^2.110.9",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.81.2",

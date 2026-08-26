@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import { SentryModule } from '@sentry/nestjs/setup';
+import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import {
@@ -29,10 +32,11 @@ import { AddressesModule } from './modules/addresses/Addresses.module';
 import { FirebaseAdminModule } from './firebase/firebase-admin.module';
 @Module({
   imports: [
+   
+    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
-      // Loads the file matching NODE_ENV first (e.g. .env.production), falls back
-      // to .env. This lets Dev/Staging/Prod ship different values without code changes.
+     
       envFilePath: [
         `.env.${process.env.NODE_ENV ?? 'development'}.local`,
         `.env.${process.env.NODE_ENV ?? 'development'}`,
@@ -64,6 +68,13 @@ import { FirebaseAdminModule } from './firebase/firebase-admin.module';
     FirebaseAdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+   
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
+    },
+  ],
 })
 export class AppModule {}
