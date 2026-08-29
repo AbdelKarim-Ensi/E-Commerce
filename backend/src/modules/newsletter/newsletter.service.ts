@@ -24,11 +24,31 @@ export class NewsletterService {
         where: { email },
         data: { isActive: true },
       });
+      await this.sendWelcomeEmail(email);
       return { subscribed: true, alreadySubscribed: false };
     }
 
     await this.prisma.newsletterSubscriber.create({ data: { email } });
+    await this.sendWelcomeEmail(email);
     return { subscribed: true, alreadySubscribed: false };
+  }
+
+  private async sendWelcomeEmail(email: string) {
+    try {
+      await this.notificationsQueue.enqueueNewsletterEmail(
+        email,
+        'Bienvenue chez TechGear !',
+        'Merci de vous être inscrit à notre newsletter. Vous recevrez désormais nos meilleures offres et actualités tech en avant-première.',
+        undefined,
+        undefined,
+      );
+    } catch (error) {
+      // On log l'échec sans bloquer l'inscription : l'abonné est déjà enregistré
+      // en base, un souci d'envoi d'email ne doit pas faire échouer la requête.
+      this.logger.error(
+        `Échec de l'envoi de l'email de bienvenue à ${email}: ${(error as Error).message}`,
+      );
+    }
   }
 
   async unsubscribe(email: string) {
