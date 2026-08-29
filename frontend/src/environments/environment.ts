@@ -1,5 +1,5 @@
 export const environment = {
-   production: true,
+  production: true,
   apiUrl: 'https://techgear-backend-ekrc.onrender.com/api',
   stripePublishableKey: 'pk_test_51U3YMi3Li5UjJEvoNL0eLXCoyuHnzqKMdvC9qzRbzZIkwg0RiGJWMHap0tEo13qi8WMywpjr9NbhWxnchTwIwTob0034ZyNQcp',
   firebase: {
@@ -11,4 +11,5 @@ export const environment = {
     appId: '1:17448476089:web:efd7b42ee2f7eab949aa68',
     measurementId: 'G-92M9QM1NX0',
   },
+  sentryDsn: 'https://76a9792d1e0edd6838d3489960dff2f8@o4511977011281920.ingest.de.sentry.io/4511987941507152',
 };
