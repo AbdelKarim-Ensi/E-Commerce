@@ -1,12 +1,12 @@
-// ⚠️ DOIT être le tout premier import du fichier — avant tout le reste
-import * as Sentry from '@sentry/nestjs';
 
+import * as Sentry from '@sentry/nestjs';
+import compression from 'compression';
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
 });
 
-// --- Imports habituels, après l'init Sentry ---
+
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
@@ -26,7 +26,7 @@ async function bootstrap() {
         directives: {
           defaultSrc: ["'self'"],
           objectSrc: ["'none'"],
-          frameAncestors: ["'none'"], // extra clickjacking protection beyond X-Frame-Options
+          frameAncestors: ["'none'"], 
         },
       },
       crossOriginResourcePolicy: { policy: 'same-site' },
@@ -48,19 +48,20 @@ async function bootstrap() {
 
   app.enableCors({
     origin: corsOrigins,
-    credentials: true, // required so the browser sends/receives the httpOnly cookies
+    credentials: true, 
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  // --- Global input validation (already used per-DTO, enforced app-wide here too) ---
+  
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // strips properties not defined in the DTO
-      forbidNonWhitelisted: true, // rejects the request instead of silently dropping extras
+      whitelist: true, 
+      forbidNonWhitelisted: true, 
       transform: true,
     }),
   );
+  app.use(compression());
 
  
   app.useGlobalFilters(new PrismaExceptionFilter());
