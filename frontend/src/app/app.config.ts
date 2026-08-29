@@ -1,5 +1,6 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, inject, provideAppInitializer } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, inject, provideAppInitializer, PLATFORM_ID } from '@angular/core';
 import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { isPlatformServer } from '@angular/common';
 
 import { routes } from './app.routes';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
@@ -26,7 +27,14 @@ export const appConfig: ApplicationConfig = {
     { provide: API_BASE_URL, useValue: environment.apiUrl },
     provideAppInitializer(() => {
       const authService = inject(AuthService);
-      return firstValueFrom(authService.checkSession());
+      const platformId = inject(PLATFORM_ID);
+
+      
+      if (isPlatformServer(platformId)) {
+        return firstValueFrom(authService.checkSession());
+      }
+      authService.checkSession().subscribe();
+      return Promise.resolve();
     }),
   ]
 };
