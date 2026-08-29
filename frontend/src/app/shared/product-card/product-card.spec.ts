@@ -37,7 +37,6 @@ describe('ProductCard', () => {
     cartServiceMock = {
       isWishlisted: vi.fn(),
       toggleWishlist: vi.fn(),
-      addItem: vi.fn(),
     } as unknown as Mocked<CartService>;
     showcaseServiceMock = {
       setProduct: vi.fn(),
@@ -85,7 +84,7 @@ describe('ProductCard', () => {
     expect(cartServiceMock.toggleWishlist).toHaveBeenCalledWith('1');
   });
 
-  it('should add item to cart and emit addToCart on cart click', () => {
+  it('should emit addToCart on cart click without calling CartService directly', () => {
     const event = new MouseEvent('click');
     vi.spyOn(event, 'stopPropagation');
     vi.spyOn(component.addToCart, 'emit');
@@ -93,7 +92,7 @@ describe('ProductCard', () => {
     component.onCartClick(event);
 
     expect(event.stopPropagation).toHaveBeenCalled();
-    expect(cartServiceMock.addItem).toHaveBeenCalledWith(mockProduct);
+   
     expect(component.addToCart.emit).toHaveBeenCalledWith(mockProduct);
   });
 });
