@@ -5,8 +5,10 @@
   <!-- Image Produit & Bouton Cœur -->
   <div class="relative aspect-square bg-gray-50 overflow-hidden">
     <img 
-      [src]="product.imageUrl" 
+      [src]="getOptimizedImageUrl(product.imageUrl || '')" 
       [alt]="product.name"
+      width="400" height="400"
+      loading="lazy"
       class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
     />
 
@@ -40,7 +42,6 @@
     </button>
   </div>
 
-
   <div class="p-5 flex flex-col flex-1 justify-between">
     <div>
       <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">{{ product.brand }}</p>
@@ -50,12 +51,12 @@
     <div class="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
       <span class="text-xl font-black text-gray-900">${{ product.price }}</span>
       <button
-  type="button"
-  (click)="onCartClick($event)"
-  [attr.aria-label]="'Ajouter ' + product.name + ' au panier'"
-  class="w-9 h-9 rounded-xl bg-amber-500 hover:bg-amber-600 text-gray-900 flex items-center justify-center shadow-md active:scale-95 transition-all"
-  [class.animate-pop]="isCartAnimating"
->
+        type="button"
+        (click)="onCartClick($event)"
+        [attr.aria-label]="'Ajouter ' + product.name + ' au panier'"
+        class="w-9 h-9 rounded-xl bg-amber-500 hover:bg-amber-600 text-gray-900 flex items-center justify-center shadow-md active:scale-95 transition-all"
+        [class.animate-pop]="isCartAnimating"
+      >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
