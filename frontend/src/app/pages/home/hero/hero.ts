@@ -8,6 +8,7 @@ import { Component, Output, EventEmitter } from '@angular/core';
 })
 export class Hero {
   @Output() shopNow = new EventEmitter<void>();
+  @Output() viewDeals = new EventEmitter<void>();
 
   protected readonly stats = [
     { value: '50K+', label: 'Happy Customers' },

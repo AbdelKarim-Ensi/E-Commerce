@@ -52,6 +52,7 @@ export class Home implements OnInit {
     this.router.navigate(['/products'], { queryParams: { category: categoryId } });
   }
 
+  
   onAddToCart(product: Product): void {
     this.cartService.addItem(product);
   }
@@ -64,7 +65,13 @@ export class Home implements OnInit {
     return this.cartService.isWishlisted(productId);
   }
 
-  scrollToFeatured(): void {
-    document.getElementById('featured')?.scrollIntoView({ behavior: 'smooth' });
+  
+  goToProducts(): void {
+    this.router.navigate(['/products']);
+  }
+
+  
+  scrollToDeals(): void {
+    document.getElementById('flash-deals')?.scrollIntoView({ behavior: 'smooth' });
   }
 }

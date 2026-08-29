@@ -3,7 +3,6 @@ import { Router } from '@angular/router';
 import { Product } from '@models/product.model';
 import { StarRating } from '../../../shared/star-rating/star-rating';
 import { ShowcaseService } from '@services/showcase.service';
-import { CartService } from '@services/cart.service';
 
 @Component({
   selector: 'app-flash-deals',
@@ -21,7 +20,6 @@ export class FlashDeals implements OnInit, OnDestroy {
 
   private router = inject(Router);
   private showcaseService = inject(ShowcaseService);
-  private cartService = inject(CartService);
 
   time = { h: 5, m: 34, s: 17 };
   private timer?: ReturnType<typeof setInterval>;
@@ -70,7 +68,7 @@ export class FlashDeals implements OnInit, OnDestroy {
     event.stopPropagation();
     this.isCartAnimating[product.id] = true;
     setTimeout(() => { this.isCartAnimating[product.id] = false; }, 200);
-    this.cartService.addItem(product);
+    
     this.addToCart.emit(product);
   }
 }

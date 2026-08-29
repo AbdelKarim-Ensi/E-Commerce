@@ -43,15 +43,15 @@ export class ProductCard {
     event.stopPropagation();
     this.isCartAnimating = true;
     setTimeout(() => (this.isCartAnimating = false), 200);
-    this.cartService.addItem(this.product);
+   
     this.addToCart.emit(this.product);
   }
- protected getOptimizedImageUrl(imageUrl: string): string {
- 
-  if (!imageUrl.startsWith('/assets/products/')) return imageUrl;
 
-  const match = imageUrl.match(/^(.*)\.(jpe?g|png)$/i);
-  if (!match) return imageUrl;
-  return `${match[1]}-400w.${match[2]}`;
-}
+  protected getOptimizedImageUrl(imageUrl: string): string {
+    if (!imageUrl.startsWith('/assets/products/')) return imageUrl;
+
+    const match = imageUrl.match(/^(.*)\.(jpe?g|png)$/i);
+    if (!match) return imageUrl;
+    return `${match[1]}-400w.${match[2]}`;
+  }
 }
