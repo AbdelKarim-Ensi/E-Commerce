@@ -2,10 +2,10 @@
   (click)="onCardClick()"
   class="group relative bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer"
 >
-  <!-- Image Produit & Bouton Cœur -->
+  
   <div class="relative aspect-square bg-gray-50 overflow-hidden">
     <img 
-      [src]="getOptimizedImageUrl(product.imageUrl || '')" 
+      [src]="getOptimizedImageUrl(product.imageUrl ?? '')" 
       [alt]="product.name"
       width="400" height="400"
       loading="lazy"
@@ -15,7 +15,7 @@
     <button
       type="button"
       (click)="onWishlistClick($event)"
-      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center shadow-md transition-all duration-200 z-10 hover:scale-110 active:scale-95"
+      class="absolute top-3 right-3 w-11 h-11 rounded-full flex items-center justify-center shadow-md transition-all duration-200 z-10 hover:scale-110 active:scale-95"
       [class.bg-red-50]="wishlisted"
       [class.bg-white]="!wishlisted"
       [class.animate-pop]="isWishlistAnimating"
@@ -54,7 +54,7 @@
         type="button"
         (click)="onCartClick($event)"
         [attr.aria-label]="'Ajouter ' + product.name + ' au panier'"
-        class="w-9 h-9 rounded-xl bg-amber-500 hover:bg-amber-600 text-gray-900 flex items-center justify-center shadow-md active:scale-95 transition-all"
+        class="w-11 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-gray-900 flex items-center justify-center shadow-md active:scale-95 transition-all"
         [class.animate-pop]="isCartAnimating"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

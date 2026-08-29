@@ -73,7 +73,7 @@
           type="button" 
           [routerLink]="['/products']"
           [queryParams]="{ wishlist: true }"
-          class="relative p-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors group"
+          class="relative p-3 min-w-11 min-h-11 flex items-center justify-center text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors group"
           aria-label="Wishlist"
         >
           <svg 
@@ -101,7 +101,7 @@
           <button
             type="button"
             (click)="toggleUserMenu($event)"
-            class="p-2.5 text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+            class="p-3 min-w-11 min-h-11 flex items-center justify-center text-gray-600 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
             [attr.aria-label]="isLoggedIn ? 'Account menu' : 'Sign in or sign up'"
             aria-haspopup="menu"
             [attr.aria-expanded]="userMenuOpen"
@@ -124,6 +124,7 @@
               <div class="p-2">
                 @if (isLoggedIn) {
                   <a
+                  
                     routerLink="/orders"
                     role="menuitem"
                     (click)="closeUserMenu()"
@@ -160,6 +161,7 @@
                   </button>
                 } @else {
                   <a
+                  
                     routerLink="/login"
                     role="menuitem"
                     (click)="closeUserMenu()"
@@ -191,6 +193,7 @@
 
         @if (isAdmin) {
           <a
+          
             routerLink="/admin"
             aria-label="Dashboard"
             class="flex items-center gap-2 px-3 py-2 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-colors ml-1"
@@ -209,7 +212,7 @@
           type="button"
           (click)="onCartOpen()"
           aria-label="Cart"
-          class="relative flex items-center gap-2 px-3 py-2 bg-amber-500 text-gray-900 rounded-xl hover:bg-amber-600 transition-colors ml-1"
+          class="relative flex items-center justify-center gap-2 min-w-11 min-h-11 px-3 py-2 bg-amber-500 text-gray-900 rounded-xl hover:bg-amber-600 transition-colors ml-1"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
