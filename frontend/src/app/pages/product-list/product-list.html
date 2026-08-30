@@ -89,7 +89,7 @@
             </button>
           </div>
         } @else {
-          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          <div class="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             @for (product of filtered(); track product.id) {
               <app-product-card
   [product]="product"

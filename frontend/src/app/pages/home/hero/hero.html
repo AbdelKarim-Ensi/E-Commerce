@@ -1,9 +1,8 @@
 <section
   class="relative overflow-hidden pt-16"
-  style="background: radial-gradient(ellipse at 50% -5%, #ffffff 35%, #fde68a 70%, #f59e0b 100%);
-         min-height: 92vh;"
+  style="background: radial-gradient(ellipse at 50% -5%, #ffffff 35%, #fde68a 70%, #f59e0b 100%);"
 >
-  <!-- Decorative blobs -->
+  
   <div class="absolute top-1/4 -left-24 w-72 h-72 rounded-full opacity-20"
        style="background: radial-gradient(circle, #f59e0b, transparent)"></div>
   <div class="absolute bottom-0 right-0 w-96 h-96 rounded-full opacity-10"
@@ -55,7 +54,7 @@
       </div>
 
       <!-- Floating images -->
-      <div class="relative flex items-center justify-center h-[480px] lg:h-[540px]">
+      <div class="relative flex items-center justify-center h-[320px] sm:h-[480px] lg:h-[540px]">
         <div class="absolute inset-0 rounded-full opacity-30"
              style="background: radial-gradient(circle at center, #fbbf24 0%, transparent 70%); transform: scale(0.8)"></div>
 
@@ -76,30 +75,31 @@
           </div>
         </div>
 
+        
         <!-- Smartwatch -->
-        <div class="float-animation-2 absolute z-9" style="right:2%; top:8%">
+        <div class="float-animation-2 absolute z-9 hidden sm:block" style="right:2%; top:8%">
           <div class="w-28 h-28 sm:w-36 sm:h-36 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/60">
             <img src="/assets/products/apple-watch-ultra2-150w.jpg"
-                 alt="Apple Watch Ultra"
-                 width="150" height="150"
-                 loading="lazy"
-                 class="w-full h-full object-cover"/>
+                alt="Apple Watch Ultra"
+                width="150" height="150"
+                loading="lazy"
+                class="w-full h-full object-cover"/>
           </div>
         </div>
 
-        <!-- Earbuds -->
-        <div class="float-animation absolute z-9" style="left:0%; bottom:12%; animation-delay:1.2s">
-          <div class="w-24 h-24 sm:w-32 sm:h-32 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/60">
-            <img src="/assets/products/galaxy-buds3-pro-150w.jpg"
-                 alt="Wireless earbuds"
-                 width="150" height="150"
-                 loading="lazy"
-                 class="w-full h-full object-cover"/>
-          </div>
+       <!-- Earbuds -->
+      <div class="float-animation absolute z-9 hidden sm:block" style="left:0%; bottom:12%; animation-delay:1.2s">
+        <div class="w-24 h-24 sm:w-32 sm:h-32 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-white/60">
+          <img src="/assets/products/galaxy-buds3-pro-150w.jpg"
+              alt="Wireless earbuds"
+              width="150" height="150"
+              loading="lazy"
+              class="w-full h-full object-cover"/>
         </div>
+      </div>
 
-        <!-- Price badge -->
-        <div class="absolute z-20" style="right:4%; bottom:20%">
+       <!-- Price badge -->
+        <div class="absolute z-20 hidden sm:block" style="right:4%; bottom:20%">
           <div class="bg-amber-500 text-gray-900 rounded-2xl px-4 py-2.5 shadow-lg">
             <div class="text-xs font-medium">Flash Deal</div>
             <div class="text-lg font-black font-display">-30% OFF</div>
@@ -107,7 +107,7 @@
         </div>
 
         <!-- Rating badge -->
-        <div class="absolute z-20" style="left:4%; top:16%">
+        <div class="absolute z-20 hidden sm:block" style="left:4%; top:16%">
           <div class="bg-white rounded-2xl px-4 py-2.5 shadow-lg border border-gray-100">
             <div class="flex items-center gap-1">
               <span class="text-amber-700 text-sm" aria-hidden="true">★★★★★</span>
