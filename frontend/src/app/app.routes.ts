@@ -27,6 +27,7 @@ export const routes: Routes = [
   {
     path: 'checkout',
     loadComponent: () => import('@pages/checkout/checkout').then(m => m.Checkout),
+    canActivate: [authGuard],
     title: 'TechGear — Commande'
   },
   {

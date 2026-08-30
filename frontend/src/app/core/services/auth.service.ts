@@ -29,9 +29,7 @@ export class AuthService {
   sessionChecked = signal(false);
   currentUser = signal<User | null>(null);
 
-  // Initialisé paresseusement, uniquement côté navigateur — le SDK Firebase
-  // client (popup, window, etc.) n'a aucun sens en SSR et planterait sur le
-  // serveur Node si on essayait de l'instancier au chargement du module.
+  
   private firebaseApp: FirebaseApp | null = null;
 
   private getFirebaseApp(): FirebaseApp {
@@ -52,13 +50,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * Ouvre la popup Google (SDK Firebase client), récupère l'idToken du
-   * compte Google choisi, puis le transmet à notre backend qui le vérifie
-   * via Firebase Admin et émet nos propres cookies de session — exactement
-   * le même flux que login(), juste une source d'authentification différente.
-   * Navigateur uniquement : signInWithPopup n'existe pas côté SSR.
-   */
   loginWithGoogle() {
     if (isPlatformServer(this.platformId)) {
       return throwError(() => new Error('Google sign-in is only available in the browser'));
@@ -85,15 +76,6 @@ export class AuthService {
     );
   }
 
-  /**
-   * Fait tourner le refresh token (le backend invalide l'ancien et en émet un
-   * nouveau via Set-Cookie). SÛR uniquement côté navigateur, où le vrai cookie
-   * jar reçoit le nouveau cookie. Ne JAMAIS appeler depuis le SSR : le serveur
-   * Node ne peut pas relayer le Set-Cookie du backend vers le navigateur, donc
-   * le navigateur retenterait l'ancien token déjà invalidé au prochain appel,
-   * ce qui déclenche la détection de réutilisation du backend et révoque
-   * TOUTES les sessions de l'utilisateur.
-   */
   refresh() {
     return this.http.post(this.url + 'refresh', {}).pipe(
       tap(() => this.isLoggedIn.set(true)),
@@ -113,19 +95,12 @@ export class AuthService {
     );
   }
 
-  /**
-   * Vérification "légère" et non-mutante de la session : lit uniquement
-   * GET /users/me avec le cookie access_token existant. N'échoue jamais
-   * bruyamment (access_token expire vite, ~15min) et ne touche jamais au
-   * refresh_token. Utilisée exclusivement côté SSR.
-   */
+  
   private verifySessionReadOnly() {
     return this.loadCurrentUser().pipe(
       tap(() => this.isLoggedIn.set(true)),
       catchError(() => {
-        // access_token probablement expiré ou absent : on ne sait pas encore
-        // si l'utilisateur est connecté. Le client corrigera après hydratation.
-        this.isLoggedIn.set(false);
+        
         this.currentUser.set(null);
         return of(null);
       })

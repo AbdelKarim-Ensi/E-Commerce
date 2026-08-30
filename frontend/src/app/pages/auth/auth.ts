@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink, NavigationEnd } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink, NavigationEnd } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { AuthService } from '@services/auth.service';
 import { AlertService } from '@services/alert.service';
@@ -18,14 +18,16 @@ export class Auth implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private alertService = inject(AlertService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private location = inject(Location);
   private routerSub?: Subscription;
 
-  /** Contrôle l'affichage du panneau : false = Sign in (/login), true = Sign up (/register). */
+  
   isSignUp = false;
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  private returnUrl: string | null = null;
 
   signInForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -39,15 +41,15 @@ export class Auth implements OnInit, OnDestroy {
   });
 
   ngOnInit() {
-    
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+
     if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/']);
+      this.router.navigateByUrl(this.returnUrl ?? '/');
       return;
     }
 
     this.syncModeFromUrl(this.router.url);
 
- 
     this.routerSub = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => this.syncModeFromUrl(event.urlAfterRedirects));
@@ -61,7 +63,10 @@ export class Auth implements OnInit, OnDestroy {
     this.isSignUp = url.startsWith('/register');
   }
 
- 
+  private redirectAfterAuth() {
+    this.router.navigateByUrl(this.returnUrl ?? '/');
+  }
+
   showSignUp() {
     if (this.isSignUp) return;
     this.isSignUp = true;
@@ -88,15 +93,12 @@ export class Auth implements OnInit, OnDestroy {
     this.authService.login(this.signInForm.getRawValue()).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/']);
+        this.redirectAfterAuth();
       },
       error: (err) => {
         this.isLoading.set(false);
         const message = err?.error?.message ?? 'Invalid email or password. Please try again.';
 
-        // Cas particulier : compte pas encore vérifié — propose de renvoyer
-        // l'email plutôt qu'une simple bannière/popup passive, puisque
-        // c'est le blocage exact qui empêche l'utilisateur d'avancer.
         if (typeof message === 'string' && message.toLowerCase().includes('verify your email')) {
           this.offerResendVerification(this.signInForm.getRawValue().email);
           return;
@@ -146,10 +148,6 @@ export class Auth implements OnInit, OnDestroy {
 
     const { email, password, username } = this.signUpForm.getRawValue();
 
-    // Le backend (RegisterDto) n'a pas de champ `username` — il attend
-    // `firstName`/`lastName`. On mappe la saisie du champ "username" sur
-    // `firstName` pour rester compatible avec le DTO whitelisté côté Nest,
-    // sans changer le formulaire ni le template.
     this.authService.register({ email, password, firstName: username }).subscribe({
       next: () => {
         this.isLoading.set(false);
@@ -169,11 +167,6 @@ export class Auth implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Utilisée par les deux formulaires (Sign in / Sign up) — Google renvoie
-   * toujours le même flux de compte, il n'y a pas de distinction "créer"
-   * vs "se connecter" côté Firebase, donc un seul handler suffit.
-   */
   loginWithGoogle() {
     this.isLoading.set(true);
     this.errorMessage.set(null);
@@ -181,12 +174,10 @@ export class Auth implements OnInit, OnDestroy {
     this.authService.loginWithGoogle().subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/']);
+        this.redirectAfterAuth();
       },
       error: (err) => {
         this.isLoading.set(false);
-        // L'utilisateur ferme souvent la popup lui-même (auth/popup-closed-by-user) :
-        // ce n'est pas une vraie erreur, pas besoin d'afficher de message dans ce cas.
         if (err?.code === 'auth/popup-closed-by-user') {
           return;
         }

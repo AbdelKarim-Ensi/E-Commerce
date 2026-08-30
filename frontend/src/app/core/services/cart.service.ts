@@ -69,10 +69,7 @@ export class CartService {
 
   readonly wishlistCount = computed(() => this._wishlist().length);
 
-  /**
-   * Charge la wishlist depuis le backend. À appeler après une connexion
-   * réussie (login, refresh, ou vérif de session SSR).
-   */
+  
   loadWishlist() {
     this.wishlistApi.getWishlist().subscribe({
       next: (products) => {
@@ -82,10 +79,7 @@ export class CartService {
     });
   }
 
-  /**
-   * Vide la wishlist locale. À appeler à la déconnexion pour éviter
-   * qu'un autre utilisateur voie les favoris du précédent.
-   */
+ 
   clearWishlist() {
     this._wishlist.set([]);
   }
@@ -93,16 +87,16 @@ export class CartService {
   toggleWishlist(id: string | number) {
     const strId = String(id);
 
-    // Optimistic update : l'UI réagit immédiatement
+    
     this._wishlist.update(wl =>
       wl.includes(strId) ? wl.filter(x => x !== strId) : [...wl, strId]
     );
 
-    // Synchronisation avec le backend
+   
     this.wishlistApi.toggle(strId).subscribe({
       error: (err) => {
         console.error('Erreur toggle wishlist', err);
-        // Rollback si l'appel échoue
+       
         this._wishlist.update(wl =>
           wl.includes(strId) ? wl.filter(x => x !== strId) : [...wl, strId]
         );
