@@ -11,6 +11,9 @@ import { ProductsService } from '@services/products.service';
 import { CategoriesService } from '@services/categories.service';
 import { CartService } from '@services/cart.service';
 
+
+const HOME_PRODUCTS_LIMIT = 8;
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -21,6 +24,7 @@ import { CartService } from '@services/cart.service';
 export class Home implements OnInit {
   private router = inject(Router);
 
+  private allProducts: Product[] = [];
   products: Product[] = [];
   dealProducts: Product[] = [];
   categories: Category[] = [];
@@ -36,7 +40,8 @@ export class Home implements OnInit {
     this.productsService.getAll().subscribe({
       next: (res) => {
         const products = Array.isArray(res) ? res : (res?.data ?? []);
-        this.products = products;
+        this.allProducts = products;
+        this.products = products.slice(0, HOME_PRODUCTS_LIMIT);
         this.dealProducts = products.filter((p: Product) => !!p.discountPercent);
       },
       error: (err: unknown) => console.error('Erreur chargement produits', err),
@@ -52,7 +57,6 @@ export class Home implements OnInit {
     this.router.navigate(['/products'], { queryParams: { category: categoryId } });
   }
 
-  
   onAddToCart(product: Product): void {
     this.cartService.addItem(product);
   }
@@ -65,12 +69,10 @@ export class Home implements OnInit {
     return this.cartService.isWishlisted(productId);
   }
 
-  
   goToProducts(): void {
     this.router.navigate(['/products']);
   }
 
-  
   scrollToDeals(): void {
     document.getElementById('flash-deals')?.scrollIntoView({ behavior: 'smooth' });
   }

@@ -44,4 +44,15 @@
   } @error {
     <div class="h-96 flex items-center justify-center text-red-500">Impossible de charger les produits.</div>
   }
+
+  <div class="flex justify-center mt-8 px-4">
+    <button
+      type="button"
+      (click)="goToProducts()"
+      class="px-8 py-3 border border-gray-200 text-gray-700 font-semibold rounded-xl
+             hover:border-amber-300 hover:bg-amber-50 transition-colors"
+    >
+      View All Products →
+    </button>
+  </div>
 </div>
